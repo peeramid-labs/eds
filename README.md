@@ -19,15 +19,7 @@ This system acts as generalized and efficient factory which is designed in one-f
 
 ![image](https://github.com/user-attachments/assets/52fa7028-177c-4de2-9259-3f883491a3d3)
 
-### Key Components
-
-- **CodeIndex:**
-- **Distribution:** A stateless, permissionless contract enabling instantiation from a resource (bytecode) or repository.
-- **Distributor:** A stateful, permissioned contract allowing instantiation of distributions or repositories and managing their versions.
-- **Installer:** A stateful, permissioned contract for managing permissions to access targets by multiple instances from various distributors.
-- **Repository:** A stateful, permissioned contract enabling developers to version and manage multiple versions of the same functional resource.
-
-#### Permission-less Domain
+#### Key Components
 
 ##### CodeIndex
 
