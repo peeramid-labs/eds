@@ -5,7 +5,7 @@ import "../interfaces/ICodeIndex.sol";
 
 abstract contract CodeIndexer {
     //Create2 contract
-    ICodeIndex constant indexContract = ICodeIndex(0xC0d31dB079b9eb23f6942A44c29F1ece9e118C30);
+    ICodeIndex constant indexContract = ICodeIndex(0xc0d31D6A64D1BE49867158ed3c25152D240b5c0B);
 
     constructor() {}
 
