@@ -33,7 +33,7 @@ Proposed `CREATE2` implementation with deterministic address : `0xC0d31dB079b9eb
 ##### `Distribution`
 
 Interface for contracts that allow specific mechanics of instantiation of referred bytecode identifiers in the `CodeIndex`. It may be using different methods for instantiation, yet it is ultimately referred by it's bytecode hash and instantiation methods kept non-parametric, to promote hardcoding of instantiation logic by the distribution creator, ultimately making any distribution a unique part of code ecosystem.
-It also allows distribution creators to associate own metadata with the distribution, such as URIs defined in [ERC-190](https://eips.ethereum.org/EIPS/eip-190)
+It also allows distribution creators to associate own metadata with the distribution, such as URIs defined in [ERC-190](https://eips.ethereum.org/EIPS/eip-190) or [ERC-2678](https://eips.ethereum.org/EIPS/eip-2678)
 
 #### Developer Domain
 
