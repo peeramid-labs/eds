@@ -225,7 +225,6 @@ blockchain/keystore/**
 blockchain/history
 
 #truffle
-yarn.lock
 package-lock.json
 
 ### VisualStudioCode ###
@@ -272,3 +271,4 @@ artifacts/
 build/
 types/typechain
 bin/
+types

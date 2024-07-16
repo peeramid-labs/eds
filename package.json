@@ -1,6 +1,6 @@
 {
-  "name": "bootstrap-solidity",
-  "version": "0..1",
+  "name": "eds",
+  "version": "0.1",
   "files": [
     "abi",
     "deployments",
@@ -9,11 +9,10 @@
     "scripts",
     "docs"
   ],
-  "description": "bootstrap solidity project",
+  "description": "Generalized factory implementation for reproducible ethereum smart contract instantiation",
   "scripts": {
     "lint:fix": "eslint ./ --ext js,jsx,ts,tsx --fix && pnpm run lint:sol:fix",
     "lint": "eslint ./ --ext js,jsx,ts,tsx && pnpm run lint:sol",
-    "upgrade:game:mumbai": "source .secrets/hh_mumbai.env &&  pnpm hardhat --network mumbai deploy --tags upgrade_game",
     "test": "export NODE_ENV=TEST && pnpm hardhat test",
     "test:parallel": "export NODE_ENV=TEST && pnpm hardhat test --parallel",
     "build": "pnpm hardhat compile",

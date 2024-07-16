@@ -1,0 +1,480 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_owner",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "instance",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidInstance",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IRepository",
+        "name": "repository",
+        "type": "address"
+      }
+    ],
+    "name": "InvalidRepository",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableInvalidOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IRepository",
+        "name": "repository",
+        "type": "address"
+      }
+    ],
+    "name": "RepositoryAlreadyExists",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IRepository",
+        "name": "repository",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "version",
+        "type": "uint256"
+      }
+    ],
+    "name": "VersionOutdated",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "repository",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes",
+        "name": "argsHash",
+        "type": "bytes"
+      }
+    ],
+    "name": "Instantiated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "contract IRepository",
+        "name": "repository",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "enum LibSemver.requirements",
+        "name": "oldRequirement",
+        "type": "uint8"
+      },
+      {
+        "indexed": true,
+        "internalType": "enum LibSemver.requirements",
+        "name": "newRequirement",
+        "type": "uint8"
+      }
+    ],
+    "name": "RequirementChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "repository",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "oldVersion",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "newVersion",
+        "type": "uint256"
+      }
+    ],
+    "name": "VersionChanged",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "contract IRepository",
+        "name": "repository",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "version",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum LibSemver.requirements",
+        "name": "requirement",
+        "type": "uint8"
+      },
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "initializerId",
+        "type": "bytes32"
+      }
+    ],
+    "name": "VersionedDistributionAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "contract IRepository",
+        "name": "repository",
+        "type": "address"
+      }
+    ],
+    "name": "VersionedDistributionRemoved",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IRepository",
+        "name": "repository",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint64",
+            "name": "major",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "minor",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint128",
+            "name": "patch",
+            "type": "uint128"
+          }
+        ],
+        "internalType": "struct LibSemver.Version",
+        "name": "version",
+        "type": "tuple"
+      },
+      {
+        "internalType": "enum LibSemver.requirements",
+        "name": "requirement",
+        "type": "uint8"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "initializer",
+        "type": "bytes32"
+      }
+    ],
+    "name": "addVersionedDistribution",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "layerConfig",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes4",
+        "name": "selector",
+        "type": "bytes4"
+      },
+      {
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "value",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "data",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "beforeCallResult",
+        "type": "bytes"
+      }
+    ],
+    "name": "afterCallValidation",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes4",
+        "name": "",
+        "type": "bytes4"
+      },
+      {
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "name": "beforeCallValidation",
+    "outputs": [
+      {
+        "internalType": "bytes",
+        "name": "",
+        "type": "bytes"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IRepository",
+        "name": "repository",
+        "type": "address"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint64",
+            "name": "major",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "minor",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint128",
+            "name": "patch",
+            "type": "uint128"
+          }
+        ],
+        "internalType": "struct LibSemver.Version",
+        "name": "version",
+        "type": "tuple"
+      },
+      {
+        "internalType": "enum LibSemver.requirements",
+        "name": "requirement",
+        "type": "uint8"
+      }
+    ],
+    "name": "changeRequirement",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IRepository",
+        "name": "repository",
+        "type": "address"
+      }
+    ],
+    "name": "getVersionedDistributionURI",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getVersionedDistributions",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "repositories",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IRepository",
+        "name": "repository",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "args",
+        "type": "bytes"
+      }
+    ],
+    "name": "instantiate",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "owner",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IRepository",
+        "name": "repository",
+        "type": "address"
+      }
+    ],
+    "name": "removeVersionedDistribution",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
