@@ -21,6 +21,10 @@ This system acts as generalized and efficient factory which is designed in one-f
 
 ### Key Components
 
+System components are broken down into four domains: Permission-less, Developer, Distributor and User. Each domain has its own set of contracts and interfaces, which are designed to work together to provide a seamless experience for developers and users.
+
+#### Permission-less Domain
+
 ##### CodeIndex
 
 A stateful, permissionless contract allowing anyone to register associations between bytecode and its on-chain location. Any smart contract may be indexed by `CodeIndex` based on its bytecode.
