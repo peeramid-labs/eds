@@ -28,7 +28,7 @@ System components are broken down into four domains: Permission-less, Developer,
 ##### CodeIndex
 
 A stateful, permissionless contract allowing anyone to register associations between bytecode and its on-chain location. Any smart contract may be indexed by `CodeIndex` based on its bytecode.
-Proposed `CREATE2` implementation with deterministic address : `0xC0d31dB079b9eb23f6942A44c29F1ece9e118C30`
+Proposed `CREATE2` implementation with deterministic address : `0xc0d31D6A64D1BE49867158ed3c25152D240b5c0B`
 
 ##### `Distribution`
 
