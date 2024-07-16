@@ -14,4 +14,4 @@ Contents:
 
 ## End-goal
 
-![image](https://github.com/user-attachments/assets/15f7e293-5d6d-45e6-9caa-63d8aa3f2613)
+![image](https://github.com/user-attachments/assets/52fa7028-177c-4de2-9259-3f883491a3d3)
