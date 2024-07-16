@@ -21,45 +21,49 @@ This system acts as generalized and efficient factory which is designed in one-f
 
 ### Key Components
 
-- **CodeIndex:** A stateful, permissionless contract allowing anyone to register associations between bytecode and its on-chain location.
+- **CodeIndex:**
 - **Distribution:** A stateless, permissionless contract enabling instantiation from a resource (bytecode) or repository.
 - **Distributor:** A stateful, permissioned contract allowing instantiation of distributions or repositories and managing their versions.
 - **Installer:** A stateful, permissioned contract for managing permissions to access targets by multiple instances from various distributors.
 - **Repository:** A stateful, permissioned contract enabling developers to version and manage multiple versions of the same functional resource.
 
-### Ownership Domains
+#### Permission-less Domain
 
-To simplify code reuse, auditing, and encapsulate responsibilities, the system is divided into multiple ownership domains, each with distinct security and trust requirements.
+##### CodeIndex
 
-#### Permissionless Domain
+A stateful, permissionless contract allowing anyone to register associations between bytecode and its on-chain location. Any smart contract may be indexed by `CodeIndex` based on its bytecode.
+Proposed `CREATE2` implementation with deterministic address : `0xC0d31dB079b9eb23f6942A44c29F1ece9e118C30`
 
-**Stateless Contracts:**
+##### `Distribution`
 
-- Any smart contract indexed by `CodeIndex` based on its bytecode.
-- `Distribution` contract is a special stateless contract for instantiating from a resource or repository. Its lack of state ensures easy verification and trust.
-- **CodeIndex:**
-  - The only stateful, permissionless contract in the system.
-  - A `CREATE2` contract maintaining an immutable mapping between bytecode hash and its on-chain location.
-  - `0xC0d31dB079b9eb23f6942A44c29F1ece9e118C30` with given settings is the only valid global `CodeIndex` contract.
+Interface for contracts that allow specific mechanics of instantiation of referred bytecode identifiers in the `CodeIndex`. It may be using different methods for instantiation, yet it is ultimately referred by it's bytecode hash and instantiation methods kept non-parametric, to promote hardcoding of instantiation logic by the distribution creator, ultimately making any distribution a unique part of code ecosystem.
+It also allows distribution creators to associate own metadata with the distribution, such as URIs defined in [ERC-190](https://eips.ethereum.org/EIPS/eip-190)
 
 #### Developer Domain
 
-- **Repositories:**
-  - Stateful, permissioned contracts allowing developers to manage resources and versions.
-  - May return `IDistribution` interface-compatible contracts when made for distributor clients.
-  - May return anything when made to be consumed by distributions.
+##### Repositories
+
+Repositories are interfaces provided for stateful, permissioned contracts allowing developers to manage resources and versions. Such repositories may return any kind of source code reference, including system-internal used ones, like `IDistribution`. It allows developers to increment versions according to [Semver](http://semver.org/) as well as implement version requirements lookup for the clients.
+
+##### Non-Stateless Distributions
+
+Any implementation of Distribution interface mentioned in the Permission-less Domain, that is stateful is considered as a Developer Domain component. It is possible in principle, yet will be used only for specific use-cases, where stateful distribution is required and will require distribution users to use direct location addressing, effectively excluding it from the global index system.
 
 #### Distributor Domain
 
-- **Distributors:**
-  - Stateful, permissioned contracts for managing resources and versions.
-  - Allow custom instantiation arguments and initializer interfaces for flexible distribution customization.
+##### Distributor
+
+Stateful, permissioned contract interface for managing distributions. It allows distributors, who may act as trusted source for many, to have their own index of trusted distributions coupled to any, parametric, initialization logic that they might need. This is a first point on instantiation chain that allows to configure distribution after it's been instantiated.
+
+##### Version Distributor
+
+Same as Distributor, but with additional functionality to manage versions of distributions. It allows to manage multiple versions of the same distribution and to provide version requirements lookup for the clients. Distributor may change the version of the repository, effectively disabling, in one go, every outdated version instances from operating in the system.
 
 #### User Domain
 
-- **Installers:**
-  - Stateful, permissioned contracts for managing permissions and accessing targets from multiple distributors.
-  - Primarily used by end-users to manage resources and permissions.
+##### Installer
+
+Stateful, permissioned contracts for managing permissions and accessing targets from multiple distributors. Allows end-users to manage trusted sources for their installations.
 
 ## Getting Started
 
