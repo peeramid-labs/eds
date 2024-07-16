@@ -32,9 +32,10 @@ To simplify code reuse, auditing, and encapsulate responsibilities, the system i
 
 #### Permissionless Domain
 
-- **Stateless Contracts:**
-  - Any smart contract indexed by `CodeIndex` based on its bytecode.
-  - `Distribution` contract is a special stateless contract for instantiating from a resource or repository. Its lack of state ensures easy verification and trust.
+**Stateless Contracts:**
+
+- Any smart contract indexed by `CodeIndex` based on its bytecode.
+- `Distribution` contract is a special stateless contract for instantiating from a resource or repository. Its lack of state ensures easy verification and trust.
 - **CodeIndex:**
   - The only stateful, permissionless contract in the system.
   - A `CREATE2` contract maintaining an immutable mapping between bytecode hash and its on-chain location.
@@ -43,7 +44,8 @@ To simplify code reuse, auditing, and encapsulate responsibilities, the system i
 
 - **Repositories:**
   - Stateful, permissioned contracts allowing developers to manage resources and versions.
-  - Not indexed by `CodeIndex` and expected to return `IDistribution` interface-compatible contracts when used for resource distribution.
+  - May return `IDistribution` interface-compatible contracts when made for distributor clients.
+  - May return anything when made to be consumed by distributions.
 
 #### Distributor Domain
 
