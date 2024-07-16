@@ -5,8 +5,9 @@ EDS maps functionality, expressed as bytecode, to on-chain locations, using a gl
 
 ## Overview
 
+This system acts as generalized and efficient factory which is designed in one-fits-all principle. It achieves this by referring bytecode instead of location, enabling code queries by bytecode hash (`address.codehash`). Developers when interacting with the system first must register their bytecode to the code indexer contract. After that, they may create a distribution contract that links multiple various required code hashes in one place. If the developer wants to manage multiple versions of the same resource, they can create a repository contract to add own index on top of global. In order to provide functionality to users, developers may pack their code to Distributions, which have hardcoded instructions for instantiation. Such hardcoded bytecode later can be itself consumed by Distributors, which are responsible for determining custom instantiation arguments and initializer interfaces that will wrap the Distribution. Finally, Installers are used by end-users to manage resources and permissions
 
-This system prioritizes bytecode over contract location, enabling code queries by bytecode hash (`address.codehash`). It aims to be loosely coupled and easy to use, while providing a robust foundation for complex system distribution.
+It aims to be loosely coupled and easy to use, while providing a robust foundation for complex system distribution.
 
 ### Key Features
 
@@ -15,7 +16,7 @@ This system prioritizes bytecode over contract location, enabling code queries b
 - **All-Inclusive:** The `CodeIndex` contract registers the association between bytecode and its on-chain location.
 - **Versioning enabled:** The `Repository` interface enables versioning and management of multiple resource versions.
 - **Plug-n-Play:** The `Installer` contract manages multiple instances of the same resource from various distributors.
-- **Secure:** Different distribution-chain roles are provisioned with clearly isolated contracts sets and defined constraints.
+- **Runtime Security:** Clearly isolated contracts sets and baked-in runtime checks enable trust chain between developers, distributors and users.
 - **Efficient:** Extensive reuse of the same bytecode reduces gas costs, increasing efficiency across the industry.
 
 ![image](https://github.com/user-attachments/assets/52fa7028-177c-4de2-9259-3f883491a3d3)
