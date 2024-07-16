@@ -39,6 +39,7 @@ To simplify code reuse, auditing, and encapsulate responsibilities, the system i
 - **CodeIndex:**
   - The only stateful, permissionless contract in the system.
   - A `CREATE2` contract maintaining an immutable mapping between bytecode hash and its on-chain location.
+  - `0xC0d31dB079b9eb23f6942A44c29F1ece9e118C30` with given settings is the only valid global `CodeIndex` contract.
 
 #### Developer Domain
 
