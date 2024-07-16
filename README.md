@@ -1,20 +1,22 @@
 # Ethereum Distribution System
 
-This repository introduces a standardized, on-chain distribution system for Ethereum smart contracts, designed as a flexible, user-centric, and developer-friendly alternative to traditional upgradeability patterns.
+The Ethereum Distribution System (EDS) is a open and decentralized, fully on-chain distribution system for Ethereum smart contracts.
+EDS maps functionality, expressed as bytecode, to on-chain locations, using a global non-permissioned singleton indexer contract. Using this index, EDS provides developers with a built in system for [Semver](http://semver.org/) versioning, managing multiple versions and distribution of their smart contracts. System provisions for generic interfaces for distributors, developers and installers, each with their own responsibilities and constraints.
 
 ## Overview
+
 
 This system prioritizes bytecode over contract location, enabling code queries by bytecode hash (`address.codehash`). It aims to be loosely coupled and easy to use, while providing a robust foundation for complex system distribution.
 
 ### Key Features
 
-- **Bytecode Verification:** Stateless distribution components are easily verifiable by anyone through their bytecode.
-- **Permissionless Distribution:** Anyone can deploy distribution components without requiring permissions.
-- **Trustless Code Indexing:** The `CodeIndex` contract registers the association between bytecode and its on-chain location.
-- **Source Versioning:** The `Repository` interface enables versioning and management of multiple resource versions.
-- **Resource Management:** The `Installer` contract manages multiple instances of the same resource from various distributors.
-- **Encapsulated Ownership Domains:** Different components are owned by distinct parties, simplifying auditing and trust management.
-- **Efficiency:** Extensive reuse of the same bytecode reduces gas costs, increasing efficiency across the industry.
+- **Verifiable:** Stateless distribution components are easily verifiable by anyone through their bytecode.
+- **Permissionless:** Anyone can deploy distribution components without requiring permissions.
+- **All-Inclusive:** The `CodeIndex` contract registers the association between bytecode and its on-chain location.
+- **Versioning enabled:** The `Repository` interface enables versioning and management of multiple resource versions.
+- **Plug-n-Play:** The `Installer` contract manages multiple instances of the same resource from various distributors.
+- **Secure:** Different distribution-chain roles are provisioned with clearly isolated contracts sets and defined constraints.
+- **Efficient:** Extensive reuse of the same bytecode reduces gas costs, increasing efficiency across the industry.
 
 ![image](https://github.com/user-attachments/assets/52fa7028-177c-4de2-9259-3f883491a3d3)
 
