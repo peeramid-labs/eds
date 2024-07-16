@@ -13,7 +13,7 @@ This system acts as generalized and efficient factory which is designed in one-f
 - **Permission-less:** Anyone can deploy distribution components without requiring permissions.
 - **Inclusive:** Can accommodate already deployed on-chain functionality.
 - **Versionable:** [Semver](http://semver.org/) based versioning can be applied to manage resources.
-- **Plug-n-Play:** Installation procedures, custom for any target platform are provisioned and can be easily integrated.
+- **Plug-n-Play:** Installation procedures,easily customizable for any target platform are provisioned.
 - **Secure:** Isolated contract sets and baked-in runtime checks enable trust chain between developers, distributors and users.
 - **Efficient:** Extensive reuse of the same bytecode reduces gas costs, increasing efficiency across the industry.
 
