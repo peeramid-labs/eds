@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
-import "hardhat/console.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 library LibSemver {
     error versionMissmatch(string message);
     struct Version {
@@ -29,7 +29,16 @@ library LibSemver {
     }
 
     function toString(Version memory _version) internal pure returns (string memory) {
-        return string(abi.encodePacked(_version.major, ".", _version.minor, ".", _version.patch));
+        return
+            string(
+                abi.encodePacked(
+                    Strings.toString(uint256(_version.major)),
+                    ".",
+                    Strings.toString(uint256(_version.minor)),
+                    ".",
+                    Strings.toString(uint256(_version.patch))
+                )
+            );
     }
 
     function require_exact(Version memory _version1, Version memory _version2) internal pure {
