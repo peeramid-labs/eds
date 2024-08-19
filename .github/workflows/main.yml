@@ -1,0 +1,24 @@
+name: CI
+on: 
+  pull_request:
+    branches: [main,staging]
+    types: [opened, reopened, labeled, synchronize]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: './.github/setup'
+      - name: Building
+        run: pnpm build
+      - name: Linting
+        run: pnpm lint
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: './.github/setup'
+
+      - name: Running tests
+        run: pnpm test:parallel

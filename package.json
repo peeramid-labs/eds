@@ -1,5 +1,5 @@
 {
-  "name": "eds",
+  "name": "@peeramid-labs/eds",
   "version": "0.1",
   "files": [
     "abi",
