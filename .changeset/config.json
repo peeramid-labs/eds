@@ -3,7 +3,7 @@
   "changelog": [
     "@changesets/changelog-github",
     {
-      "repo": "@peeramid-labs/eds"
+      "repo": "peeramid-labs/eds"
     }
   ],
   "commit": false,
