@@ -1,5 +1,5 @@
 name: CI
-on: 
+on:
   pull_request:
     branches: [main,staging]
     types: [opened, reopened, labeled, synchronize]
@@ -7,7 +7,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: './.github/setup'
       - name: Building
         run: pnpm build
@@ -17,7 +17,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: './.github/setup'
 
       - name: Running tests
