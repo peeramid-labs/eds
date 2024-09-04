@@ -291,7 +291,7 @@
         "type": "bytes"
       }
     ],
-    "name": "afterCallValidation",
+    "name": "afterCall",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -324,7 +324,7 @@
         "type": "bytes"
       }
     ],
-    "name": "beforeCallValidation",
+    "name": "beforeCall",
     "outputs": [
       {
         "internalType": "bytes",
