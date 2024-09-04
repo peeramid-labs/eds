@@ -1,6 +1,6 @@
 {
   "name": "@peeramid-labs/eds",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "files": [
     "abi",
     "deployments",
@@ -12,7 +12,7 @@
   "description": "Generalized factory implementation for reproducible ethereum smart contract instantiation",
   "scripts": {
     "lint:fix": "eslint --fix --no-ignore && pnpm run lint:sol:fix",
-    "lint": "eslint ./ --ext js,jsx,ts,tsx && pnpm run lint:sol",
+    "lint": "eslint && pnpm run lint:sol",
     "test": "export NODE_ENV=TEST && pnpm hardhat test",
     "test:parallel": "export NODE_ENV=TEST && pnpm hardhat test --parallel",
     "build": "pnpm hardhat compile",
