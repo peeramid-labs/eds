@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity =0.8.20;
 import "../interfaces/IDistributor.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IInstaller.sol";
@@ -79,7 +79,7 @@ abstract contract Installer is IInstaller {
         return _target;
     }
 
-    function beforeCallValidation(
+    function beforeCall(
         bytes memory layerConfig,
         bytes4 selector,
         address sender,
@@ -91,12 +91,12 @@ abstract contract Installer is IInstaller {
         }
         address distributor = _instancesDistributor[sender];
         if (distributor != address(0)) {
-            return IDistributor(distributor).beforeCallValidation(layerConfig, selector, sender, value, data);
+            return IDistributor(distributor).beforeCall(layerConfig, selector, sender, value, data);
         }
         revert NotAnInstance(sender);
     }
 
-    function afterCallValidation(
+    function afterCall(
         bytes memory layerConfig,
         bytes4 selector,
         address sender,
@@ -109,7 +109,7 @@ abstract contract Installer is IInstaller {
         }
         address distributor = _instancesDistributor[sender];
         if (distributor != address(0)) {
-            IDistributor(distributor).afterCallValidation(layerConfig, selector, sender, value, data, beforeCallResult);
+            IDistributor(distributor).afterCall(layerConfig, selector, sender, value, data, beforeCallResult);
             return;
         }
         revert NotAnInstance(sender);

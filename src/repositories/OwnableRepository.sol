@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity =0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../abstracts/Repository.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";

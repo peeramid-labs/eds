@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity =0.8.20;
 
 interface IInitializer {
     event Initialized(address indexed container, bytes32 indexed codeHash);
