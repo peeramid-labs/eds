@@ -134,20 +134,20 @@ describe("Installer", function () {
     await expect(
       installer
         .connect(target)
-        .beforeCallValidation("0x", "0x00000000", deployer.address, "0", "0x")
+        .beforeCall("0x", "0x00000000", deployer.address, "0", "0x")
     ).to.be.revertedWithCustomError(installer, "NotAnInstance");
 
     await expect(
       installer
         .connect(target)
-        .beforeCallValidation("0x", "0x00000000", instanceAddress, "0", "0x")
+        .beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
     ).to.be.not.revertedWithCustomError(installer, "NotAnInstance");
 
     await distributor.connect(owner).removeDistribution(cloneDistributionId);
     await expect(
       installer
         .connect(target)
-        .beforeCallValidation("0x", "0x00000000", instanceAddress, "0", "0x")
+        .beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
     ).to.be.revertedWithCustomError(distributor, "InvalidInstance");
   });
   it("Does reverts on invalid target", async () => {
@@ -162,13 +162,13 @@ describe("Installer", function () {
     await expect(
       installer
         .connect(deployer)
-        .beforeCallValidation("0x", "0x00000000", deployer.address, "0", "0x")
+        .beforeCall("0x", "0x00000000", deployer.address, "0", "0x")
     ).to.be.revertedWithCustomError(installer, "InvalidTarget");
 
     await expect(
       installer
         .connect(deployer)
-        .beforeCallValidation("0x", "0x00000000", instanceAddress, "0", "0x")
+        .beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
     ).to.be.revertedWithCustomError(installer, "InvalidTarget");
   });
 });

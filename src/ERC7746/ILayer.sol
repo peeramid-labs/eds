@@ -8,7 +8,7 @@ interface ILayer {
     /// @param sender The address initiating the call.
     /// @param value The amount of ETH sent with the call (if any).
     /// @param data The calldata for the function call.
-    /// @return beforeCallResult Arbitrary data to be passed to `afterCallValidation`.
+    /// @return beforeCallResult Arbitrary data to be passed to `afterCall`.
     /// @dev MUST revert if validation fails.
     function beforeCall(
         bytes memory configuration,
@@ -24,7 +24,7 @@ interface ILayer {
     /// @param sender The address initiating the call.
     /// @param value The amount of ETH sent with the call (if any).
     /// @param data The calldata for the function call.
-    /// @param beforeCallResult The data returned by `beforeCallValidation`.
+    /// @param beforeCallResult The data returned by `beforeCall`.
     /// @dev MUST revert if validation fails.
     function afterCall(
         bytes memory configuration,

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity =0.8.20;
 import "./IDistribution.sol";
-import "../layers/ILayer.sol";
+import "../ERC7746/ILayer.sol";
 import "../interfaces/IRepository.sol";
 import "../libraries/LibSemver.sol";
 interface IVersionDistributor is ILayer {
