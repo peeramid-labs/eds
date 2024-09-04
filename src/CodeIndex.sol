@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
-import "./interfaces/ICodeIndex.sol";
+// SPDX-License-Identifier: CC0-1.0
+pragma solidity 0.8.20;
+import "./ICodeIndex.sol";
 
 /**
  * @title Byte Code Indexer Contract

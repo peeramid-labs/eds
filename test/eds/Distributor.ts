@@ -136,13 +136,7 @@ describe("Distributor", function () {
         await expect(
           distributor
             .connect(owner)
-            .beforeCallValidation(
-              "0x",
-              "0x00000000",
-              instanceAddress,
-              "0",
-              "0x"
-            )
+            .beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
         ).to.be.revertedWithCustomError(distributor, "InvalidInstance");
       });
     });

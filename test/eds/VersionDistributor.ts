@@ -162,7 +162,7 @@ describe("Version Distributor", function () {
       await expect(
         distributor
           .connect(owner)
-          .beforeCallValidation("0x", "0x00000000", instanceAddress, "0", "0x")
+          .beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
       ).to.be.revertedWithCustomError(distributor, "VersionOutdated");
       await distributor
         .connect(owner)
@@ -174,7 +174,7 @@ describe("Version Distributor", function () {
       await expect(
         distributor
           .connect(owner)
-          .beforeCallValidation("0x", "0x00000000", instanceAddress, "0", "0x")
+          .beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
       ).to.not.be.revertedWithCustomError(distributor, "VersionOutdated");
     });
 
@@ -200,13 +200,7 @@ describe("Version Distributor", function () {
         await expect(
           distributor
             .connect(owner)
-            .beforeCallValidation(
-              "0x",
-              "0x00000000",
-              instanceAddress,
-              "0",
-              "0x"
-            )
+            .beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
         ).to.be.revertedWithCustomError(distributor, "InvalidInstance");
       });
     });

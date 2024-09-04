@@ -116,7 +116,7 @@
     "inputs": [
       {
         "internalType": "bytes",
-        "name": "layerConfig",
+        "name": "configuration",
         "type": "bytes"
       },
       {
@@ -145,7 +145,7 @@
         "type": "bytes"
       }
     ],
-    "name": "afterCallValidation",
+    "name": "afterCall",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -154,7 +154,7 @@
     "inputs": [
       {
         "internalType": "bytes",
-        "name": "layerConfig",
+        "name": "configuration",
         "type": "bytes"
       },
       {
@@ -178,7 +178,7 @@
         "type": "bytes"
       }
     ],
-    "name": "beforeCallValidation",
+    "name": "beforeCall",
     "outputs": [
       {
         "internalType": "bytes",

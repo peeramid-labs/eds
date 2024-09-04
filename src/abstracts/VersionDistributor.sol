@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity =0.8.20;
 import "../interfaces/IDistribution.sol";
 import "../interfaces/IDistributor.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -98,7 +98,7 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
         emit VersionedDistributionRemoved(repository);
     }
 
-    function beforeCallValidation(
+    function beforeCall(
         bytes memory,
         bytes4,
         address sender,
@@ -117,7 +117,7 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
         }
     }
 
-    function afterCallValidation(
+    function afterCall(
         bytes memory layerConfig,
         bytes4 selector,
         address sender,

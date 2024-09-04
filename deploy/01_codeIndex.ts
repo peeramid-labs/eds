@@ -7,15 +7,12 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
-  const bigIntValue = BigInt(
-    "41141709390666784200050170042964565822604878497452311470603333265732153031889"
-  );
-  // Convert to a hexadecimal string
-  const hexValue = "0x" + bigIntValue.toString(16);
+  const salt =
+    "0x220a70730c743a005cfd55180805d2c0d5b8c7695c5496100dcffa91c02befce";
 
-  console.log("hexValue", hexValue);
+  console.log("salt", salt);
   const result = await deploy("CodeIndex", {
-    deterministicDeployment: hexValue,
+    deterministicDeployment: salt,
     from: deployer,
     skipIfAlreadyDeployed: true,
   });
