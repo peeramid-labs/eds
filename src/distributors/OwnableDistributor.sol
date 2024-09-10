@@ -11,7 +11,7 @@ import "../abstracts/Distributor.sol";
 contract OwnableDistributor is Distributor, Ownable {
     constructor(address _owner) Ownable(_owner) {}
 
-    function instantiate(bytes32 id, bytes calldata args) public returns (address[] memory) {
+    function instantiate(bytes32 id, bytes calldata args) public returns (address[] memory, bytes32, uint256 ) {
         return super._instantiate(id, args);
     }
 

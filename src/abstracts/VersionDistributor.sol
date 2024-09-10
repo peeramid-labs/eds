@@ -51,7 +51,10 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
         if (oldRequirement != requirement) emit RequirementChanged(repository, oldRequirement, requirement);
     }
 
-    function _instantiate(IRepository repository, bytes calldata args) internal returns (address[] memory) {
+    function _instantiate(
+        IRepository repository,
+        bytes calldata args
+    ) internal returns (address[] memory, bytes32, uint256) {
         if (!_repositories.contains(address(repository))) {
             revert InvalidRepository(repository);
         }
@@ -59,9 +62,12 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
             versions[address(repository)],
             requirements[address(repository)]
         );
-        address source = getContractsIndex().get(src.sourceId);
-        address[] memory instances = IDistribution(source).instantiate();
+
+        (address[] memory instances, bytes32 _distributionName, uint256 _distributionVersion) = IDistribution(
+            getContractsIndex().get(src.sourceId)
+        ).instantiate();
         bytes4 selector = IInitializer.initialize.selector;
+
         address initializer = address(initializers[address(repository)]);
         if (initializer != address(0)) {
             (bool success, bytes memory result) = initializer.delegatecall(
@@ -69,12 +75,13 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
             );
             require(success, string(result));
         }
+
         for (uint256 i = 0; i < instances.length; i++) {
             instancesDistribution[instances[i]] = address(repository);
             instancesVersions[instances[i]] = src.version;
         }
         emit Instantiated(address(repository), args);
-        return instances;
+        return (instances, _distributionName, _distributionVersion);
     }
 
     function getVersionedDistributions() public view returns (address[] memory repositories) {

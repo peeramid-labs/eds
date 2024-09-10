@@ -39,10 +39,10 @@ abstract contract Distributor is IDistributor, CodeIndexer {
         emit DistributionRemoved(id);
     }
 
-    function _instantiate(bytes32 id, bytes calldata args) internal virtual returns (address[] memory instances) {
+    function _instantiate(bytes32 id, bytes calldata args) internal virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
         ICodeIndex codeIndex = getContractsIndex();
         if (!distirbutionsSet.contains(id)) revert DistributionNotFound(id);
-        instances = IDistribution(codeIndex.get(id)).instantiate();
+        (instances, distributionName, distributionVersion) = IDistribution(codeIndex.get(id)).instantiate();
         bytes4 selector = IInitializer.initialize.selector;
         // This ensures instance owner (distributor) performs initialization.
         // It is distirbutor responsibility to make sure calldata and initializer are safe to execute
@@ -54,7 +54,7 @@ abstract contract Distributor is IDistributor, CodeIndexer {
             require(success, string(result));
         }
         emit Instantiated(id, args);
-        return instances;
+        return (instances, distributionName, distributionVersion);
     }
 
     function beforeCall(

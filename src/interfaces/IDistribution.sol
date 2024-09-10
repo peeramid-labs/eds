@@ -4,7 +4,7 @@ pragma solidity =0.8.20;
 interface IDistribution {
     event Distributed(address indexed distributor, address[] instances);
 
-    function instantiate() external returns (address[] memory instances);
+    function instantiate() external returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion);
 
     function get() external view returns (address[] memory sources, bytes32 distributionName, uint256 distributionVersion);
 

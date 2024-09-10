@@ -10,15 +10,15 @@ abstract contract CloneDistribution is IDistribution, CodeIndexer {
 
     function sources() internal view virtual returns (address[] memory, bytes32 name, uint256 version);
 
-    function instantiate() public virtual returns (address[] memory instances) {
-        (address[] memory _sources,,) = sources();
+    function instantiate() public virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
+        (address[] memory _sources,bytes32 _distributionName,uint256 _distributionVersion) = sources();
         instances = new address[](_sources.length);
         for (uint256 i = 0; i < _sources.length; i++) {
             address clone = Clones.clone(_sources[i]);
             instances[i] = clone;
         }
         emit Distributed(msg.sender, instances);
-        return instances;
+        return (instances, _distributionName, _distributionVersion);
     }
 
     function get() public view virtual returns (address[] memory src, bytes32 name, uint256 version) {

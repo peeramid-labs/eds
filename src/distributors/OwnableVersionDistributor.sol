@@ -11,7 +11,7 @@ import "../abstracts/VersionDistributor.sol";
 contract OwnableVersionDistributor is VersionDistributor, Ownable {
     constructor(address _owner) Ownable(_owner) {}
 
-    function instantiate(IRepository repository, bytes calldata args) public returns (address[] memory) {
+    function instantiate(IRepository repository, bytes calldata args) public returns (address[] memory, bytes32, uint256) {
         return super._instantiate(repository, args);
     }
 

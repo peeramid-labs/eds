@@ -40,7 +40,7 @@ abstract contract Installer is IInstaller {
         if (!isDistributor(distributor)) {
             revert InvalidDistributor(distributor);
         }
-        address[] memory installation = distributor.instantiate(distributionId, args);
+        (address[] memory installation,,) = distributor.instantiate(distributionId, args);
         instancesNum++;
         _instanceEnum[instancesNum] = installation;
         for (uint i = 0; i < installation.length; i++) {
