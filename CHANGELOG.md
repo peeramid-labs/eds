@@ -1,5 +1,17 @@
 # @peeramid-labs/eds
 
+## 0.2.0
+
+### Minor Changes
+
+- [`198ceee7711a59c335d48c29233772b21ce0a7a1`](https://github.com/peeramid-labs/eds/commit/198ceee7711a59c335d48c29233772b21ce0a7a1) Thanks [@peersky](https://github.com/peersky)! - instantiation now returns version and name
+
+- [`6ada120ad22dae8af8da88d2bd4cf99db81bee7a`](https://github.com/peeramid-labs/eds/commit/6ada120ad22dae8af8da88d2bd4cf99db81bee7a) Thanks [@peersky](https://github.com/peersky)! - renamed getSources to get, added contract version and name to the return parameters
+
+### Patch Changes
+
+- [`67e1cacd37f961e451d8fda4a7172728735015de`](https://github.com/peeramid-labs/eds/commit/67e1cacd37f961e451d8fda4a7172728735015de) Thanks [@peersky](https://github.com/peersky)! - fixed type errors in tests
+
 ## 0.1.0
 
 ### Minor Changes

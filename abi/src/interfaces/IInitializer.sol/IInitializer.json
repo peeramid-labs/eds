@@ -38,13 +38,23 @@
     "inputs": [
       {
         "internalType": "bytes32",
-        "name": "id",
+        "name": "distributionId",
         "type": "bytes32"
       },
       {
         "internalType": "address[]",
         "name": "instances",
         "type": "address[]"
+      },
+      {
+        "internalType": "string",
+        "name": "distributionName",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "distributionVersion",
+        "type": "string"
       },
       {
         "internalType": "bytes",
