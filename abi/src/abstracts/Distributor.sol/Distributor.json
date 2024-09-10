@@ -240,6 +240,16 @@
         "internalType": "address[]",
         "name": "",
         "type": "address[]"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "distributionName",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "distributionVersion",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",

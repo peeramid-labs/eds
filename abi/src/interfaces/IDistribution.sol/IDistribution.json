@@ -20,6 +20,29 @@
   },
   {
     "inputs": [],
+    "name": "get",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "sources",
+        "type": "address[]"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "distributionName",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "distributionVersion",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getMetadata",
     "outputs": [
       {
@@ -33,25 +56,22 @@
   },
   {
     "inputs": [],
-    "name": "getSources",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "",
-        "type": "address[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "instantiate",
     "outputs": [
       {
         "internalType": "address[]",
         "name": "instances",
         "type": "address[]"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "distributionName",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "distributionVersion",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
