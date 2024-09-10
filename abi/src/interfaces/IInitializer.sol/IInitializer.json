@@ -47,14 +47,14 @@
         "type": "address[]"
       },
       {
-        "internalType": "string",
+        "internalType": "bytes32",
         "name": "distributionName",
-        "type": "string"
+        "type": "bytes32"
       },
       {
-        "internalType": "string",
+        "internalType": "uint256",
         "name": "distributionVersion",
-        "type": "string"
+        "type": "uint256"
       },
       {
         "internalType": "bytes",
