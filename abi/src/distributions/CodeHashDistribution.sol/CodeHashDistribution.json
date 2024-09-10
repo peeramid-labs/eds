@@ -10,6 +10,16 @@
         "internalType": "bytes32",
         "name": "_metadata",
         "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "name",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "version",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
@@ -41,6 +51,55 @@
   },
   {
     "inputs": [],
+    "name": "distributionName",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "distributionVersion",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "get",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "src",
+        "type": "address[]"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "name",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "version",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "getMetadata",
     "outputs": [
       {
@@ -54,25 +113,22 @@
   },
   {
     "inputs": [],
-    "name": "getSources",
-    "outputs": [
-      {
-        "internalType": "address[]",
-        "name": "",
-        "type": "address[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "instantiate",
     "outputs": [
       {
         "internalType": "address[]",
         "name": "instances",
         "type": "address[]"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "distributionName",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "uint256",
+        "name": "distributionVersion",
+        "type": "uint256"
       }
     ],
     "stateMutability": "nonpayable",
