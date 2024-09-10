@@ -11,6 +11,7 @@ import {
   MockCloneDistribution__factory,
   MockInstaller,
   MockInstaller__factory,
+  OwnableDistributor,
   OwnableDistributor__factory,
   OwnableRepository__factory,
   Repository,
@@ -24,7 +25,7 @@ import utils from "../utils";
 
 describe("Installer", function () {
   let codeIndex: CodeIndex;
-  let distributor: Distributor;
+  let distributor: OwnableDistributor;
   let deployer: SignerWithAddress;
   let owner: SignerWithAddress;
   let target: SignerWithAddress;

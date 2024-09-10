@@ -6,6 +6,7 @@ import {
     MockCloneDistribution__factory,
     MockInstaller,
     MockInstaller__factory,
+    OwnableDistributor,
     OwnableDistributor__factory
 } from "../../types";
 import { deployments } from "hardhat";
@@ -13,7 +14,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("Installer", function () {
   let codeIndex: CodeIndex;
-  let distributor: Distributor;
+  let distributor: OwnableDistributor;
   let deployer: SignerWithAddress;
   let owner: SignerWithAddress;
   let target: SignerWithAddress;

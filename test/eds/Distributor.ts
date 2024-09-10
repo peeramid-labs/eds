@@ -3,6 +3,7 @@ import { expect } from "chai";
 import {
     CodeIndex,
     Distributor, MockCloneDistribution__factory,
+    OwnableDistributor,
     OwnableDistributor__factory, TestFacet__factory
 } from "../../types";
 import { deployments } from "hardhat";
@@ -11,7 +12,7 @@ import utils from "../utils";
 
 describe("Distributor", function () {
   let codeIndex: CodeIndex;
-  let distributor: Distributor;
+  let distributor: OwnableDistributor;
   let deployer: SignerWithAddress;
   let owner: SignerWithAddress;
   let cloneDistributionId: any;
