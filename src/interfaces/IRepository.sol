@@ -20,6 +20,7 @@ interface IRepository is IERC165 {
     event ReleaseMetadataUpdated(uint256 indexed version, bytes releaseMetadata);
 
     function updateReleaseMetadata(LibSemver.Version memory version, bytes calldata releaseMetadata) external;
+    function repositoryName() external view returns (bytes32);
     function newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version) external;
     function getLatest() external view returns (Source memory);
     function get(

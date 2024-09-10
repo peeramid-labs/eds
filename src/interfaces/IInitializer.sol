@@ -5,5 +5,5 @@ interface IInitializer {
     event Initialized(address indexed container, bytes32 indexed codeHash);
     error initializationFailed(bytes32 id, string reason);
 
-    function initialize(bytes32 id, address[] memory instances, bytes calldata args) external;
+    function initialize(bytes32 distributionId, address[] memory instances, string memory distributionName, string memory distributionVersion, bytes calldata args) external;
 }

@@ -1,18 +1,11 @@
 import { ethers } from "hardhat";
-import { Signer } from "ethers";
 import { expect } from "chai";
 import {
-  CodeHashDistribution,
-  CodeHashDistribution__factory,
-  CodeIndex,
-  Distributor,
-  Distributor__factory,
-  MockCloneDistribution__factory,
-  OwnableDistributor__factory,
-  TestFacet,
-  TestFacet__factory,
+    CodeIndex,
+    Distributor, MockCloneDistribution__factory,
+    OwnableDistributor__factory, TestFacet__factory
 } from "../../types";
-import hre, { deployments } from "hardhat";
+import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import utils from "../utils";
 

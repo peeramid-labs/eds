@@ -42,7 +42,10 @@ describe("Version Distributor", function () {
     const Repository = (await ethers.getContractFactory(
       "OwnableRepository"
     )) as OwnableRepository__factory;
-    repository = await Repository.deploy(owner.address);
+    repository = await Repository.deploy(
+      owner.address,
+      ethers.utils.formatBytes32String("testRepository")
+    );
     const repositoryCode = await repository.provider.getCode(
       repository.address
     );

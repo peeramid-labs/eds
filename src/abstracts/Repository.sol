@@ -5,6 +5,8 @@ import "../libraries/LibSemver.sol";
 import "../interfaces/IRepository.sol";
 
 abstract contract Repository is IRepository {
+
+    bytes32 immutable public repositoryName;
     struct Uint64WithMetadata {
         uint64 value;
         bytes metadata;
@@ -24,6 +26,9 @@ abstract contract Repository is IRepository {
     uint64 internal majorReleases;
     uint256 internal latestVersion;
 
+    constructor(bytes32 _repositoryName) {
+        repositoryName = _repositoryName;
+    }
     // error VersionHashDoesNotExist(uint256 version);
     // error ReleaseZeroNotAllowed();
     // error AlreadyInPreviousRelease(uint256 version, bytes32 source);

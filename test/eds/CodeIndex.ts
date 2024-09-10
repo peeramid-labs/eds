@@ -1,5 +1,4 @@
 import { ethers } from "hardhat";
-import { Signer } from "ethers";
 import { expect } from "chai";
 import { CodeIndex, TestFacet } from "../../types";
 import hre, { deployments } from "hardhat";

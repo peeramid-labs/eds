@@ -6,7 +6,7 @@ interface IDistribution {
 
     function instantiate() external returns (address[] memory instances);
 
-    function getSources() external view returns (address[] memory);
+    function get() external view returns (address[] memory sources, bytes32 distributionName, uint256 distributionVersion);
 
     function getMetadata() external view returns (string memory);
 }

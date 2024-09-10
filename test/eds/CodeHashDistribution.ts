@@ -1,12 +1,11 @@
 import { ethers } from "hardhat";
-import { Signer } from "ethers";
 import { expect } from "chai";
 import {
   CodeHashDistribution,
   CodeHashDistribution__factory,
   CodeIndex,
 } from "../../types";
-import hre, { deployments } from "hardhat";
+import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import utils from "../utils";
 
@@ -36,7 +35,9 @@ describe("CloneHashDistribution", function () {
     const codeHash = ethers.utils.keccak256(code);
     const codeHashDistribution = (await CodeHashDistribution.deploy(
       codeHash,
-      ethers.utils.formatBytes32String("DiamondProxy")
+      ethers.utils.formatBytes32String("DiamondProxy"),
+      ethers.utils.formatBytes32String("testDistribution"),
+      0
     )) as CodeHashDistribution;
     expect(await codeHashDistribution.instantiate()).to.emit(
       codeHashDistribution,
@@ -54,7 +55,9 @@ describe("CloneHashDistribution", function () {
     const codeHash = ethers.utils.keccak256(code);
     const codeHashDistribution = (await CodeHashDistribution.deploy(
       codeHash,
-      ethers.utils.formatBytes32String("DiamondProxy")
+      ethers.utils.formatBytes32String("DiamondProxy"),
+      ethers.utils.formatBytes32String("testDistribution"),
+      0
     )) as CodeHashDistribution;
     const receipt = await (await codeHashDistribution.instantiate()).wait();
 
@@ -69,5 +72,27 @@ describe("CloneHashDistribution", function () {
     expect(code2.slice(22, 62).toLowerCase()).to.be.equal(
       testFacet.address.slice(2).toLowerCase()
     );
+  });
+  it("returns contract name and version", async function () {
+    const TestFacet = await ethers.getContractFactory("TestFacet");
+    const testFacet = await TestFacet.deploy();
+    codeIndex.register(testFacet.address);
+    const CodeHashDistribution = (await ethers.getContractFactory(
+      "CodeHashDistribution"
+    )) as CodeHashDistribution__factory;
+    const code = await testFacet.provider.getCode(testFacet.address);
+    const codeHash = ethers.utils.keccak256(code);
+    const codeHashDistribution = (await CodeHashDistribution.deploy(
+      codeHash,
+      ethers.utils.formatBytes32String("DiamondProxy"),
+      ethers.utils.formatBytes32String("testDistribution"),
+      0
+    )) as CodeHashDistribution;
+
+    const { src, name, version } = await codeHashDistribution.get();
+    expect(ethers.utils.parseBytes32String(name)).to.be.equal(
+      "testDistribution"
+    );
+    expect(version).to.be.equal(0);
   });
 });

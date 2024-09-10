@@ -1,23 +1,15 @@
 import { ethers } from "hardhat";
-import { Signer } from "ethers";
 import { expect } from "chai";
 import {
-  CodeHashDistribution,
-  CodeHashDistribution__factory,
-  CodeIndex,
-  Distributor,
-  Distributor__factory,
-  MockCloneDistribution,
-  MockCloneDistribution__factory,
-  MockInstaller,
-  MockInstaller__factory,
-  OwnableDistributor__factory,
-  TestFacet,
-  TestFacet__factory,
+    CodeIndex,
+    Distributor, MockCloneDistribution,
+    MockCloneDistribution__factory,
+    MockInstaller,
+    MockInstaller__factory,
+    OwnableDistributor__factory
 } from "../../types";
-import hre, { deployments } from "hardhat";
+import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import utils from "../utils";
 
 describe("Installer", function () {
   let codeIndex: CodeIndex;
@@ -118,7 +110,7 @@ describe("Installer", function () {
       "MockCloneDistribution",
       instanceAddress
     )) as MockCloneDistribution;
-    const src = await instance.getSources();
+    const { src } = await instance.get();
     expect(src[0]).to.be.equal(instance.address);
   });
 

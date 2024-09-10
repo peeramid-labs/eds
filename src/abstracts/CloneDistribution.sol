@@ -6,10 +6,12 @@ import "../interfaces/IDistribution.sol";
 import "./CodeIndexer.sol";
 
 abstract contract CloneDistribution is IDistribution, CodeIndexer {
-    function sources() internal view virtual returns (address[] memory);
+
+
+    function sources() internal view virtual returns (address[] memory, bytes32 name, uint256 version);
 
     function instantiate() public virtual returns (address[] memory instances) {
-        address[] memory _sources = sources();
+        (address[] memory _sources,,) = sources();
         instances = new address[](_sources.length);
         for (uint256 i = 0; i < _sources.length; i++) {
             address clone = Clones.clone(_sources[i]);
@@ -19,7 +21,7 @@ abstract contract CloneDistribution is IDistribution, CodeIndexer {
         return instances;
     }
 
-    function getSources() public view virtual returns (address[] memory) {
+    function get() public view virtual returns (address[] memory src, bytes32 name, uint256 version) {
         return sources();
     }
 
