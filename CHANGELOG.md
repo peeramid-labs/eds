@@ -1,5 +1,11 @@
 # @peeramid-labs/eds
 
+## 0.2.1
+
+### Patch Changes
+
+- [`19aef3082c8adbfe6ec81da6c9fbe3120393ae36`](https://github.com/peeramid-labs/eds/commit/19aef3082c8adbfe6ec81da6c9fbe3120393ae36) Thanks [@peersky](https://github.com/peersky)! - fixed initializer interface to return correct types for distribution name and version
+
 ## 0.2.0
 
 ### Minor Changes
