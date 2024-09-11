@@ -20,6 +20,7 @@ describe("Installer", function () {
   let owner: SignerWithAddress;
   let target: SignerWithAddress;
   let cloneDistributionId: any;
+  let distributorsId: any;
   let installer: MockInstaller;
 
   beforeEach(async function () {
@@ -47,6 +48,10 @@ describe("Installer", function () {
     distributor
       .connect(owner)
       .addDistribution(cloneDistributionId, ethers.utils.formatBytes32String(""));
+    distributorsId = ethers.utils.solidityKeccak256(
+      ["bytes32", "bytes32"],
+      [cloneDistributionId, ethers.utils.formatBytes32String("")]
+    );
     const Installer = (await ethers.getContractFactory("MockInstaller")) as MockInstaller__factory;
     installer = await Installer.deploy(target.address, owner.address);
   });
@@ -78,7 +83,7 @@ describe("Installer", function () {
     await installer.connect(owner).whitelistDistributor(distributor.address);
 
     expect(
-      await installer.connect(deployer).install(distributor.address, cloneDistributionId, "0x")
+      await installer.connect(deployer).install(distributor.address, distributorsId, "0x")
     ).to.emit(installer, "Installed");
   });
   it("can List distributors", async function () {
@@ -89,7 +94,7 @@ describe("Installer", function () {
   });
   it("Can get instances by id", async function () {
     await installer.connect(owner).whitelistDistributor(distributor.address);
-    await installer.connect(owner).install(distributor.address, cloneDistributionId, "0x");
+    await installer.connect(owner).install(distributor.address, distributorsId, "0x");
     const instanceNum = await installer.connect(owner).getInstancesNum();
     expect((await installer.connect(owner).getInstance(instanceNum)).length).to.be.eq(1);
     let instanceAddress = (await installer.connect(owner).getInstance(instanceNum))[0];
@@ -103,7 +108,7 @@ describe("Installer", function () {
 
   it("Allows whitelisted distributor only valid instances to call target", async () => {
     await installer.connect(owner).whitelistDistributor(distributor.address);
-    await installer.connect(owner).install(distributor.address, cloneDistributionId, "0x");
+    await installer.connect(owner).install(distributor.address, distributorsId, "0x");
     const instanceNum = await installer.connect(owner).getInstancesNum();
     let instanceAddress = (await installer.connect(target).getInstance(instanceNum))[0];
     await expect(
@@ -114,15 +119,15 @@ describe("Installer", function () {
       installer.connect(target).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
     ).to.be.not.revertedWithCustomError(installer, "NotAnInstance");
 
-    await distributor.connect(owner).removeDistribution(cloneDistributionId);
+    await distributor.connect(owner).removeDistribution(distributorsId);
     await expect(
       installer.connect(target).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
     ).to.be.revertedWithCustomError(distributor, "InvalidInstance");
   });
 
   it("Allows valid distributions added by distributor and distribution id to call target", async () => {
-    await installer.connect(owner).allowDistribution(distributor.address, cloneDistributionId);
-    await installer.connect(owner).install(distributor.address, cloneDistributionId, "0x");
+    await installer.connect(owner).allowDistribution(distributor.address, distributorsId);
+    await installer.connect(owner).install(distributor.address, distributorsId, "0x");
     const instanceNum = await installer.connect(owner).getInstancesNum();
     let instanceAddress = (await installer.connect(target).getInstance(instanceNum))[0];
     await expect(
@@ -133,19 +138,19 @@ describe("Installer", function () {
       installer.connect(target).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
     ).to.be.not.revertedWithCustomError(installer, "NotAnInstance");
 
-    await distributor.connect(owner).removeDistribution(cloneDistributionId);
+    await distributor.connect(owner).removeDistribution(distributorsId);
     await expect(
       installer.connect(target).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
     ).to.be.revertedWithCustomError(distributor, "InvalidInstance");
   });
 
   it("Reverts when valid distributions added by distributor and distribution id were removed", async () => {
-    await installer.connect(owner).allowDistribution(distributor.address, cloneDistributionId);
-    await installer.connect(owner).install(distributor.address, cloneDistributionId, "0x");
+    await installer.connect(owner).allowDistribution(distributor.address, distributorsId);
+    await installer.connect(owner).install(distributor.address, distributorsId, "0x");
     const instanceNum = await installer.connect(owner).getInstancesNum();
     let instanceAddress = (await installer.connect(target).getInstance(instanceNum))[0];
 
-    await installer.connect(owner).disallowDistribution(distributor.address, cloneDistributionId);
+    await installer.connect(owner).disallowDistribution(distributor.address, distributorsId);
 
     await expect(
       installer.connect(target).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
@@ -154,7 +159,7 @@ describe("Installer", function () {
 
   it("Does reverts on invalid target", async () => {
     await installer.connect(owner).whitelistDistributor(distributor.address);
-    await installer.connect(owner).install(distributor.address, cloneDistributionId, "0x");
+    await installer.connect(owner).install(distributor.address, distributorsId, "0x");
     const instanceNum = await installer.connect(owner).getInstancesNum();
     let instanceAddress = (await installer.connect(target).getInstance(instanceNum))[0];
     await expect(

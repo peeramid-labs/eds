@@ -6,12 +6,17 @@ import "../interfaces/IDistributor.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IInitializer.sol";
 import "../abstracts/CodeIndexer.sol";
-
 abstract contract Distributor is IDistributor, CodeIndexer {
+
+    struct DistributionComponent {
+        bytes32 id;
+        address initializer;
+    }
     using EnumerableSet for EnumerableSet.Bytes32Set;
     EnumerableSet.Bytes32Set private distirbutionsSet;
     mapping(bytes32 => IInitializer) private initializers;
     mapping(address => bytes32) private distributionOf;
+    mapping(bytes32 => DistributionComponent) private distributionComponents;
 
     function getDistributions() public view returns (bytes32[] memory) {
         return distirbutionsSet.values();
@@ -22,9 +27,10 @@ abstract contract Distributor is IDistributor, CodeIndexer {
         return distributionOf[instance];
     }
 
-    function getDistributionURI(bytes32 id) public view returns (string memory) {
+    function getDistributionURI(bytes32 distributorsId) public view returns (string memory) {
+        DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
         ICodeIndex codeIndex = getContractsIndex();
-        return IDistribution(codeIndex.get(id)).getMetadata();
+        return IDistribution(codeIndex.get(distributionComponent.id)).getMetadata();
     }
 
     function _addDistribution(bytes32 id, bytes32 initId) internal virtual {
@@ -32,36 +38,39 @@ abstract contract Distributor is IDistributor, CodeIndexer {
         address initializerAddress = codeIndex.get(initId);
         if (codeIndex.get(id) == address(0)) revert DistributionNotFound(id);
         if (initializerAddress == address(0) && initId != bytes32(0)) revert InitializerNotFound(initId);
-        if (distirbutionsSet.contains(id)) revert DistributionExists(id);
-        distirbutionsSet.add(id);
-        initializers[id] = IInitializer(initializerAddress);
+        bytes32 distributorsId = keccak256(abi.encode(id,initId));
+        if (distirbutionsSet.contains(distributorsId)) revert DistributionExists(distributorsId);
+        distirbutionsSet.add(distributorsId);
+        distributionComponents[distributorsId] = DistributionComponent(id, initializerAddress);
         emit DistributionAdded(id, initId);
     }
 
-    function _removeDistribution(bytes32 id) internal virtual {
-        if (!distirbutionsSet.contains(id)) revert DistributionNotFound(id);
-        distirbutionsSet.remove(id);
-        emit DistributionRemoved(id);
+    function _removeDistribution(bytes32 distributorsId) internal virtual {
+        if (!distirbutionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
+        distirbutionsSet.remove(distributorsId);
+        initializers[distributorsId] = IInitializer(address(0));
+        emit DistributionRemoved(distributorsId);
     }
 
-    function _instantiate(bytes32 id, bytes calldata args) internal virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
+    function _instantiate(bytes32 distributorsId, bytes calldata args) internal virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
         ICodeIndex codeIndex = getContractsIndex();
-        if (!distirbutionsSet.contains(id)) revert DistributionNotFound(id);
-        (instances, distributionName, distributionVersion) = IDistribution(codeIndex.get(id)).instantiate();
+        if (!distirbutionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
+        DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
+        (instances, distributionName, distributionVersion) = IDistribution(codeIndex.get(distributionComponent.id)).instantiate();
         bytes4 selector = IInitializer.initialize.selector;
         // This ensures instance owner (distributor) performs initialization.
         // It is distirbutor responsibility to make sure calldata and initializer are safe to execute
-        address initializer = address(initializers[id]);
+        address initializer = address(initializers[distributionComponent.id]);
         if (initializer != address(0)) {
-            (bool success, bytes memory result) = address(initializers[id]).delegatecall(
+            (bool success, bytes memory result) = address(distributionComponent.initializer).delegatecall(
                 abi.encodeWithSelector(selector, instances, args)
             );
             require(success, string(result));
         }
         for (uint256 i = 0; i < instances.length; i++) {
-            distributionOf[instances[i]] = id;
+            distributionOf[instances[i]] = distributorsId;
         }
-        emit Instantiated(id, args);
+        emit Instantiated(distributorsId, args);
         return (instances, distributionName, distributionVersion);
     }
 
@@ -72,9 +81,10 @@ abstract contract Distributor is IDistributor, CodeIndexer {
         uint256,
         bytes memory
     ) public view virtual returns (bytes memory) {
-        bytes32 id = distributionOf[instance];
-        if (id != bytes32(0) && distirbutionsSet.contains(id) == true) {
-            return abi.encode(id, "");
+        bytes32 distributorsId = distributionOf[instance];
+        // DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
+        if (distributorsId != bytes32(0) && distirbutionsSet.contains(distributorsId) == true) {
+            return abi.encode(distributorsId, "");
         } else {
             revert InvalidInstance(instance);
         }
