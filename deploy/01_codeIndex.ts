@@ -7,8 +7,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
-  const salt =
-    "0x220a70730c743a005cfd55180805d2c0d5b8c7695c5496100dcffa91c02befce";
+  const salt = "0x220a70730c743a005cfd55180805d2c0d5b8c7695c5496100dcffa91c02befce";
 
   console.log("salt", salt);
   const result = await deploy("CodeIndex", {
