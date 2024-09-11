@@ -5,13 +5,6 @@ import "../abstracts/Installer.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 contract MockInstaller is Installer, Ownable {
     constructor(address targetAddress, address owner) Ownable(owner) Installer(targetAddress) {}
-    function addDistributor(IDistributor distributor) public onlyOwner {
-        super._addDistributor(distributor);
-    }
-
-    function removeDistributor(IDistributor distributor) public onlyOwner {
-        super._removeDistributor(distributor);
-    }
 
     function install(
         IDistributor distributor,
@@ -34,11 +27,11 @@ contract MockInstaller is Installer, Ownable {
     }
 
 
-    function allowAllDistributions(IDistributor distributor) public onlyOwner {
+    function whitelistDistributor(IDistributor distributor) public onlyOwner {
         super._allowAllDistributions(distributor);
     }
 
-    function disallowAllDistributions(IDistributor distributor) public onlyOwner {
+    function revokeWhitelistedDistributor(IDistributor distributor) public onlyOwner {
         super._disallowAllDistributions(distributor);
     }
 }

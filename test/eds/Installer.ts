@@ -52,42 +52,43 @@ describe("Installer", function () {
   });
 
   it("Only owner can install distributors", async function () {
-    expect(await installer.connect(owner).addDistributor(distributor.address)).to.emit(
+    expect(await installer.connect(owner).whitelistDistributor(distributor.address)).to.emit(
       installer,
       "DistributorAdded"
     );
 
     await expect(
-      installer.connect(deployer).addDistributor(distributor.address)
+      installer.connect(deployer).whitelistDistributor(distributor.address)
     ).to.be.revertedWithCustomError(installer, "OwnableUnauthorizedAccount");
   });
 
   it("Only owner can remove distributors", async function () {
-    await installer.connect(owner).addDistributor(distributor.address);
+    await installer.connect(owner).whitelistDistributor(distributor.address);
 
-    expect(await installer.connect(owner).removeDistributor(distributor.address)).to.emit(
-      installer,
-      "DistributorRemoved"
-    );
+    expect(
+      await installer.connect(owner).revokeWhitelistedDistributor(distributor.address)
+    ).to.emit(installer, "DistributorRemoved");
 
     await expect(
-      installer.connect(deployer).removeDistributor(distributor.address)
+      installer.connect(deployer).revokeWhitelistedDistributor(distributor.address)
     ).to.be.revertedWithCustomError(installer, "OwnableUnauthorizedAccount");
   });
 
   it("Anyone can instantiate from whitelisted distributors", async function () {
-    await installer.connect(owner).addDistributor(distributor.address);
+    await installer.connect(owner).whitelistDistributor(distributor.address);
 
     expect(
       await installer.connect(deployer).install(distributor.address, cloneDistributionId, "0x")
     ).to.emit(installer, "Installed");
   });
   it("can List distributors", async function () {
-    await installer.connect(owner).addDistributor(distributor.address);
-    expect(await installer.connect(owner).getDistributors()).to.be.deep.eq([distributor.address]);
+    await installer.connect(owner).whitelistDistributor(distributor.address);
+    expect(await installer.connect(owner).getWhitelistedDistributors()).to.be.deep.eq([
+      distributor.address,
+    ]);
   });
   it("Can get instances by id", async function () {
-    await installer.connect(owner).addDistributor(distributor.address);
+    await installer.connect(owner).whitelistDistributor(distributor.address);
     await installer.connect(owner).install(distributor.address, cloneDistributionId, "0x");
     const instanceNum = await installer.connect(owner).getInstancesNum();
     expect((await installer.connect(owner).getInstance(instanceNum)).length).to.be.eq(1);
@@ -100,8 +101,8 @@ describe("Installer", function () {
     expect(src[0]).to.be.equal(instance.address);
   });
 
-  it("Allows only valid instances to call target", async () => {
-    await installer.connect(owner).addDistributor(distributor.address);
+  it("Allows whitelisted distributor only valid instances to call target", async () => {
+    await installer.connect(owner).whitelistDistributor(distributor.address);
     await installer.connect(owner).install(distributor.address, cloneDistributionId, "0x");
     const instanceNum = await installer.connect(owner).getInstancesNum();
     let instanceAddress = (await installer.connect(target).getInstance(instanceNum))[0];
@@ -118,8 +119,41 @@ describe("Installer", function () {
       installer.connect(target).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
     ).to.be.revertedWithCustomError(distributor, "InvalidInstance");
   });
+
+  it("Allows valid distributions added by distributor and distribution id to call target", async () => {
+    await installer.connect(owner).allowDistribution(distributor.address, cloneDistributionId);
+    await installer.connect(owner).install(distributor.address, cloneDistributionId, "0x");
+    const instanceNum = await installer.connect(owner).getInstancesNum();
+    let instanceAddress = (await installer.connect(target).getInstance(instanceNum))[0];
+    await expect(
+      installer.connect(target).beforeCall("0x", "0x00000000", deployer.address, "0", "0x")
+    ).to.be.revertedWithCustomError(installer, "NotAnInstance");
+
+    await expect(
+      installer.connect(target).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
+    ).to.be.not.revertedWithCustomError(installer, "NotAnInstance");
+
+    await distributor.connect(owner).removeDistribution(cloneDistributionId);
+    await expect(
+      installer.connect(target).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
+    ).to.be.revertedWithCustomError(distributor, "InvalidInstance");
+  });
+
+  it("Reverts when valid distributions added by distributor and distribution id were removed", async () => {
+    await installer.connect(owner).allowDistribution(distributor.address, cloneDistributionId);
+    await installer.connect(owner).install(distributor.address, cloneDistributionId, "0x");
+    const instanceNum = await installer.connect(owner).getInstancesNum();
+    let instanceAddress = (await installer.connect(target).getInstance(instanceNum))[0];
+
+    await installer.connect(owner).disallowDistribution(distributor.address, cloneDistributionId);
+
+    await expect(
+      installer.connect(target).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
+    ).to.be.revertedWithCustomError(installer, "DistributionIsNotPermitted");
+  });
+
   it("Does reverts on invalid target", async () => {
-    await installer.connect(owner).addDistributor(distributor.address);
+    await installer.connect(owner).whitelistDistributor(distributor.address);
     await installer.connect(owner).install(distributor.address, cloneDistributionId, "0x");
     const instanceNum = await installer.connect(owner).getInstancesNum();
     let instanceAddress = (await installer.connect(target).getInstance(instanceNum))[0];

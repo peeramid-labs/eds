@@ -3,15 +3,13 @@ pragma solidity =0.8.20;
 import "../interfaces/IDistributor.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IInstaller.sol";
-
 abstract contract Installer is IInstaller {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
     address private immutable _target;
-    EnumerableSet.AddressSet private _distributors;
+    EnumerableSet.AddressSet private whitelistedDistributors;
     mapping(address => EnumerableSet.Bytes32Set) private _permittedDistributions;
     mapping(address => address) private _distributorOf;
-    mapping(address => bool) private _allDistributions;
     mapping(uint256 => address[]) private _instanceEnum;
     uint256 instancesNum;
 
@@ -19,57 +17,51 @@ abstract contract Installer is IInstaller {
         _target = targetAddress;
     }
 
-    function _addDistributor(IDistributor distributor) internal {
-        _distributors.add(address(distributor));
-    }
-
-    function _removeDistributor(IDistributor distributor) internal {
-        _distributors.remove(address(distributor));
-    }
-
     function isDistributor(IDistributor distributor) public view returns (bool) {
-        return _distributors.contains(address(distributor));
+        return whitelistedDistributors.contains(address(distributor));
     }
 
-    function getDistributors() public view returns (address[] memory) {
-        return _distributors.values();
+    function getWhitelistedDistributors() public view returns (address[] memory) {
+        return whitelistedDistributors.values();
     }
 
-    function listPermittedDistributions(IDistributor distributor) public view returns (bytes32[] memory)
-    {
-        if (_allDistributions[address(distributor)]) {
+    function whitelistedDistributions(IDistributor distributor) public view returns (bytes32[] memory) {
+        if (whitelistedDistributors.contains(address(distributor))) {
             return distributor.getDistributions();
-        }
-        else
-        {
+        } else {
             return _permittedDistributions[address(distributor)].values();
         }
     }
 
-    function _allowAllDistributions(IDistributor distributor) internal virtual
-    {
-        _allDistributions[address(distributor)] = true;
+    function _allowAllDistributions(IDistributor distributor) internal virtual {
+        whitelistedDistributors.add(address(distributor));
     }
 
-    function _disallowAllDistributions(IDistributor distributor) internal virtual
-    {
-        _allDistributions[address(distributor)] = false;
+    function _disallowAllDistributions(IDistributor distributor) internal virtual {
+        whitelistedDistributors.remove(address(distributor));
     }
 
-    function _allowDistribution(IDistributor distributor, bytes32 distributionId) internal virtual
-    {
-        if (_allDistributions[address(distributor)]) {
-            revert AllDistributionsAllowed(distributor);
+    function _allowDistribution(IDistributor distributor, bytes32 distributionId) internal virtual {
+        if (whitelistedDistributors.contains(address(distributor))) {
+            revert alreadyAllowed(distributor);
         }
         _permittedDistributions[address(distributor)].add(distributionId);
     }
 
-    function _disallowDistribution(IDistributor distributor, bytes32 distributionId) internal virtual
-    {
-        if (_allDistributions[address(distributor)]) {
-            revert AllDistributionsAllowed(distributor);
+    function _disallowDistribution(IDistributor distributor, bytes32 distributionId) internal virtual {
+        if (whitelistedDistributors.contains(address(distributor))) {
+            revert("cannot dissalow distribution on whitelisted distributor");
         }
         _permittedDistributions[address(distributor)].remove(distributionId);
+    }
+
+    function enforceActiveDistribution(IDistributor distributor, bytes32 distributionId) internal view {
+        if (
+            !whitelistedDistributors.contains(address(distributor)) &&
+            !_permittedDistributions[address(distributor)].contains(distributionId)
+        ) {
+            revert DistributionIsNotPermitted(distributor, distributionId);
+        }
     }
 
     function _install(
@@ -77,10 +69,11 @@ abstract contract Installer is IInstaller {
         bytes32 distributionId,
         bytes calldata args
     ) internal virtual returns (uint256 instanceId) {
-        if (!isDistributor(distributor)) {
+        if (!isDistributor(distributor) && !_permittedDistributions[address(distributor)].contains(distributionId)) {
             revert InvalidDistributor(distributor);
         }
-        (address[] memory installation,,) = distributor.instantiate(distributionId, args);
+        enforceActiveDistribution(distributor, distributionId);
+        (address[] memory installation, , ) = distributor.instantiate(distributionId, args);
         instancesNum++;
         _instanceEnum[instancesNum] = installation;
         for (uint i = 0; i < installation.length; i++) {
@@ -122,18 +115,21 @@ abstract contract Installer is IInstaller {
     function beforeCall(
         bytes memory layerConfig,
         bytes4 selector,
-        address sender,
+        address requestingInstance,
         uint256 value,
         bytes memory data
     ) public returns (bytes memory) {
         if (msg.sender != _target) {
             revert InvalidTarget(msg.sender);
         }
-        address distributor = _distributorOf[sender];
+        address distributor = _distributorOf[requestingInstance];
         if (distributor != address(0)) {
-            return IDistributor(distributor).beforeCall(layerConfig, selector, sender, value, data);
+            bytes memory beforeCallValue = IDistributor(distributor).beforeCall(layerConfig, selector, requestingInstance, value, data);
+            (bytes32 id, )= abi.decode(beforeCallValue, (bytes32, bytes));
+            enforceActiveDistribution(IDistributor(distributor), id);
+            return abi.encode(id, distributor);
         }
-        revert NotAnInstance(sender);
+        revert NotAnInstance(requestingInstance);
     }
 
     function afterCall(
@@ -150,7 +146,6 @@ abstract contract Installer is IInstaller {
         address distributor = _distributorOf[sender];
         if (distributor != address(0)) {
             IDistributor(distributor).afterCall(layerConfig, selector, sender, value, data, beforeCallResult);
-            return;
         }
         revert NotAnInstance(sender);
     }

@@ -7,26 +7,29 @@ import "../ERC7746/ILayer.sol";
 interface IInstaller is ILayer {
     error InvalidDistributor(IDistributor distributor);
     error InvalidTarget(address target);
-    error AllDistributionsAllowed(IDistributor distributor);
-    event DistributorAdded(IDistributor indexed distributor);
-    event DistributorRemoved(IDistributor indexed distributor);
+    error alreadyAllowed(IDistributor distributor);
+    error DistributionIsNotPermitted(IDistributor distributor, bytes32 distributionId);
 
-    function addDistributor(IDistributor distributor) external;
-    function removeDistributor(IDistributor distributor) external;
+    event DistributorWhitelisted(IDistributor indexed distributor);
+    event DistributorWhitelistRevoked(IDistributor indexed distributor);
+
+    event DistributionAllowed(IDistributor indexed distributor, bytes32 indexed distributionId);
+    event DistributionDisallowed(IDistributor indexed distributor, bytes32 indexed distributionId);
+
 
     function allowDistribution(IDistributor distributor, bytes32 distributionId) external;
 
     function disallowDistribution(IDistributor distributor, bytes32 distributionId) external;
 
-    function listPermittedDistributions(IDistributor distributor) external view returns (bytes32[] memory);
+    function whitelistedDistributions(IDistributor distributor) external view returns (bytes32[] memory);
 
-    function allowAllDistributions(IDistributor distributor) external;
+    function whitelistDistributor(IDistributor distributor) external;
 
-    function disallowAllDistributions(IDistributor distributor) external;
+    function revokeWhitelistedDistributor(IDistributor distributor) external;
 
     function isDistributor(IDistributor distributor) external view returns (bool);
 
-    function getDistributors() external view returns (address[] memory);
+    function getWhitelistedDistributors() external view returns (address[] memory);
 
     event Installed(address indexed instance, bytes32 indexed distributionId, bytes32 indexed permissions, bytes args);
     event Uninstalled(address indexed instance);

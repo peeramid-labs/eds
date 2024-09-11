@@ -74,7 +74,7 @@ abstract contract Distributor is IDistributor, CodeIndexer {
     ) public view virtual returns (bytes memory) {
         bytes32 id = distributionOf[instance];
         if (id != bytes32(0) && distirbutionsSet.contains(id) == true) {
-            return "";
+            return abi.encode(id, "");
         } else {
             revert InvalidInstance(instance);
         }
