@@ -17,6 +17,7 @@ describe("Distributor", function () {
   let distributor: OwnableDistributor;
   let deployer: SignerWithAddress;
   let owner: SignerWithAddress;
+  let distributorsId: any;
   let cloneDistributionId: any;
 
   beforeEach(async function () {
@@ -40,6 +41,10 @@ describe("Distributor", function () {
     await cloneDistribution.deployed();
     const code = await cloneDistribution.provider.getCode(cloneDistribution.address);
     cloneDistributionId = ethers.utils.keccak256(code);
+    distributorsId = ethers.utils.solidityKeccak256(
+      ["bytes32", "bytes32"],
+      [cloneDistributionId, ethers.utils.formatBytes32String("")]
+    );
     await codeIndex.register(cloneDistribution.address);
   });
 
@@ -83,12 +88,12 @@ describe("Distributor", function () {
       expect(
         await distributor
           .connect(owner)
-          .instantiate(cloneDistributionId, ethers.utils.formatBytes32String(""))
+          .instantiate(distributorsId, ethers.utils.formatBytes32String(""))
       ).to.emit(distributor, "Instantiated");
     });
 
     it("Is possible to remove a distribution", async function () {
-      expect(await distributor.connect(owner).removeDistribution(cloneDistributionId)).to.emit(
+      expect(await distributor.connect(owner).removeDistribution(distributorsId)).to.emit(
         distributor,
         "DistributionRemoved"
       );
@@ -100,12 +105,12 @@ describe("Distributor", function () {
         let receipt = await (
           await distributor
             .connect(owner)
-            .instantiate(cloneDistributionId, ethers.utils.formatBytes32String(""))
+            .instantiate(distributorsId, ethers.utils.formatBytes32String(""))
         ).wait();
         let parsed = utils.getSuperInterface().parseLog(receipt.logs[0]);
         instanceAddress = parsed.args.instances[0];
         console.log(instanceAddress);
-        await distributor.connect(owner).removeDistribution(cloneDistributionId);
+        await distributor.connect(owner).removeDistribution(distributorsId);
       });
       it("Instance is invalid upon check", async () => {
         await expect(

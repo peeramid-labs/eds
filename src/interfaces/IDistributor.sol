@@ -14,13 +14,13 @@ interface IDistributor is ILayer {
 
     event DistributionAdded(bytes32 indexed id, bytes32 indexed initializerId);
 
-    function getDistributions() external view returns (bytes32[] memory ids);
+    function getDistributions() external view returns (bytes32[] memory distributorIds);
 
-    function getDistributionURI(bytes32 id) external view returns (string memory);
+    function getDistributionURI(bytes32 distributorId) external view returns (string memory);
 
-    function instantiate(bytes32 id, bytes calldata args) external returns (address[] memory, bytes32 distributionName, uint256 distributionVersion);
+    function instantiate(bytes32 distributorId, bytes calldata args) external returns (address[] memory, bytes32 distributionName, uint256 distributionVersion);
 
-    function addDistribution(bytes32 id, bytes32 initializer) external;
+    function addDistribution(bytes32 distributorId, bytes32 initializer) external;
 
-    function removeDistribution(bytes32 id) external;
+    function removeDistribution(bytes32 distributorId) external;
 }
