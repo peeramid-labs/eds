@@ -24,4 +24,21 @@ contract MockInstaller is Installer, Ownable {
     function uninstall(uint256 instanceId) public onlyOwner {
         super._uninstall(instanceId);
     }
+
+     function allowDistribution(IDistributor distributor, bytes32 distributionId) public onlyOwner {
+        super._allowDistribution(distributor, distributionId);
+     }
+
+    function disallowDistribution(IDistributor distributor, bytes32 distributionId) public onlyOwner {
+        super._disallowDistribution(distributor, distributionId);
+    }
+
+
+    function allowAllDistributions(IDistributor distributor) public onlyOwner {
+        super._allowAllDistributions(distributor);
+    }
+
+    function disallowAllDistributions(IDistributor distributor) public onlyOwner {
+        super._disallowAllDistributions(distributor);
+    }
 }

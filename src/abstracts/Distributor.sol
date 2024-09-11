@@ -11,10 +11,15 @@ abstract contract Distributor is IDistributor, CodeIndexer {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     EnumerableSet.Bytes32Set private distirbutionsSet;
     mapping(bytes32 => IInitializer) private initializers;
-    mapping(address => bytes32) private instancesDistribution;
+    mapping(address => bytes32) private distributionOf;
 
     function getDistributions() public view returns (bytes32[] memory) {
         return distirbutionsSet.values();
+    }
+
+    function distributionId(address instance) public view virtual returns (bytes32 instanceId)
+    {
+        return distributionOf[instance];
     }
 
     function getDistributionURI(bytes32 id) public view returns (string memory) {
@@ -53,6 +58,9 @@ abstract contract Distributor is IDistributor, CodeIndexer {
             );
             require(success, string(result));
         }
+        for (uint256 i = 0; i < instances.length; i++) {
+            distributionOf[instances[i]] = id;
+        }
         emit Instantiated(id, args);
         return (instances, distributionName, distributionVersion);
     }
@@ -60,15 +68,15 @@ abstract contract Distributor is IDistributor, CodeIndexer {
     function beforeCall(
         bytes memory,
         bytes4,
-        address sender,
+        address instance,
         uint256,
         bytes memory
     ) public view virtual returns (bytes memory) {
-        bytes32 id = instancesDistribution[sender];
+        bytes32 id = distributionOf[instance];
         if (id != bytes32(0) && distirbutionsSet.contains(id) == true) {
             return "";
         } else {
-            revert InvalidInstance(sender);
+            revert InvalidInstance(instance);
         }
     }
 

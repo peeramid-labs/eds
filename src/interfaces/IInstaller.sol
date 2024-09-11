@@ -7,12 +7,22 @@ import "../ERC7746/ILayer.sol";
 interface IInstaller is ILayer {
     error InvalidDistributor(IDistributor distributor);
     error InvalidTarget(address target);
+    error AllDistributionsAllowed(IDistributor distributor);
     event DistributorAdded(IDistributor indexed distributor);
     event DistributorRemoved(IDistributor indexed distributor);
 
     function addDistributor(IDistributor distributor) external;
-
     function removeDistributor(IDistributor distributor) external;
+
+    function allowDistribution(IDistributor distributor, bytes32 distributionId) external;
+
+    function disallowDistribution(IDistributor distributor, bytes32 distributionId) external;
+
+    function listPermittedDistributions(IDistributor distributor) external view returns (bytes32[] memory);
+
+    function allowAllDistributions(IDistributor distributor) external;
+
+    function disallowAllDistributions(IDistributor distributor) external;
 
     function isDistributor(IDistributor distributor) external view returns (bool);
 

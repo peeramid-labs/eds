@@ -14,7 +14,7 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
     using EnumerableSet for EnumerableSet.AddressSet;
     EnumerableSet.AddressSet private _repositories;
     mapping(address => IInitializer) private initializers;
-    mapping(address => address) private instancesDistribution;
+    mapping(address => address) private distributionOf;
     mapping(address => LibSemver.Version) private versions;
     mapping(address => LibSemver.requirements) private requirements;
     mapping(address => LibSemver.Version) private instancesVersions;
@@ -77,7 +77,7 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
         }
 
         for (uint256 i = 0; i < instances.length; i++) {
-            instancesDistribution[instances[i]] = address(repository);
+            distributionOf[instances[i]] = address(repository);
             instancesVersions[instances[i]] = src.version;
         }
         emit Instantiated(address(repository), args);
@@ -108,19 +108,19 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
     function beforeCall(
         bytes memory,
         bytes4,
-        address sender,
+        address instance,
         uint256,
         bytes memory
     ) public view returns (bytes memory) {
-        address repo = instancesDistribution[sender];
+        address repo = distributionOf[instance];
         if (repo != address(0) && _repositories.contains(repo)) {
-            LibSemver.Version memory version = instancesVersions[sender];
+            LibSemver.Version memory version = instancesVersions[instance];
             if (!version.compare(versions[repo], requirements[repo])) {
                 revert VersionOutdated(IRepository(repo), LibSemver.toUint256(version));
             }
             return "";
         } else {
-            revert InvalidInstance(sender);
+            revert InvalidInstance(instance);
         }
     }
 

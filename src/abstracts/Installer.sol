@@ -6,9 +6,12 @@ import "../interfaces/IInstaller.sol";
 
 abstract contract Installer is IInstaller {
     using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
     address private immutable _target;
     EnumerableSet.AddressSet private _distributors;
-    mapping(address => address) private _instancesDistributor;
+    mapping(address => EnumerableSet.Bytes32Set) private _permittedDistributions;
+    mapping(address => address) private _distributorOf;
+    mapping(address => bool) private _allDistributions;
     mapping(uint256 => address[]) private _instanceEnum;
     uint256 instancesNum;
 
@@ -32,6 +35,43 @@ abstract contract Installer is IInstaller {
         return _distributors.values();
     }
 
+    function listPermittedDistributions(IDistributor distributor) public view returns (bytes32[] memory)
+    {
+        if (_allDistributions[address(distributor)]) {
+            return distributor.getDistributions();
+        }
+        else
+        {
+            return _permittedDistributions[address(distributor)].values();
+        }
+    }
+
+    function _allowAllDistributions(IDistributor distributor) internal virtual
+    {
+        _allDistributions[address(distributor)] = true;
+    }
+
+    function _disallowAllDistributions(IDistributor distributor) internal virtual
+    {
+        _allDistributions[address(distributor)] = false;
+    }
+
+    function _allowDistribution(IDistributor distributor, bytes32 distributionId) internal virtual
+    {
+        if (_allDistributions[address(distributor)]) {
+            revert AllDistributionsAllowed(distributor);
+        }
+        _permittedDistributions[address(distributor)].add(distributionId);
+    }
+
+    function _disallowDistribution(IDistributor distributor, bytes32 distributionId) internal virtual
+    {
+        if (_allDistributions[address(distributor)]) {
+            revert AllDistributionsAllowed(distributor);
+        }
+        _permittedDistributions[address(distributor)].remove(distributionId);
+    }
+
     function _install(
         IDistributor distributor,
         bytes32 distributionId,
@@ -44,7 +84,7 @@ abstract contract Installer is IInstaller {
         instancesNum++;
         _instanceEnum[instancesNum] = installation;
         for (uint i = 0; i < installation.length; i++) {
-            _instancesDistributor[installation[i]] = address(distributor);
+            _distributorOf[installation[i]] = address(distributor);
             emit Installed(installation[0], distributionId, "0x", args);
         }
         return instancesNum;
@@ -53,7 +93,7 @@ abstract contract Installer is IInstaller {
     function _uninstall(uint256 instanceId) internal virtual {
         address[] memory instance = _instanceEnum[instanceId];
         for (uint i = 0; i < instance.length; i++) {
-            _instancesDistributor[instance[i]] = address(0);
+            _distributorOf[instance[i]] = address(0);
             emit Uninstalled(instance[i]);
         }
         instancesNum--;
@@ -68,11 +108,11 @@ abstract contract Installer is IInstaller {
     }
 
     function isInstance(address instance) public view returns (bool) {
-        return _instancesDistributor[instance] != address(0);
+        return _distributorOf[instance] != address(0);
     }
 
     function distributorOf(address instance) public view returns (IDistributor) {
-        return IDistributor(_instancesDistributor[instance]);
+        return IDistributor(_distributorOf[instance]);
     }
 
     function target() public view returns (address) {
@@ -89,7 +129,7 @@ abstract contract Installer is IInstaller {
         if (msg.sender != _target) {
             revert InvalidTarget(msg.sender);
         }
-        address distributor = _instancesDistributor[sender];
+        address distributor = _distributorOf[sender];
         if (distributor != address(0)) {
             return IDistributor(distributor).beforeCall(layerConfig, selector, sender, value, data);
         }
@@ -107,7 +147,7 @@ abstract contract Installer is IInstaller {
         if (msg.sender != _target) {
             revert InvalidTarget(msg.sender);
         }
-        address distributor = _instancesDistributor[sender];
+        address distributor = _distributorOf[sender];
         if (distributor != address(0)) {
             IDistributor(distributor).afterCall(layerConfig, selector, sender, value, data, beforeCallResult);
             return;
