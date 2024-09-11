@@ -41,10 +41,9 @@ describe("Installer", function () {
     const CodeIndex = await ethers.getContractFactory("CodeIndex");
     [deployer, owner, target] = await ethers.getSigners();
     const codeIndexDeployment = await deployments.get("CodeIndex");
-    codeIndex = new ethers.Contract(
-      codeIndexDeployment.address,
-      CodeIndex.interface
-    ).connect(deployer) as CodeIndex;
+    codeIndex = new ethers.Contract(codeIndexDeployment.address, CodeIndex.interface).connect(
+      deployer
+    ) as CodeIndex;
 
     const Repository = (await ethers.getContractFactory(
       "OwnableRepository"
@@ -53,18 +52,14 @@ describe("Installer", function () {
       owner.address,
       ethers.utils.formatBytes32String("testRepository")
     );
-    const repositoryCode = await repository.provider.getCode(
-      repository.address
-    );
+    const repositoryCode = await repository.provider.getCode(repository.address);
     fourthId = ethers.utils.keccak256(repositoryCode);
 
     const Distributor = (await ethers.getContractFactory(
       "OwnableDistributor"
     )) as OwnableDistributor__factory;
     distributor = await Distributor.deploy(owner.address);
-    const distributorCode = await distributor.provider.getCode(
-      distributor.address
-    );
+    const distributorCode = await distributor.provider.getCode(distributor.address);
     thirdId = ethers.utils.keccak256(distributorCode);
 
     const CloneDistribution = (await ethers.getContractFactory(
@@ -72,17 +67,11 @@ describe("Installer", function () {
     )) as MockCloneDistribution__factory;
     const cloneDistribution = await CloneDistribution.deploy();
     await cloneDistribution.deployed();
-    const code = await cloneDistribution.provider.getCode(
-      cloneDistribution.address
-    );
+    const code = await cloneDistribution.provider.getCode(cloneDistribution.address);
     firstId = ethers.utils.keccak256(code);
     await codeIndex.register(cloneDistribution.address);
-    distributor
-      .connect(owner)
-      .addDistribution(firstId, ethers.utils.formatBytes32String(""));
-    const Installer = (await ethers.getContractFactory(
-      "MockInstaller"
-    )) as MockInstaller__factory;
+    distributor.connect(owner).addDistribution(firstId, ethers.utils.formatBytes32String(""));
+    const Installer = (await ethers.getContractFactory("MockInstaller")) as MockInstaller__factory;
     installer = await Installer.deploy(target.address, owner.address);
 
     const installerCode = await installer.provider.getCode(installer.address);
@@ -90,35 +79,29 @@ describe("Installer", function () {
   });
   it("Can add new versions to the repository", async function () {
     await expect(
-      repository
-        .connect(owner)
-        .newRelease(firstId, ethers.utils.formatBytes32String("test"), {
-          major: 1,
-          minor: 0,
-          patch: 0,
-        })
+      repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
+        major: 1,
+        minor: 0,
+        patch: 0,
+      })
     ).to.emit(repository, "VersionAdded");
   });
   it("Can cannot create version with gap number ", async function () {
     await expect(
-      repository
-        .connect(owner)
-        .newRelease(firstId, ethers.utils.formatBytes32String("test"), {
-          major: 2,
-          minor: 0,
-          patch: 0,
-        })
+      repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
+        major: 2,
+        minor: 0,
+        patch: 0,
+      })
     ).to.be.revertedWithCustomError(repository, "VersionIncrementInvalid");
   });
   it("Can cannot create version with zero major ", async function () {
     await expect(
-      repository
-        .connect(owner)
-        .newRelease(firstId, ethers.utils.formatBytes32String("test"), {
-          major: 0,
-          minor: 0,
-          patch: 0,
-        })
+      repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
+        major: 0,
+        minor: 0,
+        patch: 0,
+      })
     ).to.be.revertedWithCustomError(repository, "ReleaseZeroNotAllowed");
   });
   describe("When version was created", function () {
@@ -137,24 +120,20 @@ describe("Installer", function () {
     });
     it("Cannot create same version again", async function () {
       await expect(
-        repository
-          .connect(owner)
-          .newRelease(firstId, ethers.utils.formatBytes32String("test"), {
-            major: 1,
-            minor: 0,
-            patch: 0,
-          })
+        repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
+          major: 1,
+          minor: 0,
+          patch: 0,
+        })
       ).to.be.revertedWithCustomError(repository, "VersionExists");
     });
     it("Can create minor release", async function () {
       await expect(
-        repository
-          .connect(owner)
-          .newRelease(firstId, ethers.utils.formatBytes32String("test"), {
-            major: 1,
-            minor: 1,
-            patch: 0,
-          })
+        repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
+          major: 1,
+          minor: 1,
+          patch: 0,
+        })
       ).to.emit(repository, "VersionAdded");
     });
     describe("When minor and second major versions were created", function () {

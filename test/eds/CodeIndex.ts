@@ -26,10 +26,9 @@ describe("CloneDistribution", function () {
       from: deployer.address,
       skipIfAlreadyDeployed: true,
     });
-    codeIndex = new ethers.Contract(
-      result.address,
-      CodeIndex.interface
-    ).connect(deployer) as CodeIndex;
+    codeIndex = new ethers.Contract(result.address, CodeIndex.interface).connect(
+      deployer
+    ) as CodeIndex;
     console.log("CodeIndex deployed at", result.address);
     const TestContract = await ethers.getContractFactory("TestFacet");
     testContract = (await TestContract.deploy()) as TestFacet;
@@ -37,10 +36,7 @@ describe("CloneDistribution", function () {
 
   it("should emit Distributed event", async function () {
     // const code = await testContract.provider.getCode(testContract.address);
-    expect(await codeIndex.register(testContract.address)).to.emit(
-      codeIndex,
-      "Indexed"
-    );
+    expect(await codeIndex.register(testContract.address)).to.emit(codeIndex, "Indexed");
   });
 
   it("should return address for registered code hash", async function () {
@@ -52,8 +48,9 @@ describe("CloneDistribution", function () {
 
   it("Should revert on registering same code hash", async function () {
     await codeIndex.register(testContract.address);
-    await expect(
-      codeIndex.register(testContract.address)
-    ).to.be.revertedWithCustomError(codeIndex, "alreadyExists");
+    await expect(codeIndex.register(testContract.address)).to.be.revertedWithCustomError(
+      codeIndex,
+      "alreadyExists"
+    );
   });
 });

@@ -1,10 +1,12 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import {
-    CodeIndex,
-    Distributor, MockCloneDistribution__factory,
-    OwnableDistributor,
-    OwnableDistributor__factory, TestFacet__factory
+  CodeIndex,
+  Distributor,
+  MockCloneDistribution__factory,
+  OwnableDistributor,
+  OwnableDistributor__factory,
+  TestFacet__factory,
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -22,10 +24,9 @@ describe("Distributor", function () {
     const CodeIndex = await ethers.getContractFactory("CodeIndex");
     [deployer, owner] = await ethers.getSigners();
     const codeIndexDeployment = await deployments.get("CodeIndex");
-    codeIndex = new ethers.Contract(
-      codeIndexDeployment.address,
-      CodeIndex.interface
-    ).connect(deployer) as CodeIndex;
+    codeIndex = new ethers.Contract(codeIndexDeployment.address, CodeIndex.interface).connect(
+      deployer
+    ) as CodeIndex;
 
     const Distributor = (await ethers.getContractFactory(
       "OwnableDistributor"
@@ -37,9 +38,7 @@ describe("Distributor", function () {
     )) as MockCloneDistribution__factory;
     const cloneDistribution = await CloneDistribution.deploy();
     await cloneDistribution.deployed();
-    const code = await cloneDistribution.provider.getCode(
-      cloneDistribution.address
-    );
+    const code = await cloneDistribution.provider.getCode(cloneDistribution.address);
     cloneDistributionId = ethers.utils.keccak256(code);
     await codeIndex.register(cloneDistribution.address);
   });
@@ -48,18 +47,12 @@ describe("Distributor", function () {
     expect(
       await distributor
         .connect(owner)
-        .addDistribution(
-          cloneDistributionId,
-          ethers.utils.formatBytes32String("")
-        )
+        .addDistribution(cloneDistributionId, ethers.utils.formatBytes32String(""))
     ).to.emit(distributor, "DistributionAdded");
     await expect(
       distributor
         .connect(deployer)
-        .addDistribution(
-          cloneDistributionId,
-          ethers.utils.formatBytes32String("")
-        )
+        .addDistribution(cloneDistributionId, ethers.utils.formatBytes32String(""))
     ).to.be.revertedWithCustomError(distributor, "OwnableUnauthorizedAccount");
   });
 
@@ -69,9 +62,7 @@ describe("Distributor", function () {
     )) as TestFacet__factory;
     const testFacetDistribution = await TestFacetDistribution.deploy();
     await testFacetDistribution.deployed();
-    const code = await testFacetDistribution.provider.getCode(
-      testFacetDistribution.address
-    );
+    const code = await testFacetDistribution.provider.getCode(testFacetDistribution.address);
     const cloneDistributionId = ethers.utils.keccak256(code);
     await codeIndex.register(testFacetDistribution.address);
     await expect(
@@ -85,27 +76,22 @@ describe("Distributor", function () {
     beforeEach(async function () {
       await distributor
         .connect(owner)
-        .addDistribution(
-          cloneDistributionId,
-          ethers.utils.formatBytes32String("")
-        );
+        .addDistribution(cloneDistributionId, ethers.utils.formatBytes32String(""));
     });
 
     it("Is possible to instantiate a contract", async function () {
       expect(
         await distributor
           .connect(owner)
-          .instantiate(
-            cloneDistributionId,
-            ethers.utils.formatBytes32String("")
-          )
+          .instantiate(cloneDistributionId, ethers.utils.formatBytes32String(""))
       ).to.emit(distributor, "Instantiated");
     });
 
     it("Is possible to remove a distribution", async function () {
-      expect(
-        await distributor.connect(owner).removeDistribution(cloneDistributionId)
-      ).to.emit(distributor, "DistributionRemoved");
+      expect(await distributor.connect(owner).removeDistribution(cloneDistributionId)).to.emit(
+        distributor,
+        "DistributionRemoved"
+      );
     });
 
     describe("When distribution is instantiated and then removed", () => {
@@ -114,23 +100,16 @@ describe("Distributor", function () {
         let receipt = await (
           await distributor
             .connect(owner)
-            .instantiate(
-              cloneDistributionId,
-              ethers.utils.formatBytes32String("")
-            )
+            .instantiate(cloneDistributionId, ethers.utils.formatBytes32String(""))
         ).wait();
         let parsed = utils.getSuperInterface().parseLog(receipt.logs[0]);
         instanceAddress = parsed.args.instances[0];
         console.log(instanceAddress);
-        await distributor
-          .connect(owner)
-          .removeDistribution(cloneDistributionId);
+        await distributor.connect(owner).removeDistribution(cloneDistributionId);
       });
       it("Instance is invalid upon check", async () => {
         await expect(
-          distributor
-            .connect(owner)
-            .beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
+          distributor.connect(owner).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
         ).to.be.revertedWithCustomError(distributor, "InvalidInstance");
       });
     });

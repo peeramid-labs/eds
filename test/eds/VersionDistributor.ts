@@ -34,10 +34,9 @@ describe("Version Distributor", function () {
     const CodeIndex = await ethers.getContractFactory("CodeIndex");
     [deployer, owner] = await ethers.getSigners();
     const codeIndexDeployment = await deployments.get("CodeIndex");
-    codeIndex = new ethers.Contract(
-      codeIndexDeployment.address,
-      CodeIndex.interface
-    ).connect(deployer) as CodeIndex;
+    codeIndex = new ethers.Contract(codeIndexDeployment.address, CodeIndex.interface).connect(
+      deployer
+    ) as CodeIndex;
 
     const Repository = (await ethers.getContractFactory(
       "OwnableRepository"
@@ -46,9 +45,7 @@ describe("Version Distributor", function () {
       owner.address,
       ethers.utils.formatBytes32String("testRepository")
     );
-    const repositoryCode = await repository.provider.getCode(
-      repository.address
-    );
+    const repositoryCode = await repository.provider.getCode(repository.address);
 
     const CloneDistribution = (await ethers.getContractFactory(
       "MockCloneDistribution"
@@ -61,15 +58,11 @@ describe("Version Distributor", function () {
 
     repository
       .connect(owner)
-      .newRelease(
-        mockDistributionId,
-        ethers.utils.formatBytes32String("test"),
-        {
-          major: 1,
-          minor: 0,
-          patch: 0,
-        }
-      );
+      .newRelease(mockDistributionId, ethers.utils.formatBytes32String("test"), {
+        major: 1,
+        minor: 0,
+        patch: 0,
+      });
 
     const Distributor = (await ethers.getContractFactory(
       "OwnableVersionDistributor"
@@ -110,10 +103,7 @@ describe("Version Distributor", function () {
     await expect(
       distributor
         .connect(owner)
-        .instantiate(
-          testFacetDistribution.address,
-          ethers.utils.formatBytes32String("")
-        )
+        .instantiate(testFacetDistribution.address, ethers.utils.formatBytes32String(""))
     ).to.be.revertedWithCustomError(distributor, "InvalidRepository");
   });
 
@@ -139,9 +129,7 @@ describe("Version Distributor", function () {
 
     it("Is possible to remove a distribution", async function () {
       expect(
-        await distributor
-          .connect(owner)
-          .removeVersionedDistribution(repository.address)
+        await distributor.connect(owner).removeVersionedDistribution(repository.address)
       ).to.emit(distributor, "DistributionRemoved");
     });
 
@@ -157,27 +145,15 @@ describe("Version Distributor", function () {
 
       await distributor
         .connect(owner)
-        .changeRequirement(
-          repository.address,
-          { major: 2, minor: 0, patch: 0 },
-          2
-        );
+        .changeRequirement(repository.address, { major: 2, minor: 0, patch: 0 }, 2);
       await expect(
-        distributor
-          .connect(owner)
-          .beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
+        distributor.connect(owner).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
       ).to.be.revertedWithCustomError(distributor, "VersionOutdated");
       await distributor
         .connect(owner)
-        .changeRequirement(
-          repository.address,
-          { major: 1, minor: 0, patch: 0 },
-          1
-        );
+        .changeRequirement(repository.address, { major: 1, minor: 0, patch: 0 }, 1);
       await expect(
-        distributor
-          .connect(owner)
-          .beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
+        distributor.connect(owner).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
       ).to.not.be.revertedWithCustomError(distributor, "VersionOutdated");
     });
 
@@ -187,23 +163,16 @@ describe("Version Distributor", function () {
         let receipt = await (
           await distributor
             .connect(owner)
-            .instantiate(
-              repository.address,
-              ethers.utils.formatBytes32String("")
-            )
+            .instantiate(repository.address, ethers.utils.formatBytes32String(""))
         ).wait();
         let parsed = utils.getSuperInterface().parseLog(receipt.logs[0]);
         instanceAddress = parsed.args.instances[0];
         console.log(instanceAddress);
-        await distributor
-          .connect(owner)
-          .removeVersionedDistribution(repository.address);
+        await distributor.connect(owner).removeVersionedDistribution(repository.address);
       });
       it("Instance is invalid upon check", async () => {
         await expect(
-          distributor
-            .connect(owner)
-            .beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
+          distributor.connect(owner).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
         ).to.be.revertedWithCustomError(distributor, "InvalidInstance");
       });
     });
