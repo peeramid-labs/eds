@@ -18,7 +18,10 @@ interface IDistributor is ILayer {
 
     function getDistributionURI(bytes32 distributorId) external view returns (string memory);
 
-    function instantiate(bytes32 distributorId, bytes calldata args) external returns (address[] memory, bytes32 distributionName, uint256 distributionVersion);
+    function instantiate(
+        bytes32 distributorId,
+        bytes calldata args
+    ) external returns (address[] memory, bytes32 distributionName, uint256 distributionVersion);
 
     function addDistribution(bytes32 distributorId, bytes32 initializer) external;
 

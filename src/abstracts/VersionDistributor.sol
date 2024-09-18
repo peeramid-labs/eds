@@ -65,7 +65,7 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
 
         (address[] memory instances, bytes32 _distributionName, uint256 _distributionVersion) = IDistribution(
             getContractsIndex().get(src.sourceId)
-        ).instantiate();
+        ).instantiate("");
         bytes4 selector = IInitializer.initialize.selector;
 
         address initializer = address(initializers[address(repository)]);

@@ -52,15 +52,14 @@ abstract contract Distributor is IDistributor, CodeIndexer {
         emit DistributionRemoved(distributorsId);
     }
 
-    function _instantiate(bytes32 distributorsId, bytes calldata args) internal virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
+    function _instantiate(bytes32 distributorsId, bytes memory args) internal virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
         ICodeIndex codeIndex = getContractsIndex();
         if (!distirbutionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
         DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
-        (instances, distributionName, distributionVersion) = IDistribution(codeIndex.get(distributionComponent.id)).instantiate();
-        bytes4 selector = IInitializer.initialize.selector;
-        // This ensures instance owner (distributor) performs initialization.
-        // It is distirbutor responsibility to make sure calldata and initializer are safe to execute
         address initializer = address(initializers[distributionComponent.id]);
+        bytes4 selector = IInitializer.initialize.selector;
+        bytes memory instantiationArgs = initializer != address(0) ? args : bytes ("");
+        (instances, distributionName, distributionVersion) = IDistribution(codeIndex.get(distributionComponent.id)).instantiate(instantiationArgs);
         if (initializer != address(0)) {
             (bool success, bytes memory result) = address(distributionComponent.initializer).delegatecall(
                 abi.encodeWithSelector(selector, instances, args)
