@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.20;
 import "./IDistribution.sol";
-import "../ERC7746/ILayer.sol";
+import {IERC7746} from "../interfaces/IERC7746.sol";
 import "../interfaces/IRepository.sol";
 import "../libraries/LibSemver.sol";
-interface IVersionDistributor is ILayer {
+interface IVersionDistributor is IERC7746 {
     error InvalidRepository(IRepository repository);
     error RepositoryAlreadyExists(IRepository repository);
     error VersionOutdated(IRepository repository, uint256 version);

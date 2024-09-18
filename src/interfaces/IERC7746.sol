@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: CC0-1.0
-pragma solidity 0.8.20;
+pragma solidity >=0.8.0 <0.9.0;
 
-interface ILayer {
+interface IERC7746 {
     /// @notice Validates a function call before execution.
     /// @param configuration Layer-specific configuration data.
     /// @param selector The function selector being called.
     /// @param sender The address initiating the call.
     /// @param value The amount of ETH sent with the call (if any).
     /// @param data The calldata for the function call.
-    /// @return beforeCallResult Arbitrary data to be passed to `afterCall`.
+    /// @return beforeCallResult Arbitrary data to be passed to `afterCallValidation`.
     /// @dev MUST revert if validation fails.
     function beforeCall(
         bytes memory configuration,
@@ -24,7 +24,7 @@ interface ILayer {
     /// @param sender The address initiating the call.
     /// @param value The amount of ETH sent with the call (if any).
     /// @param data The calldata for the function call.
-    /// @param beforeCallResult The data returned by `beforeCall`.
+    /// @param beforeCallResult The data returned by `beforeCallValidation`.
     /// @dev MUST revert if validation fails.
     function afterCall(
         bytes memory configuration,

@@ -2,9 +2,9 @@
 pragma solidity =0.8.20;
 
 import {IDistributor} from "./IDistributor.sol";
-import "../ERC7746/ILayer.sol";
+import {IERC7746} from "../interfaces/IERC7746.sol";
 
-interface IInstaller is ILayer {
+interface IInstaller is IERC7746 {
     error InvalidDistributor(IDistributor distributor);
     error InvalidTarget(address target);
     error alreadyAllowed(IDistributor distributor);

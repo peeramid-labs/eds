@@ -16,7 +16,7 @@ describe("CloneDistribution", function () {
   });
 
   it("should emit Distributed event", async function () {
-    expect(await cloneDistribution.instantiate()).to.emit(cloneDistribution, "Distributed");
+    expect(await cloneDistribution.instantiate("0x")).to.emit(cloneDistribution, "Distributed");
   });
 
   it("Should read metadata", async function () {
