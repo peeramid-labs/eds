@@ -4,7 +4,8 @@ import "./IDistribution.sol";
 import {IERC7746} from "../interfaces/IERC7746.sol";
 import "../interfaces/IRepository.sol";
 import "../libraries/LibSemver.sol";
-interface IDistributor is IERC7746 {
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+interface IDistributor is IERC7746, IERC165 {
     error DistributionNotFound(bytes32 id);
     error DistributionExists(bytes32 id);
     error InitializerNotFound(bytes32 id);

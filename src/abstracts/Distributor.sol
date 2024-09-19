@@ -6,7 +6,8 @@ import "../interfaces/IDistributor.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IInitializer.sol";
 import "../abstracts/CodeIndexer.sol";
-abstract contract Distributor is IDistributor, CodeIndexer {
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+abstract contract Distributor is IDistributor, CodeIndexer, ERC165{
 
     struct DistributionComponent {
         bytes32 id;
@@ -97,4 +98,8 @@ abstract contract Distributor is IDistributor, CodeIndexer {
         bytes memory data,
         bytes memory beforeCallResult
     ) public virtual {}
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+        return interfaceId == type(IDistributor).interfaceId || super.supportsInterface(interfaceId);
+    }
 }
