@@ -6,6 +6,7 @@ import "hardhat-gas-reporter";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import "solidity-docgen";
+// import "@nomicfoundation/hardhat-verify";
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();
 
@@ -26,14 +27,14 @@ export default {
     currency: "USD",
     gasPrice: 21,
     token: "MATIC",
-    gasPriceApi:
-      "https://api.polygonscan.com/api?module=proxy&action=eth_gasPrice",
+    gasPriceApi: "https://api.polygonscan.com/api?module=proxy&action=eth_gasPrice",
     enabled: false,
     coinmarketcap: process.env.COINMARKETCAP_KEY,
   },
   namedAccounts: {
     deployer: {
       hardhat: "0xF52E5dF676f51E410c456CC34360cA6F27959420",
+      arbitrum: "0x5F997aAb4F6757FAa48e008faa599841947959F1",
       anvil: "0x6Cf8d74C7875de8C2FfB09228F4bf2A21b25e583",
       default: "0xF52E5dF676f51E410c456CC34360cA6F27959420", //TODO this must be set for networks
     },
@@ -46,9 +47,12 @@ export default {
   networks: {
     hardhat: {
       accounts: {
-        mnemonic:
-          "casual vacant letter raw trend tool vacant opera buzz jaguar bridge myself",
+        mnemonic: "casual vacant letter raw trend tool vacant opera buzz jaguar bridge myself",
       }, // ONLY LOCAL
+    },
+    arbitrum: {
+      url: process.env.RPC_URL ?? "",
+      accounts: process.env.PRIVATE_KEY && [process.env.PRIVATE_KEY],
     },
     mumbai: {
       url: "https://matic-mumbai.chainstacklabs.com",
@@ -69,8 +73,7 @@ export default {
     localhost: {
       url: "http://127.0.0.1:8545",
       accounts: {
-        mnemonic:
-          "casual vacant letter raw trend tool vacant opera buzz jaguar bridge myself",
+        mnemonic: "casual vacant letter raw trend tool vacant opera buzz jaguar bridge myself",
       }, // ONLY LOCAL
     },
     anvil: {
@@ -95,6 +98,9 @@ export default {
         },
       },
     ],
+  },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY,
   },
   typechain: {
     outDir: "types",
