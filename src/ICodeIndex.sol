@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: CC0-1.0
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity 0.8.20;
 
 interface ICodeIndex {
     event Indexed(address indexed container, bytes32 indexed codeHash);
