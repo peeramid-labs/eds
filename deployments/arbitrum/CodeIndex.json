@@ -1,0 +1,162 @@
+{
+  "address": "0xc0D31d398c5ee86C5f8a23FA253ee8a586dA03Ce",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "id",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "source",
+          "type": "address"
+        }
+      ],
+      "name": "alreadyExists",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "container",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "codeHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "Indexed",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "id",
+          "type": "bytes32"
+        }
+      ],
+      "name": "get",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "container",
+          "type": "address"
+        }
+      ],
+      "name": "register",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x0fe19626e1dd0491b392d04b38f4849e743cb547fff2c09be8daf678db5c7f1a",
+  "receipt": {
+    "to": "0x4e59b44847b379578588920cA78FbF26c0B4956C",
+    "from": "0x5F997aAb4F6757FAa48e008faa599841947959F1",
+    "contractAddress": null,
+    "transactionIndex": 2,
+    "gasUsed": "527200",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xbc7cc4c20588f56c36316c31df2951b8569945d40be1bff569da49e657685a68",
+    "transactionHash": "0x0fe19626e1dd0491b392d04b38f4849e743cb547fff2c09be8daf678db5c7f1a",
+    "logs": [],
+    "blockNumber": 255236464,
+    "cumulativeGasUsed": "874644",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "cc9470d20fcce6905d2bd940bec91919",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"id\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"source\",\"type\":\"address\"}],\"name\":\"alreadyExists\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"container\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"codeHash\",\"type\":\"bytes32\"}],\"name\":\"Indexed\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"id\",\"type\":\"bytes32\"}],\"name\":\"get\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"container\",\"type\":\"address\"}],\"name\":\"register\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"author\":\"Tim Pechersky (@Peersky)\",\"details\":\"This allows to query contracts by their bytecode instead of addresses.\",\"kind\":\"dev\",\"methods\":{\"get(bytes32)\":{\"details\":\"returns zero if the contract is not indexed\",\"params\":{\"id\":\"The bytecode hash\"},\"returns\":{\"_0\":\"The contract address\"}},\"register(address)\":{\"details\":\"`msg.codeHash` will be usedIt will revert if the contract is already indexed\",\"params\":{\"container\":\"The contract to register\"}}},\"title\":\"Byte Code Indexer Contract\",\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"get(bytes32)\":{\"notice\":\"Returns the contract address by its bytecode hash\"},\"register(address)\":{\"notice\":\"Registers a contract in the index by its bytecode hash\"}},\"notice\":\"You can use this contract to index contracts by their bytecode.\",\"version\":1}},\"settings\":{\"compilationTarget\":{\"src/CodeIndex.sol\":\"CodeIndex\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200000},\"remappings\":[]},\"sources\":{\"src/CodeIndex.sol\":{\"content\":\"// SPDX-License-Identifier: CC0-1.0\\npragma solidity 0.8.20;\\nimport \\\"./ICodeIndex.sol\\\";\\n\\n/**\\n * @title Byte Code Indexer Contract\\n * @notice You can use this contract to index contracts by their bytecode.\\n * @dev This allows to query contracts by their bytecode instead of addresses.\\n * @author Tim Pechersky (@Peersky)\\n */\\ncontract CodeIndex is ICodeIndex {\\n    mapping(bytes32 => address) private index;\\n\\n    /**\\n     * @notice Registers a contract in the index by its bytecode hash\\n     * @param container The contract to register\\n     * @dev `msg.codeHash` will be used\\n     * @dev It will revert if the contract is already indexed\\n     */\\n    function register(address container) external {\\n        address etalon = index[container.codehash];\\n        if (etalon != address(0)) {\\n            revert alreadyExists(container.codehash, etalon);\\n        }\\n        index[container.codehash] = container;\\n        emit Indexed(container, container.codehash);\\n    }\\n\\n    /**\\n     * @notice Returns the contract address by its bytecode hash\\n     * @dev returns zero if the contract is not indexed\\n     * @param id The bytecode hash\\n     * @return The contract address\\n     */\\n    function get(bytes32 id) external view returns (address) {\\n        return index[id];\\n    }\\n}\",\"keccak256\":\"0x549e9093d5417b748ec9b46a61e09d2aece8783efe3fff2d085e35be057a5699\",\"license\":\"CC0-1.0\"},\"src/ICodeIndex.sol\":{\"content\":\"// SPDX-License-Identifier: CC0-1.0\\npragma solidity 0.8.20;\\n\\ninterface ICodeIndex {\\n    event Indexed(address indexed container, bytes32 indexed codeHash);\\n    error alreadyExists(bytes32 id, address source);\\n\\n    function register(address container) external;\\n\\n    function get(bytes32 id) external view returns (address);\\n}\",\"keccak256\":\"0x46ba8ab4127e5d6f2171d84c15cea75e530d48fb8997766002a45fe1014766dd\",\"license\":\"CC0-1.0\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b5061023d806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c80634420e4861461003b5780638eaa6ac014610050575b600080fd5b61004e6100493660046101b1565b6100af565b005b61008661005e3660046101ee565b60009081526020819052604090205473ffffffffffffffffffffffffffffffffffffffff1690565b60405173ffffffffffffffffffffffffffffffffffffffff909116815260200160405180910390f35b73ffffffffffffffffffffffffffffffffffffffff8082163f600090815260208190526040902054168015610135576040517f1a88fd5200000000000000000000000000000000000000000000000000000000815273ffffffffffffffffffffffffffffffffffffffff8084163f60048301528216602482015260440160405180910390fd5b73ffffffffffffffffffffffffffffffffffffffff8216803f60009081526020819052604080822080547fffffffffffffffffffffffff0000000000000000000000000000000000000000168417905551823f92917f7eac48f4f5b19bc4a3e15fd574676fc0f406678447f0ca444ed4830d0a4b521f91a35050565b6000602082840312156101c357600080fd5b813573ffffffffffffffffffffffffffffffffffffffff811681146101e757600080fd5b9392505050565b60006020828403121561020057600080fd5b503591905056fea2646970667358221220751ad8c3c74fe055c4d0b5590925ad6f2b9a03b3b3972786607cfe5084c2783e64736f6c63430008140033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100365760003560e01c80634420e4861461003b5780638eaa6ac014610050575b600080fd5b61004e6100493660046101b1565b6100af565b005b61008661005e3660046101ee565b60009081526020819052604090205473ffffffffffffffffffffffffffffffffffffffff1690565b60405173ffffffffffffffffffffffffffffffffffffffff909116815260200160405180910390f35b73ffffffffffffffffffffffffffffffffffffffff8082163f600090815260208190526040902054168015610135576040517f1a88fd5200000000000000000000000000000000000000000000000000000000815273ffffffffffffffffffffffffffffffffffffffff8084163f60048301528216602482015260440160405180910390fd5b73ffffffffffffffffffffffffffffffffffffffff8216803f60009081526020819052604080822080547fffffffffffffffffffffffff0000000000000000000000000000000000000000168417905551823f92917f7eac48f4f5b19bc4a3e15fd574676fc0f406678447f0ca444ed4830d0a4b521f91a35050565b6000602082840312156101c357600080fd5b813573ffffffffffffffffffffffffffffffffffffffff811681146101e757600080fd5b9392505050565b60006020828403121561020057600080fd5b503591905056fea2646970667358221220751ad8c3c74fe055c4d0b5590925ad6f2b9a03b3b3972786607cfe5084c2783e64736f6c63430008140033",
+  "devdoc": {
+    "author": "Tim Pechersky (@Peersky)",
+    "details": "This allows to query contracts by their bytecode instead of addresses.",
+    "kind": "dev",
+    "methods": {
+      "get(bytes32)": {
+        "details": "returns zero if the contract is not indexed",
+        "params": {
+          "id": "The bytecode hash"
+        },
+        "returns": {
+          "_0": "The contract address"
+        }
+      },
+      "register(address)": {
+        "details": "`msg.codeHash` will be usedIt will revert if the contract is already indexed",
+        "params": {
+          "container": "The contract to register"
+        }
+      }
+    },
+    "title": "Byte Code Indexer Contract",
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "get(bytes32)": {
+        "notice": "Returns the contract address by its bytecode hash"
+      },
+      "register(address)": {
+        "notice": "Registers a contract in the index by its bytecode hash"
+      }
+    },
+    "notice": "You can use this contract to index contracts by their bytecode.",
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 2506,
+        "contract": "src/CodeIndex.sol:CodeIndex",
+        "label": "index",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_mapping(t_bytes32,t_address)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_bytes32": {
+        "encoding": "inplace",
+        "label": "bytes32",
+        "numberOfBytes": "32"
+      },
+      "t_mapping(t_bytes32,t_address)": {
+        "encoding": "mapping",
+        "key": "t_bytes32",
+        "label": "mapping(bytes32 => address)",
+        "numberOfBytes": "32",
+        "value": "t_address"
+      }
+    }
+  }
+}
