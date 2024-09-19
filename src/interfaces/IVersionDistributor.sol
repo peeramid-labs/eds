@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity =0.8.20;
+pragma solidity >=0.8.0 <0.9.0;
 import "./IDistribution.sol";
 import {IERC7746} from "../interfaces/IERC7746.sol";
 import "../interfaces/IRepository.sol";
