@@ -4,7 +4,7 @@ pragma solidity >=0.8.0 <0.9.0;
 import "../libraries/LibMiddleware.sol";
 
 abstract contract ERC7746Middleware {
-    modifier ERC7746Customised(bytes4 _selector, address sender, bytes calldata data, uint256 value) {
+    modifier ERC7746C(bytes4 _selector, address sender, bytes calldata data, uint256 value) {
         bytes[] memory layerReturns = LibMiddleware.beforeCall(_selector, sender, data, value);
         _;
         LibMiddleware.afterCall(_selector, sender, data, value, layerReturns);
