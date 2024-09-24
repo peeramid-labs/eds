@@ -15,8 +15,8 @@ contract OwnableDistributor is Distributor, Ownable {
         return super._instantiate(id, args);
     }
 
-    function addDistribution(bytes32 id, bytes32 initId) public onlyOwner {
-        super._addDistribution(id, initId);
+    function addDistribution(bytes32 id, address initializer) public onlyOwner {
+        super._addDistribution(id, initializer);
     }
 
     function removeDistribution(bytes32 id) public onlyOwner {

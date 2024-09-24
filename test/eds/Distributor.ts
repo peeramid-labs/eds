@@ -41,9 +41,11 @@ describe("Distributor", function () {
     await cloneDistribution.deployed();
     const code = await cloneDistribution.provider.getCode(cloneDistribution.address);
     cloneDistributionId = ethers.utils.keccak256(code);
-    distributorsId = ethers.utils.solidityKeccak256(
-      ["bytes32", "bytes32"],
-      [cloneDistributionId, ethers.utils.formatBytes32String("")]
+    distributorsId = ethers.utils.keccak256(
+      ethers.utils.defaultAbiCoder.encode(
+        ["bytes32", "bytes32"],
+        [cloneDistributionId, ethers.utils.formatBytes32String("")]
+      )
     );
     await codeIndex.register(cloneDistribution.address);
   });
@@ -52,12 +54,12 @@ describe("Distributor", function () {
     expect(
       await distributor
         .connect(owner)
-        .addDistribution(cloneDistributionId, ethers.utils.formatBytes32String(""))
+        .addDistribution(cloneDistributionId, ethers.constants.AddressZero)
     ).to.emit(distributor, "DistributionAdded");
     await expect(
       distributor
         .connect(deployer)
-        .addDistribution(cloneDistributionId, ethers.utils.formatBytes32String(""))
+        .addDistribution(cloneDistributionId, ethers.constants.AddressZero)
     ).to.be.revertedWithCustomError(distributor, "OwnableUnauthorizedAccount");
   });
 
@@ -81,14 +83,12 @@ describe("Distributor", function () {
     beforeEach(async function () {
       await distributor
         .connect(owner)
-        .addDistribution(cloneDistributionId, ethers.utils.formatBytes32String(""));
+        .addDistribution(cloneDistributionId, ethers.constants.AddressZero);
     });
 
     it("Is possible to instantiate a contract", async function () {
       expect(
-        await distributor
-          .connect(owner)
-          .instantiate(distributorsId, ethers.utils.formatBytes32String(""))
+        await distributor.connect(owner).instantiate(distributorsId, ethers.constants.AddressZero)
       ).to.emit(distributor, "Instantiated");
     });
 
@@ -103,9 +103,7 @@ describe("Distributor", function () {
       let instanceAddress: string;
       beforeEach(async () => {
         let receipt = await (
-          await distributor
-            .connect(owner)
-            .instantiate(distributorsId, ethers.utils.formatBytes32String(""))
+          await distributor.connect(owner).instantiate(distributorsId, ethers.constants.AddressZero)
         ).wait();
         let parsed = utils.getSuperInterface().parseLog(receipt.logs[0]);
         instanceAddress = parsed.args.instances[0];

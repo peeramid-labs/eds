@@ -13,7 +13,7 @@ interface IDistributor is IERC7746, IERC165 {
     event Instantiated(bytes32 indexed distributionId, bytes indexed argsHash);
     event DistributionRemoved(bytes32 indexed id);
 
-    event DistributionAdded(bytes32 indexed id, bytes32 indexed initializerId);
+    event DistributionAdded(bytes32 indexed id, address indexed initializer);
 
     function getDistributions() external view returns (bytes32[] memory distributorIds);
 
@@ -24,7 +24,7 @@ interface IDistributor is IERC7746, IERC165 {
         bytes calldata args
     ) external returns (address[] memory, bytes32 distributionName, uint256 distributionVersion);
 
-    function addDistribution(bytes32 distributorId, bytes32 initializer) external;
+    function addDistribution(bytes32 distributorId, address initializer) external;
 
     function removeDistribution(bytes32 distributorId) external;
 }

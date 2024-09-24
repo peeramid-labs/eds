@@ -13,7 +13,7 @@ interface IVersionDistributor is IERC7746 {
         IRepository indexed repository,
         uint256 indexed version,
         LibSemver.requirements requirement,
-        bytes32 indexed initializerId
+        address indexed initializer
     );
     event VersionChanged(address indexed repository, uint256 indexed oldVersion, uint256 indexed newVersion);
     event RequirementChanged(
@@ -28,7 +28,7 @@ interface IVersionDistributor is IERC7746 {
         IRepository repository,
         LibSemver.Version memory version,
         LibSemver.requirements requirement,
-        bytes32 initializer
+        address initializer
     ) external;
 
     function changeRequirement(

@@ -34,16 +34,14 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165{
         return IDistribution(codeIndex.get(distributionComponent.id)).getMetadata();
     }
 
-    function _addDistribution(bytes32 id, bytes32 initId) internal virtual {
+    function _addDistribution(bytes32 id, address initializerAddress) internal virtual {
         ICodeIndex codeIndex = getContractsIndex();
-        address initializerAddress = codeIndex.get(initId);
         if (codeIndex.get(id) == address(0)) revert DistributionNotFound(id);
-        if (initializerAddress == address(0) && initId != bytes32(0)) revert InitializerNotFound(initId);
-        bytes32 distributorsId = keccak256(abi.encode(id,initId));
+        bytes32 distributorsId = keccak256(abi.encode(id,initializerAddress));
         if (distirbutionsSet.contains(distributorsId)) revert DistributionExists(distributorsId);
         distirbutionsSet.add(distributorsId);
-        distributionComponents[distributorsId] = DistributionComponent(id, initializerAddress);
-        emit DistributionAdded(id, initId);
+                distributionComponents[distributorsId] = DistributionComponent(id, initializerAddress);
+        emit DistributionAdded(id, initializerAddress);
     }
 
     function _removeDistribution(bytes32 distributorsId) internal virtual {

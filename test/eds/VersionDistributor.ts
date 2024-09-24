@@ -78,7 +78,7 @@ describe("Version Distributor", function () {
           repository.address,
           { major: 1, minor: 0, patch: 0 },
           1,
-          ethers.utils.formatBytes32String("")
+          ethers.constants.AddressZero
         )
     ).to.emit(distributor, "VersionedDistributionAdded");
     await expect(
@@ -88,7 +88,7 @@ describe("Version Distributor", function () {
           repository.address,
           { major: 1, minor: 0, patch: 0 },
           1,
-          ethers.utils.formatBytes32String("")
+          ethers.constants.AddressZero
         )
     ).to.be.revertedWithCustomError(distributor, "OwnableUnauthorizedAccount");
   });
@@ -115,7 +115,7 @@ describe("Version Distributor", function () {
           repository.address,
           { major: 1, minor: 0, patch: 0 },
           1,
-          ethers.utils.formatBytes32String("")
+          ethers.constants.AddressZero
         );
     });
 

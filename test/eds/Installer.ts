@@ -45,12 +45,12 @@ describe("Installer", function () {
     const code = await cloneDistribution.provider.getCode(cloneDistribution.address);
     cloneDistributionId = ethers.utils.keccak256(code);
     await codeIndex.register(cloneDistribution.address);
-    distributor
-      .connect(owner)
-      .addDistribution(cloneDistributionId, ethers.utils.formatBytes32String(""));
-    distributorsId = ethers.utils.solidityKeccak256(
-      ["bytes32", "bytes32"],
-      [cloneDistributionId, ethers.utils.formatBytes32String("")]
+    distributor.connect(owner).addDistribution(cloneDistributionId, ethers.constants.AddressZero);
+    distributorsId = ethers.utils.keccak256(
+      ethers.utils.defaultAbiCoder.encode(
+        ["bytes32", "address"],
+        [cloneDistributionId, ethers.constants.AddressZero]
+      )
     );
     const Installer = (await ethers.getContractFactory("MockInstaller")) as MockInstaller__factory;
     installer = await Installer.deploy(target.address, owner.address);

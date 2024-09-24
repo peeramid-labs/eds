@@ -19,7 +19,7 @@ contract OwnableVersionDistributor is VersionDistributor, Ownable {
         IRepository repository,
         LibSemver.Version memory version,
         LibSemver.requirements requirement,
-        bytes32 initializer
+        address initializer
     ) public onlyOwner {
         super._addVersionedDistribution(repository, version, requirement, initializer);
     }

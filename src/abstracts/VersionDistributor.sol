@@ -23,13 +23,13 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
         IRepository repository,
         LibSemver.Version memory version,
         LibSemver.requirements requirement,
-        bytes32 initializer
+        address initializer
     ) internal {
         if (!ERC165Checker.supportsInterface(address(repository), type(IRepository).interfaceId)) {
             revert InvalidRepository(repository);
         }
         ICodeIndex codeIndex = getContractsIndex();
-        initializers[address(repository)] = IInitializer(codeIndex.get(initializer));
+        initializers[address(repository)] = IInitializer(initializer);
         _repositories.add(address(repository));
         versions[address(repository)] = version;
         requirements[address(repository)] = requirement;
