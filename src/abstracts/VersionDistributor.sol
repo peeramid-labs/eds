@@ -28,7 +28,6 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
         if (!ERC165Checker.supportsInterface(address(repository), type(IRepository).interfaceId)) {
             revert InvalidRepository(repository);
         }
-        ICodeIndex codeIndex = getContractsIndex();
         initializers[address(repository)] = IInitializer(initializer);
         _repositories.add(address(repository));
         versions[address(repository)] = version;

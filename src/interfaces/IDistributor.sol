@@ -10,7 +10,7 @@ interface IDistributor is IERC7746, IERC165 {
     error DistributionExists(bytes32 id);
     error InitializerNotFound(bytes32 id);
     error InvalidInstance(address instance);
-    event Instantiated(bytes32 indexed distributionId, bytes indexed argsHash);
+    event Instantiated(bytes32 indexed distributionId, bytes indexed argsHash, address[] instances);
     event DistributionRemoved(bytes32 indexed id);
 
     event DistributionAdded(bytes32 indexed id, address indexed initializer);
@@ -27,4 +27,8 @@ interface IDistributor is IERC7746, IERC165 {
     function addDistribution(bytes32 distributorId, address initializer) external;
 
     function removeDistribution(bytes32 distributorId) external;
+
+    function getDistributionId(address instance) external view  returns (bytes32);
+    function getInstanceId(address instance) external view  returns (uint256);
+
 }

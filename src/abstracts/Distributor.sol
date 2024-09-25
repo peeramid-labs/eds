@@ -7,8 +7,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IInitializer.sol";
 import "../abstracts/CodeIndexer.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-abstract contract Distributor is IDistributor, CodeIndexer, ERC165{
-
+abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
     struct DistributionComponent {
         bytes32 id;
         address initializer;
@@ -16,16 +15,21 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165{
     using EnumerableSet for EnumerableSet.Bytes32Set;
     EnumerableSet.Bytes32Set private distirbutionsSet;
     mapping(bytes32 => IInitializer) private initializers;
-    mapping(address => bytes32) private distributionOf;
+    mapping(address => uint256) private instanceIds;
+    uint256 numInstances;
+    mapping(uint256 => bytes32) public distributionOf;
     mapping(bytes32 => DistributionComponent) private distributionComponents;
 
     function getDistributions() public view returns (bytes32[] memory) {
         return distirbutionsSet.values();
     }
 
-    function distributionId(address instance) public view virtual returns (bytes32 instanceId)
-    {
-        return distributionOf[instance];
+    function getDistributionId(address instance) public view virtual returns (bytes32) {
+        return distributionOf[getInstanceId(instance)];
+    }
+
+    function getInstanceId(address instance) public view virtual returns (uint256) {
+        return instanceIds[instance];
     }
 
     function getDistributionURI(bytes32 distributorsId) public view returns (string memory) {
@@ -37,10 +41,10 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165{
     function _addDistribution(bytes32 id, address initializerAddress) internal virtual {
         ICodeIndex codeIndex = getContractsIndex();
         if (codeIndex.get(id) == address(0)) revert DistributionNotFound(id);
-        bytes32 distributorsId = keccak256(abi.encode(id,initializerAddress));
+        bytes32 distributorsId = keccak256(abi.encode(id, initializerAddress));
         if (distirbutionsSet.contains(distributorsId)) revert DistributionExists(distributorsId);
         distirbutionsSet.add(distributorsId);
-                distributionComponents[distributorsId] = DistributionComponent(id, initializerAddress);
+        distributionComponents[distributorsId] = DistributionComponent(id, initializerAddress);
         emit DistributionAdded(id, initializerAddress);
     }
 
@@ -51,51 +55,74 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165{
         emit DistributionRemoved(distributorsId);
     }
 
-    function _instantiate(bytes32 distributorsId, bytes memory args) internal virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
+    function _instantiate(
+        bytes32 distributorsId,
+        bytes memory args
+    ) internal virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
         ICodeIndex codeIndex = getContractsIndex();
         if (!distirbutionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
         DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
         address initializer = address(initializers[distributionComponent.id]);
         bytes4 selector = IInitializer.initialize.selector;
-        bytes memory instantiationArgs = initializer != address(0) ? args : bytes ("");
-        (instances, distributionName, distributionVersion) = IDistribution(codeIndex.get(distributionComponent.id)).instantiate(instantiationArgs);
+        // bytes memory instantiationArgs = initializer != address(0) ? args : bytes ("");
+        (instances, distributionName, distributionVersion) = IDistribution(codeIndex.get(distributionComponent.id))
+            .instantiate(args);
         if (initializer != address(0)) {
             (bool success, bytes memory result) = address(distributionComponent.initializer).delegatecall(
                 abi.encodeWithSelector(selector, instances, args)
             );
             require(success, string(result));
         }
+        uint256 instanceId = numInstances;
         for (uint256 i = 0; i < instances.length; i++) {
-            distributionOf[instances[i]] = distributorsId;
+            instanceIds[instances[i]] = instanceId;
+            distributionOf[instanceId] = distributorsId;
         }
-        emit Instantiated(distributorsId, args);
+        emit Instantiated(distributorsId, args, instances);
         return (instances, distributionName, distributionVersion);
     }
 
+    /*
+     * @dev This is ERC7746 implementation
+     * This hook must be called by instance methods that access scope is
+     * limited to the same instance or distribution
+     * it will revert if `msg.sender` is not a valid instance
+     * it will revert if `maybeInstance` is not a valid instance
+     * it will revert if instanceId belongs to disactivated distribution
+     */
     function beforeCall(
         bytes memory,
         bytes4,
-        address instance,
+        address maybeInstance,
         uint256,
         bytes memory
     ) public view virtual returns (bytes memory) {
-        bytes32 distributorsId = distributionOf[instance];
-        // DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
-        if (distributorsId != bytes32(0) && distirbutionsSet.contains(distributorsId) == true) {
+        bytes32 distributorsId = distributionOf[getInstanceId(maybeInstance)];
+        if (
+            distributorsId != bytes32(0) &&
+            getInstanceId(msg.sender) == getInstanceId(maybeInstance) &&
+            distirbutionsSet.contains(distributorsId) == true
+        ) {
+            // ToDo: This check could be based on DistributionOf, hence allowing cross-instance calls
+            // Use layerConfig to allow client to configure requirement for the call
             return abi.encode(distributorsId, "");
-        } else {
-            revert InvalidInstance(instance);
         }
+        revert InvalidInstance(maybeInstance);
     }
 
     function afterCall(
-        bytes memory layerConfig,
-        bytes4 selector,
-        address sender,
-        uint256 value,
-        bytes memory data,
-        bytes memory beforeCallResult
-    ) public virtual {}
+        bytes memory,
+        bytes4,
+        address maybeInstance,
+        uint256,
+        bytes memory,
+        bytes memory
+    ) public virtual {
+        bytes32 distributorsId = distributionOf[getInstanceId(maybeInstance)];
+        if (getInstanceId(msg.sender) != getInstanceId(maybeInstance) && distirbutionsSet.contains(distributorsId) == true) {
+            revert InvalidInstance(maybeInstance);
+        }
+    }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
         return interfaceId == type(IDistributor).interfaceId || super.supportsInterface(interfaceId);
