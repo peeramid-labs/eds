@@ -10,7 +10,7 @@ interface IDistributor is IERC7746, IERC165 {
     error DistributionExists(bytes32 id);
     error InitializerNotFound(bytes32 id);
     error InvalidInstance(address instance);
-    event Instantiated(bytes32 indexed distributionId, bytes indexed argsHash, address[] instances);
+    event Instantiated(bytes32 indexed distributionId,uint256 indexed instanceId, bytes indexed argsHash, address[] instances);
     event DistributionRemoved(bytes32 indexed id);
 
     event DistributionAdded(bytes32 indexed id, address indexed initializer);

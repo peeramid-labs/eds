@@ -73,12 +73,13 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
             );
             require(success, string(result));
         }
+        numInstances++;
         uint256 instanceId = numInstances;
         for (uint256 i = 0; i < instances.length; i++) {
             instanceIds[instances[i]] = instanceId;
             distributionOf[instanceId] = distributorsId;
         }
-        emit Instantiated(distributorsId, args, instances);
+        emit Instantiated(distributorsId, instanceId, args, instances);
         return (instances, distributionName, distributionVersion);
     }
 
@@ -91,16 +92,17 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
      * it will revert if instanceId belongs to disactivated distribution
      */
     function beforeCall(
-        bytes memory,
+        bytes memory config,
         bytes4,
         address maybeInstance,
         uint256,
         bytes memory
     ) public view virtual returns (bytes memory) {
+        (address target) = abi.decode(config, (address));
         bytes32 distributorsId = distributionOf[getInstanceId(maybeInstance)];
         if (
             distributorsId != bytes32(0) &&
-            getInstanceId(msg.sender) == getInstanceId(maybeInstance) &&
+            getInstanceId(target) == getInstanceId(maybeInstance) &&
             distirbutionsSet.contains(distributorsId) == true
         ) {
             // ToDo: This check could be based on DistributionOf, hence allowing cross-instance calls
@@ -111,15 +113,19 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
     }
 
     function afterCall(
-        bytes memory,
+        bytes memory config,
         bytes4,
         address maybeInstance,
         uint256,
         bytes memory,
         bytes memory
     ) public virtual {
+        (address target) = abi.decode(config, (address));
         bytes32 distributorsId = distributionOf[getInstanceId(maybeInstance)];
-        if (getInstanceId(msg.sender) != getInstanceId(maybeInstance) && distirbutionsSet.contains(distributorsId) == true) {
+        if (
+            (getInstanceId(target) != getInstanceId(maybeInstance)) &&
+            distirbutionsSet.contains(distributorsId) == true
+        ) {
             revert InvalidInstance(maybeInstance);
         }
     }

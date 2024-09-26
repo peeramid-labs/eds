@@ -6,7 +6,6 @@ import {IERC7746} from "../interfaces/IERC7746.sol";
 import {IDistributor} from "../interfaces/IDistributor.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-
 contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
     struct MethodSettings {
         bool isDistributionOnly;
@@ -62,7 +61,7 @@ contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
     }
 
     function beforeCall(
-        bytes memory configuration,
+        bytes memory ,
         bytes4 selector,
         address sender,
         uint256 value,
@@ -76,14 +75,14 @@ contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
             revert("SimpleAccessManager: sender is not allowed to call this method");
         } else {
             if (s.methodSettings[selector].isDistributionOnly) {
-                return s.distributor.beforeCall(configuration, selector, sender, value, data);
+                return s.distributor.beforeCall(abi.encode(msg.sender), selector, sender, value, data);
             }
             return "";
         }
     }
 
     function afterCall(
-        bytes memory configuration,
+        bytes memory ,
         bytes4 selector,
         address sender,
         uint256 value,
@@ -95,7 +94,7 @@ contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
             revert("ERC20DistributorsManager: only target can call this function");
         }
         if (s.methodSettings[selector].isDistributionOnly) {
-            s.distributor.afterCall(configuration, selector, sender, value, data,beforeCallResult);
+            s.distributor.afterCall(abi.encode(msg.sender), selector, sender, value, data,beforeCallResult);
         }
     }
 
