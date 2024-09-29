@@ -53,7 +53,7 @@ contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
             s.methodSettings[methodSettings[i].selector].isDistributionOnly = methodSettings[i]
                 .distributionComponentsOnly;
             uint256 dissalowedMethodsLength = methodSettings[i].dissallowedAddresses.length;
-            for (uint256 j; j < dissalowedMethodsLength; j++) {
+            for (uint256 j; j < dissalowedMethodsLength; ++j) {
                 s.methodSettings[methodSettings[i].selector].dissallowedAddresses[
                     methodSettings[i].dissallowedAddresses[j]
                 ] = true;

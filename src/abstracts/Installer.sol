@@ -83,7 +83,7 @@ abstract contract Installer is IInstaller {
         instancesNum++;
         _instanceEnum[instancesNum] = installation;
         uint256 installationLength = installation.length;
-        for (uint256 i = 0; i < installationLength; ++i) {
+        for (uint256 i; i < installationLength; ++i) {
             _distributorOf[installation[i]] = address(distributor);
             emit Installed(installation[0], distributionId, "0x", args);
         }
@@ -93,7 +93,7 @@ abstract contract Installer is IInstaller {
     function _uninstall(uint256 instanceId) internal virtual {
         address[] memory instance = _instanceEnum[instanceId];
         uint256 instanceLength = instance.length;
-        for (uint256 i = 0; i < instanceLength; ++i) {
+        for (uint256 i; i < instanceLength; ++i) {
             _distributorOf[instance[i]] = address(0);
             emit Uninstalled(instance[i]);
         }

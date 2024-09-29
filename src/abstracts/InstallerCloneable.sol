@@ -86,7 +86,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         strg.instancesNum++;
         strg._instanceEnum[strg.instancesNum] = installation;
         uint256 installationlength = installation.length;
-        for (uint256 i = 0; i < installationlength; ++i) {
+        for (uint256 i; i < installationlength; ++i) {
             strg._distributorOf[installation[i]] = address(distributor);
             emit Installed(installation[0], distributionId, "0x", args);
         }
@@ -97,7 +97,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         LibInstaller.InstallerStruct storage strg = LibInstaller.getStorage();
         address[] memory instance = strg._instanceEnum[instanceId];
         uint256 length = instance.length;
-        for (uint256 i = 0; i < length; ++i) {
+        for (uint256 i; i < length; ++i) {
             strg._distributorOf[instance[i]] = address(0);
             emit Uninstalled(instance[i]);
         }

@@ -64,7 +64,7 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
 
     /**
      * @notice Internal function to instantiate a new instance.
-     * @dev This function will DELEGATECALL to initializer. Initializer MUST be trusted contract.
+     * @dev WARNING: This function will DELEGATECALL to initializer. Initializer MUST be trusted contract.
      */
     function _instantiate(
         bytes32 distributorsId,
