@@ -10,6 +10,7 @@ abstract contract CloneDistribution is IDistribution, CodeIndexer {
 
     function sources() internal view virtual returns (address[] memory, bytes32 name, uint256 version);
 
+    // @inheritdoc IDistribution
     function instantiate(
         bytes memory
     ) external virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
@@ -23,10 +24,10 @@ abstract contract CloneDistribution is IDistribution, CodeIndexer {
         emit Distributed(msg.sender, instances);
         return (instances, _distributionName, _distributionVersion);
     }
-
+    // @inheritdoc IDistribution
     function get() external view virtual returns (address[] memory src, bytes32 name, uint256 version) {
         return sources();
     }
-
+    // @inheritdoc IDistribution
     function getMetadata() external view virtual returns (string memory);
 }

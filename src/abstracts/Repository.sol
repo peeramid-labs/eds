@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.8;
+pragma solidity >=0.8.0 <0.9.0;
 
 import "../libraries/LibSemver.sol";
 import "../interfaces/IRepository.sol";
 
+/**
+ * @title Repository
+ * @notice Abstract contract that implements the IRepository interface. This contract serves as a base for other contracts that require repository functionalities.
+ */
 abstract contract Repository is IRepository {
     bytes32 public immutable repositoryName;
     using LibSemver for LibSemver.Version;
@@ -19,13 +23,6 @@ abstract contract Repository is IRepository {
     constructor(bytes32 _repositoryName) {
         repositoryName = _repositoryName;
     }
-    // error VersionHashDoesNotExist(uint256 version);
-    // error ReleaseZeroNotAllowed();
-    // error AlreadyInPreviousRelease(uint256 version, bytes32 source);
-    // error EmptyReleaseMetadata();
-    // error ReleaseDoesNotExist();
-    // event VersionAdded(uint256 indexed version, bytes32 indexed source, bytes buildMetadata);
-    // event ReleaseMetadataUpdated(uint256 indexed version, bytes releaseMetadata);
 
     function _updateReleaseMetadata(LibSemver.Version memory version, bytes memory metadata) internal {
         uint256 versionFlat = version.toUint256();
@@ -72,6 +69,7 @@ abstract contract Repository is IRepository {
         latestVersion = versionFlat;
         emit VersionAdded(versionFlat, sourceId, metadata);
     }
+    // @inheritdoc IRepository
     function getLatest() public view returns (Source memory) {
         Source memory src;
         src.sourceId = versionedSources[latestVersion];
@@ -79,6 +77,7 @@ abstract contract Repository is IRepository {
         src.metadata = releaseMetadata[uint64(latestVersion)];
         return src;
     }
+    // @inheritdoc IRepository
     function get(
         LibSemver.Version memory version,
         LibSemver.requirements requirement
@@ -146,22 +145,27 @@ abstract contract Repository is IRepository {
         bytes memory patchMetadata = patchReleaseMetadata[versionFlat];
         return bytes.concat(majorMetadata, minorMetadata, patchMetadata);
     }
-
+    // @inheritdoc IRepository
     function getMajorReleaseMetadata(uint64 major) public view returns (bytes memory) {
         return releaseMetadata[major];
     }
+    // @inheritdoc IRepository
     function getMinorReleaseMetadata(uint64 major, uint64 minor) public view returns (bytes memory) {
         return minorReleaseMetadata[(uint128(major) << 64) | uint128(minor)];
     }
+    // @inheritdoc IRepository
     function getPatchReleaseMetadata(uint64 major, uint64 minor, uint64 patch) public view returns (bytes memory) {
         return patchReleaseMetadata[(uint256(major) << 192) | (uint256(minor) << 128) | uint256(patch)];
     }
+    // @inheritdoc IRepository
     function getMajorReleases() public view returns (uint64) {
         return majorReleases;
     }
+    // @inheritdoc IRepository
     function getMinorReleases(uint64 major) public view returns (uint64) {
         return minorReleases[major];
     }
+    // @inheritdoc IRepository
     function getPatchReleases(uint64 major, uint64 minor) public view returns (uint128) {
         return patchReleases[(uint128(major) << 64) | uint128(minor)];
     }

@@ -7,6 +7,13 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IInitializer.sol";
 import "../abstracts/CodeIndexer.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+/**
+ * @title Distributor
+ * @notice Abstract contract that implements the IDistributor interface, CodeIndexer, and ERC165.
+ * This contract serves as a base for creating distributor contracts with specific functionalities.
+ * It provides the necessary structure and functions to be extended by other contracts.
+ * @author Peeramid Labs, 2024
+ */
 abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
     struct DistributionComponent {
         bytes32 id;
@@ -19,19 +26,19 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
     mapping(uint256 => bytes32) public distributionOf;
     mapping(bytes32 => DistributionComponent) public distributionComponents;
     uint256 public numInstances;
-
+    // @inheritdoc IDistributor
     function getDistributions() external view returns (bytes32[] memory) {
         return distirbutionsSet.values();
     }
-
+    // @inheritdoc IDistributor
     function getDistributionId(address instance) external view virtual returns (bytes32) {
         return distributionOf[getInstanceId(instance)];
     }
-
+    // @inheritdoc IDistributor
     function getInstanceId(address instance) public view virtual returns (uint256) {
         return instanceIds[instance];
     }
-
+    // @inheritdoc IDistributor
     function getDistributionURI(bytes32 distributorsId) external view returns (string memory) {
         DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
         ICodeIndex codeIndex = getContractsIndex();
@@ -55,6 +62,10 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         emit DistributionRemoved(distributorsId);
     }
 
+    /**
+     * @notice Internal function to instantiate a new instance.
+     * @dev This function will DELEGATECALL to initializer. Initializer MUST be trusted contract.
+     */
     function _instantiate(
         bytes32 distributorsId,
         bytes memory args
@@ -92,13 +103,10 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         return (instances, distributionName, distributionVersion);
     }
 
-    /*
-     * @dev This is ERC7746 implementation
-     * This hook must be called by instance methods that access scope is
-     * limited to the same instance or distribution
-     * it will revert if `msg.sender` is not a valid instance
-     * it will revert if `maybeInstance` is not a valid instance
-     * it will revert if instanceId belongs to disactivated distribution
+    /**
+     * @inheritdoc IERC7746
+     * @notice This is ERC7746 hook must be called by instance methods that access scope is limited to the same instance or distribution
+     * @dev it will revert if: (1) `msg.sender` is not a valid instance; (2) `maybeInstance` is not a valid instance (3) `instanceId` belongs to disactivated distribution
      */
     function beforeCall(
         bytes memory config,
@@ -120,7 +128,11 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         }
         revert InvalidInstance(maybeInstance);
     }
-
+    /**
+     * @inheritdoc IERC7746
+     * @notice This is ERC7746 hook must be called by instance methods that access scope is limited to the same instance or distribution
+     * @dev it will revert if: (1) `msg.sender` is not a valid instance; (2) `maybeInstance` is not a valid instance (3) `instanceId` belongs to disactivated distribution
+     */
     function afterCall(
         bytes memory config,
         bytes4,
