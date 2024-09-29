@@ -4,8 +4,8 @@ pragma solidity >=0.8.0 <0.9.0;
 import "../abstracts/CloneDistribution.sol";
 
 contract SACMDistribution is CloneDistribution {
-    bytes32 immutable metadata;
-    address immutable _reference;
+    bytes32 immutable private metadata;
+    address immutable private _reference;
     bytes32 immutable public distributionName;
     uint256 immutable  public distributionVersion;
 
@@ -16,7 +16,7 @@ contract SACMDistribution is CloneDistribution {
         ICodeIndex index = getContractsIndex();
         _reference = index.get(codeHash);
         if (_reference == address(0)) {
-            revert("CodeHashDistribution: CodeHash not found in index");
+            revert CodeNotFoundInIndex(codeHash);
         }
     }
 
@@ -26,7 +26,7 @@ contract SACMDistribution is CloneDistribution {
         return (_sources, distributionName, distributionVersion);
     }
 
-    function getMetadata() public view virtual override returns (string memory) {
+    function getMetadata() external view virtual override returns (string memory) {
         return string(abi.encodePacked(metadata)); //ToDo: Add IPFS link with readme!
     }
 }

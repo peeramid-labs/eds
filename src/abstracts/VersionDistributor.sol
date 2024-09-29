@@ -2,7 +2,6 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 import "../interfaces/IDistribution.sol";
-import "../interfaces/IDistributor.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IInitializer.sol";
 import "../abstracts/CodeIndexer.sol";
@@ -74,8 +73,8 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
             );
             require(success, string(result));
         }
-
-        for (uint256 i = 0; i < instances.length; i++) {
+        uint256 length = instances.length;
+        for (uint256 i; i < length; ++i) {
             distributionOf[instances[i]] = address(repository);
             instancesVersions[instances[i]] = src.version;
         }
@@ -110,7 +109,7 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
         address instance,
         uint256,
         bytes memory
-    ) public view returns (bytes memory) {
+    ) external view returns (bytes memory) {
         address repo = distributionOf[instance];
         if (repo != address(0) && _repositories.contains(repo)) {
             LibSemver.Version memory version = instancesVersions[instance];
@@ -130,5 +129,5 @@ abstract contract VersionDistributor is IVersionDistributor, CodeIndexer {
         uint256 value,
         bytes memory data,
         bytes memory beforeCallResult
-    ) public {}
+    ) external {}
 }

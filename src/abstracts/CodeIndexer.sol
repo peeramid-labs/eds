@@ -4,15 +4,16 @@ pragma solidity >=0.8.0 <0.9.0;
 import "../ICodeIndex.sol";
 
 abstract contract CodeIndexer {
+
     //Create2 contract
-    ICodeIndex constant indexContract = ICodeIndex(0xc0D31d398c5ee86C5f8a23FA253ee8a586dA03Ce);
+    ICodeIndex private constant INDEX_CONTRACT = ICodeIndex(0xc0D31d398c5ee86C5f8a23FA253ee8a586dA03Ce);
     constructor() {}
 
     function getContractsIndex() internal pure returns (ICodeIndex) {
-        return indexContract;
+        return INDEX_CONTRACT;
     }
 
     function index(address source) internal {
-        indexContract.register(source);
+        INDEX_CONTRACT.register(source);
     }
 }

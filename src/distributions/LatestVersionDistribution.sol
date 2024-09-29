@@ -6,8 +6,8 @@ import "../interfaces/IRepository.sol";
 import "../libraries/LibSemver.sol";
 
 contract LatestVersionDistribution is CloneDistribution {
-    bytes32 immutable metadata;
-    IRepository immutable repository;
+    bytes32 immutable private metadata;
+    IRepository immutable public repository;
 
     constructor(IRepository _repository, bytes32 _metadata) {
         metadata = _metadata;
@@ -21,7 +21,7 @@ contract LatestVersionDistribution is CloneDistribution {
         return (_sources, repository.repositoryName(),LibSemver.toUint256(latest.version));
     }
 
-    function getMetadata() public view virtual override returns (string memory) {
+    function getMetadata() external view virtual override returns (string memory) {
         return string(abi.encodePacked(metadata)); //ToDo: Add IPFS link with readme!
     }
 }

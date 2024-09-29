@@ -4,7 +4,7 @@ pragma solidity >=0.8.0 <0.9.0;
 import "../abstracts/CloneDistribution.sol";
 
 contract MockCloneDistribution is CloneDistribution {
-    function getMetadata() public pure override returns (string memory) {
+    function getMetadata() external pure override returns (string memory) {
         return "MockCloneDistribution";
     }
 
