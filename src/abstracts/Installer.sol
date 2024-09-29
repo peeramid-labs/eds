@@ -11,7 +11,7 @@ abstract contract Installer is IInstaller {
     mapping(address => EnumerableSet.Bytes32Set) private _permittedDistributions;
     mapping(address => address) private _distributorOf;
     mapping(uint256 => address[]) private _instanceEnum;
-    uint256 instancesNum;
+    uint256 private instancesNum;
 
     constructor(address targetAddress) {
         _target = targetAddress;
@@ -50,7 +50,7 @@ abstract contract Installer is IInstaller {
 
     function _disallowDistribution(IDistributor distributor, bytes32 distributionId) internal virtual {
         if (whitelistedDistributors.contains(address(distributor))) {
-            revert("cannot dissalow distribution on whitelisted distributor");
+            revert DissalowDistOnWhitelistedDistributor(distributor,distributionId);
         }
         _permittedDistributions[address(distributor)].remove(distributionId);
     }
@@ -76,7 +76,8 @@ abstract contract Installer is IInstaller {
         (address[] memory installation, , ) = distributor.instantiate(distributionId, args);
         instancesNum++;
         _instanceEnum[instancesNum] = installation;
-        for (uint i = 0; i < installation.length; i++) {
+        uint256 installationLength = installation.length;
+        for (uint256 i = 0; i < installationLength; ++i) {
             _distributorOf[installation[i]] = address(distributor);
             emit Installed(installation[0], distributionId, "0x", args);
         }
@@ -85,11 +86,11 @@ abstract contract Installer is IInstaller {
 
     function _uninstall(uint256 instanceId) internal virtual {
         address[] memory instance = _instanceEnum[instanceId];
-        for (uint i = 0; i < instance.length; i++) {
+        uint256 instanceLength = instance.length;
+        for (uint256 i = 0; i < instanceLength; ++i) {
             _distributorOf[instance[i]] = address(0);
             emit Uninstalled(instance[i]);
         }
-        instancesNum--;
     }
 
     function getInstance(uint256 instanceId) public view returns (address[] memory instaneContracts) {
@@ -118,7 +119,7 @@ abstract contract Installer is IInstaller {
         address requestingInstance,
         uint256 value,
         bytes memory data
-    ) public returns (bytes memory) {
+    ) external returns (bytes memory) {
         if (msg.sender != _target) {
             revert InvalidTarget(msg.sender);
         }
@@ -139,7 +140,7 @@ abstract contract Installer is IInstaller {
         uint256 value,
         bytes memory data,
         bytes memory beforeCallResult
-    ) public {
+    ) external {
         if (msg.sender != _target) {
             revert InvalidTarget(msg.sender);
         }

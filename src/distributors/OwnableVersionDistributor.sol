@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "../interfaces/IDistributor.sol";
-import "../interfaces/IDistribution.sol";
-import "../abstracts/CodeIndexer.sol";
-import "../interfaces/IInitializer.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "../abstracts/VersionDistributor.sol";
 
 contract OwnableVersionDistributor is VersionDistributor, Ownable {
     constructor(address _owner) Ownable(_owner) {}
 
-    function instantiate(IRepository repository, bytes calldata args) public returns (address[] memory, bytes32, uint256) {
+    function instantiate(IRepository repository, bytes calldata args) external returns (address[] memory, bytes32, uint256) {
         return super._instantiate(repository, args);
     }
 
@@ -20,11 +16,11 @@ contract OwnableVersionDistributor is VersionDistributor, Ownable {
         LibSemver.Version memory version,
         LibSemver.requirements requirement,
         address initializer
-    ) public onlyOwner {
+    ) external onlyOwner {
         super._addVersionedDistribution(repository, version, requirement, initializer);
     }
 
-    function removeVersionedDistribution(IRepository repository) public onlyOwner {
+    function removeVersionedDistribution(IRepository repository) external onlyOwner {
         super._removeVersionedDistribution(repository);
     }
 
@@ -32,7 +28,7 @@ contract OwnableVersionDistributor is VersionDistributor, Ownable {
         IRepository repository,
         LibSemver.Version memory version,
         LibSemver.requirements requirement
-    ) public onlyOwner {
+    ) external onlyOwner {
         super._changeRequirement(repository, version, requirement);
     }
 }

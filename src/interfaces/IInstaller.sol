@@ -9,6 +9,7 @@ interface IInstaller is IERC7746 {
     error InvalidTarget(address target);
     error alreadyAllowed(IDistributor distributor);
     error DistributionIsNotPermitted(IDistributor distributor, bytes32 distributionId);
+    error DissalowDistOnWhitelistedDistributor(IDistributor distributor, bytes32 distributionId);
 
     event DistributorWhitelisted(IDistributor indexed distributor);
     event DistributorWhitelistRevoked(IDistributor indexed distributor);

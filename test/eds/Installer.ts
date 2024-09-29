@@ -153,7 +153,15 @@ describe("Installer", function () {
     await installer.connect(owner).disallowDistribution(distributor.address, distributorsId);
 
     await expect(
-      installer.connect(target).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
+      installer
+        .connect(target)
+        .beforeCall(
+          ethers.utils.defaultAbiCoder.encode(["address"], [instanceAddress]),
+          "0x00000000",
+          instanceAddress,
+          "0",
+          "0x"
+        )
     ).to.be.revertedWithCustomError(installer, "DistributionIsNotPermitted");
   });
 

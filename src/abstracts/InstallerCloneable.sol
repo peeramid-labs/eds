@@ -50,7 +50,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
 
     function _disallowDistribution(IDistributor distributor, bytes32 distributionId) internal virtual {
         if (LibInstaller.getStorage().whitelistedDistributors.contains(address(distributor))) {
-            revert("cannot dissalow distribution on whitelisted distributor");
+            revert DissalowDistOnWhitelistedDistributor(distributor,distributionId);
         }
         LibInstaller.getStorage()._permittedDistributions[address(distributor)].remove(distributionId);
     }
@@ -80,7 +80,8 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         (address[] memory installation, , ) = distributor.instantiate(distributionId, args);
         strg.instancesNum++;
         strg._instanceEnum[strg.instancesNum] = installation;
-        for (uint i = 0; i < installation.length; i++) {
+        uint256 installationlength = installation.length;
+        for (uint256 i = 0; i < installationlength; ++i) {
             strg._distributorOf[installation[i]] = address(distributor);
             emit Installed(installation[0], distributionId, "0x", args);
         }
@@ -90,7 +91,8 @@ abstract contract InstallerClonable is IInstaller, Initializable {
     function _uninstall(uint256 instanceId) internal virtual {
         LibInstaller.InstallerStruct storage strg = LibInstaller.getStorage();
         address[] memory instance = strg._instanceEnum[instanceId];
-        for (uint i = 0; i < instance.length; i++) {
+        uint256 length = instance.length;
+        for (uint256 i = 0; i < length; ++i) {
             strg._distributorOf[instance[i]] = address(0);
             emit Uninstalled(instance[i]);
         }
@@ -123,7 +125,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         address requestingInstance,
         uint256 value,
         bytes memory data
-    ) public virtual returns (bytes memory) {
+    ) external virtual returns (bytes memory) {
         LibInstaller.InstallerStruct storage installerSettings = LibInstaller.getStorage();
         if (msg.sender != installerSettings._target) {
             revert InvalidTarget(msg.sender);
@@ -151,7 +153,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         uint256 value,
         bytes memory data,
         bytes memory beforeCallResult
-    ) public virtual {
+    ) external virtual {
         LibInstaller.InstallerStruct storage installerSettings = LibInstaller.getStorage();
         if (msg.sender != installerSettings._target) {
             revert InvalidTarget(msg.sender);

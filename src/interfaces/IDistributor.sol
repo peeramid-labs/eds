@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
-import "./IDistribution.sol";
 import {IERC7746} from "../interfaces/IERC7746.sol";
-import "../interfaces/IRepository.sol";
-import "../libraries/LibSemver.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 interface IDistributor is IERC7746, IERC165 {
     error DistributionNotFound(bytes32 id);

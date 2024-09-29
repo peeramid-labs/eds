@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.8;
 
 import "../libraries/LibSemver.sol";
@@ -7,14 +7,6 @@ import "../interfaces/IRepository.sol";
 abstract contract Repository is IRepository {
 
     bytes32 immutable public repositoryName;
-    struct Uint64WithMetadata {
-        uint64 value;
-        bytes metadata;
-    }
-    struct Uint128WIthMetadata {
-        uint128 value;
-        bytes metadata;
-    }
     using LibSemver for LibSemver.Version;
     mapping(uint256 => bytes32) internal versionedSources; // Flat version -> Source
     mapping(uint64 => bytes) internal releaseMetadata; // Major version -> Metadata
@@ -22,7 +14,6 @@ abstract contract Repository is IRepository {
     mapping(uint256 => bytes) internal patchReleaseMetadata; // Major + Minor + Patch -> Metadata
     mapping(uint64 => uint64) internal minorReleases;
     mapping(uint128 => uint128) internal patchReleases;
-    mapping(bytes32 => uint256) internal sourceVersions;
     uint64 internal majorReleases;
     uint256 internal latestVersion;
 
@@ -157,19 +148,6 @@ abstract contract Repository is IRepository {
         return bytes.concat(majorMetadata, minorMetadata, patchMetadata);
     }
 
-    function privateEnforceHasVersion(LibSemver.Version memory version) private view {
-        uint64 _majorReleases = majorReleases;
-        uint64 _minorReleases = minorReleases[version.major];
-        uint128 _patchReleases = patchReleases[(uint128(version.major) << 64) | uint128(version.minor)];
-
-        if (version.major > _majorReleases) revert VersionDoesNotExist(version.toUint256());
-        if (version.major == _majorReleases) {
-            if (version.minor > _minorReleases) revert VersionDoesNotExist(version.toUint256());
-            if (version.minor == _minorReleases) {
-                if (version.patch < _patchReleases) revert VersionDoesNotExist(version.toUint256());
-            }
-        }
-    }
     function getMajorReleaseMetadata(uint64 major) public view returns (bytes memory) {
         return releaseMetadata[major];
     }
