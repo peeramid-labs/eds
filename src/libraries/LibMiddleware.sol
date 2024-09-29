@@ -17,11 +17,7 @@ library LibMiddleware {
         }
     }
 
-    function setLayer(
-        address layerAddress,
-        uint256 layerIndex,
-        bytes memory layerConfigData
-    ) internal {
+    function setLayer(address layerAddress, uint256 layerIndex, bytes memory layerConfigData) internal {
         LayerStruct[] storage ls = accessLayersStorage();
         ls[layerIndex].layerAddess = layerAddress;
         ls[layerIndex].layerConfigData = layerConfigData;
