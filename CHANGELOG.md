@@ -1,5 +1,17 @@
 # @peeramid-labs/eds
 
+## 1.0.1
+
+### Patch Changes
+
+- [#6](https://github.com/peeramid-labs/eds/pull/6) [`3e82c686a66f814cd0c7b7a952d5d83cc6c30f57`](https://github.com/peeramid-labs/eds/commit/3e82c686a66f814cd0c7b7a952d5d83cc6c30f57) Thanks [@peersky](https://github.com/peersky)! - ### Changes
+
+  - Added documentation strings.
+  - Made minor logic improvements.
+  - Implemented documentation generation from docstrings.
+  - Performed gas optimizations.
+  - Unified code style.
+
 ## 1.0.0
 
 ### Major Changes
