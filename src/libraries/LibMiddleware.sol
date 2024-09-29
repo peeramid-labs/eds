@@ -21,9 +21,7 @@ library LibMiddleware {
         address layerAddress,
         uint256 layerIndex,
         bytes memory layerConfigData
-    ) internal // bytes4 beforeCallMethodSignature,
-    // bytes4 afterCallMethodSignature
-    {
+    ) internal {
         LayerStruct[] storage ls = accessLayersStorage();
         ls[layerIndex].layerAddess = layerAddress;
         ls[layerIndex].layerConfigData = layerConfigData;

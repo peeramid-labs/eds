@@ -7,7 +7,7 @@ import "../libraries/LibMiddleware.sol";
 /**
  * @dev This contract is a modified OpenZeppelin proxy v5.0.0.
  * Modification wraps a fallback function within ERC7746.
- * Rest is similar to OpenZeppelin Proxy.sol
+ * Rest is similar to Proxy.sol
  */
 contract MiddlewareProxy is ERC7746Middleware {
     address private immutable implementationAddress;
@@ -47,8 +47,9 @@ contract MiddlewareProxy is ERC7746Middleware {
     }
 
     /**
-     * @dev Fallback function that delegates calls to the address returned by `_implementation()`. Will run if no other
+     * @notice Fallback function that delegates calls to the address returned by `_implementation()`. Will run if no other
      * function in the contract matches the call data.
+     * @dev This function is wrapped in ERC7746 middleware pattern
      */
     fallback() external payable virtual ERC7746 {
         _fallback();

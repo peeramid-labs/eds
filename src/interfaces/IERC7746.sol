@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: CC0-1.0
 pragma solidity >=0.8.0 <0.9.0;
 
+/**
+ * @title IERC7746 Interface
+ * @dev Interface for the ERC7746 standard.
+ */
 interface IERC7746 {
     /// @notice Validates a function call before execution.
-    /// @param configuration Layer-specific configuration data.
+    /// @param configuration Middleware-specific configuration data.
     /// @param selector The function selector being called.
     /// @param sender The address initiating the call.
     /// @param value The amount of ETH sent with the call (if any).
@@ -19,7 +23,7 @@ interface IERC7746 {
     ) external returns (bytes memory);
 
     /// @notice Validates a function call after execution.
-    /// @param configuration Layer-specific configuration data.
+    /// @param configuration Middleware-specific configuration data.
     /// @param selector The function selector being called.
     /// @param sender The address initiating the call.
     /// @param value The amount of ETH sent with the call (if any).

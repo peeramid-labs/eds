@@ -3,6 +3,12 @@ pragma solidity >=0.8.0 <0.9.0;
 import "../interfaces/IDistributor.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IInstaller.sol";
+/**
+ * @title Installer
+ * @notice Abstract contract that implements the IInstaller interface.
+ * This contract serves as a base for other contracts that require installation functionality.
+ * @author Peeramid Labs, 2024
+ */
 abstract contract Installer is IInstaller {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;

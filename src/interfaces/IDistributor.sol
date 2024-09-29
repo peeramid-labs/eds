@@ -2,6 +2,12 @@
 pragma solidity >=0.8.0 <0.9.0;
 import {IERC7746} from "../interfaces/IERC7746.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+/**
+ * @title IDistributor Interface
+ * @notice Defines the standard functions for a distributor contract.
+ * @dev If you want to use {IRepository} for versioned distributions, use {IVersionDistributor} interface.
+ * @author Peeramid Labs, 2024
+ */
 interface IDistributor is IERC7746, IERC165 {
     error DistributionNotFound(bytes32 id);
     error DistributionExists(bytes32 id);

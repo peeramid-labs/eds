@@ -5,10 +5,21 @@ import "../abstracts/CloneDistribution.sol";
 import "../interfaces/IRepository.sol";
 import "../libraries/LibSemver.sol";
 
+/**
+ * @title LatestVersionDistribution
+ * @notice This contract extends the CloneDistribution contract to manage the distribution of the latest version of a given resource.
+ * It provides mechanisms to ensure that the most recent version is distributed to users.
+ * @dev it MUST refer to {../interfaces/IRepository}
+ */
 contract LatestVersionDistribution is CloneDistribution {
     bytes32 private immutable metadata;
     IRepository public immutable repository;
 
+    /**
+     * @notice Constructor for the LatestVersionDistribution contract.
+     * @param _repository The address of the IRepository contract.
+     * @param _metadata The metadata associated with the distribution.
+     */
     constructor(IRepository _repository, bytes32 _metadata) {
         metadata = _metadata;
         repository = _repository;
