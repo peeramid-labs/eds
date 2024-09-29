@@ -2,4 +2,10 @@
 "@peeramid-labs/eds": patch
 ---
 
-Implemented code inspection fixes
+### Changes
+
+- Added documentation strings.
+- Made minor logic improvements.
+- Implemented documentation generation from docstrings.
+- Performed gas optimizations.
+- Unified code style.
