@@ -7,6 +7,13 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "../interfaces/IInitializer.sol";
 import "../abstracts/CodeIndexer.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+/**
+ * @title Distributor
+ * @notice Abstract contract that implements the IDistributor interface, CodeIndexer, and ERC165.
+ * This contract serves as a base for creating distributor contracts with specific functionalities.
+ * It provides the necessary structure and functions to be extended by other contracts.
+ * @author Peeramid Labs, 2024
+ */
 abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
     struct DistributionComponent {
         bytes32 id;
@@ -14,25 +21,25 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
     }
     using EnumerableSet for EnumerableSet.Bytes32Set;
     EnumerableSet.Bytes32Set private distirbutionsSet;
-    mapping(bytes32 => IInitializer) private initializers;
+    // mapping(bytes32 => IInitializer) private initializers;
     mapping(address => uint256) private instanceIds;
-    uint256 numInstances;
     mapping(uint256 => bytes32) public distributionOf;
-    mapping(bytes32 => DistributionComponent) private distributionComponents;
-
-    function getDistributions() public view returns (bytes32[] memory) {
+    mapping(bytes32 => DistributionComponent) public distributionComponents;
+    uint256 public numInstances;
+    // @inheritdoc IDistributor
+    function getDistributions() external view returns (bytes32[] memory) {
         return distirbutionsSet.values();
     }
-
-    function getDistributionId(address instance) public view virtual returns (bytes32) {
+    // @inheritdoc IDistributor
+    function getDistributionId(address instance) external view virtual returns (bytes32) {
         return distributionOf[getInstanceId(instance)];
     }
-
+    // @inheritdoc IDistributor
     function getInstanceId(address instance) public view virtual returns (uint256) {
         return instanceIds[instance];
     }
-
-    function getDistributionURI(bytes32 distributorsId) public view returns (string memory) {
+    // @inheritdoc IDistributor
+    function getDistributionURI(bytes32 distributorsId) external view returns (string memory) {
         DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
         ICodeIndex codeIndex = getContractsIndex();
         return IDistribution(codeIndex.get(distributionComponent.id)).getMetadata();
@@ -51,10 +58,14 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
     function _removeDistribution(bytes32 distributorsId) internal virtual {
         if (!distirbutionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
         distirbutionsSet.remove(distributorsId);
-        initializers[distributorsId] = IInitializer(address(0));
+        delete distributionComponents[distributorsId];
         emit DistributionRemoved(distributorsId);
     }
 
+    /**
+     * @notice Internal function to instantiate a new instance.
+     * @dev WARNING: This function will DELEGATECALL to initializer. Initializer MUST be trusted contract.
+     */
     function _instantiate(
         bytes32 distributorsId,
         bytes memory args
@@ -62,20 +73,29 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         ICodeIndex codeIndex = getContractsIndex();
         if (!distirbutionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
         DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
-        address initializer = address(initializers[distributionComponent.id]);
         bytes4 selector = IInitializer.initialize.selector;
         // bytes memory instantiationArgs = initializer != address(0) ? args : bytes ("");
         (instances, distributionName, distributionVersion) = IDistribution(codeIndex.get(distributionComponent.id))
             .instantiate(args);
-        if (initializer != address(0)) {
+        if (distributionComponent.initializer != address(0)) {
             (bool success, bytes memory result) = address(distributionComponent.initializer).delegatecall(
                 abi.encodeWithSelector(selector, instances, args)
             );
-            require(success, string(result));
+            if (!success) {
+                if (result.length > 0) {
+                    assembly {
+                        let returndata_size := mload(result)
+                        revert(add(32, result), returndata_size)
+                    }
+                } else {
+                    revert("initializer delegatecall failed without revert reason");
+                }
+            }
         }
         numInstances++;
         uint256 instanceId = numInstances;
-        for (uint256 i = 0; i < instances.length; i++) {
+        uint256 instancesLength = instances.length;
+        for (uint256 i; i < instancesLength; ++i) {
             instanceIds[instances[i]] = instanceId;
             distributionOf[instanceId] = distributorsId;
         }
@@ -83,13 +103,10 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         return (instances, distributionName, distributionVersion);
     }
 
-    /*
-     * @dev This is ERC7746 implementation
-     * This hook must be called by instance methods that access scope is
-     * limited to the same instance or distribution
-     * it will revert if `msg.sender` is not a valid instance
-     * it will revert if `maybeInstance` is not a valid instance
-     * it will revert if instanceId belongs to disactivated distribution
+    /**
+     * @inheritdoc IERC7746
+     * @notice This is ERC7746 hook must be called by instance methods that access scope is limited to the same instance or distribution
+     * @dev it will revert if: (1) `msg.sender` is not a valid instance; (2) `maybeInstance` is not a valid instance (3) `instanceId` belongs to disactivated distribution
      */
     function beforeCall(
         bytes memory config,
@@ -97,13 +114,13 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         address maybeInstance,
         uint256,
         bytes memory
-    ) public view virtual returns (bytes memory) {
-        (address target) = abi.decode(config, (address));
+    ) external view virtual returns (bytes memory) {
+        address target = config.length > 0 ? abi.decode(config, (address)) : msg.sender;
         bytes32 distributorsId = distributionOf[getInstanceId(maybeInstance)];
         if (
             distributorsId != bytes32(0) &&
             getInstanceId(target) == getInstanceId(maybeInstance) &&
-            distirbutionsSet.contains(distributorsId) == true
+            distirbutionsSet.contains(distributorsId)
         ) {
             // ToDo: This check could be based on DistributionOf, hence allowing cross-instance calls
             // Use layerConfig to allow client to configure requirement for the call
@@ -111,7 +128,11 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         }
         revert InvalidInstance(maybeInstance);
     }
-
+    /**
+     * @inheritdoc IERC7746
+     * @notice This is ERC7746 hook must be called by instance methods that access scope is limited to the same instance or distribution
+     * @dev it will revert if: (1) `msg.sender` is not a valid instance; (2) `maybeInstance` is not a valid instance (3) `instanceId` belongs to disactivated distribution
+     */
     function afterCall(
         bytes memory config,
         bytes4,
@@ -119,13 +140,10 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         uint256,
         bytes memory,
         bytes memory
-    ) public virtual {
-        (address target) = abi.decode(config, (address));
+    ) external virtual {
+        address target = config.length > 0 ? abi.decode(config, (address)) : msg.sender;
         bytes32 distributorsId = distributionOf[getInstanceId(maybeInstance)];
-        if (
-            (getInstanceId(target) != getInstanceId(maybeInstance)) &&
-            distirbutionsSet.contains(distributorsId) == true
-        ) {
+        if ((getInstanceId(target) != getInstanceId(maybeInstance)) && distirbutionsSet.contains(distributorsId)) {
             revert InvalidInstance(maybeInstance);
         }
     }

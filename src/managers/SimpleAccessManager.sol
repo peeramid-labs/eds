@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
+// SPDX-License-Identifier: MIT
 
 pragma solidity >=0.8.0 <0.9.0;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -18,7 +18,7 @@ contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
         IDistributor distributor;
     }
 
-    bytes32 constant SACM_STORAGE_POSITION = keccak256("simple.access.manager.storage.position");
+    bytes32 private constant SACM_STORAGE_POSITION = keccak256("simple.access.manager.storage.position");
 
     function getStorage() private pure returns (Storage storage s) {
         bytes32 position = SACM_STORAGE_POSITION;
@@ -33,10 +33,10 @@ contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
         bool distributionComponentsOnly;
     }
 
-    constructor(SimpleAccessManagerInitializer[] memory methodSettings, address target, IDistributor distributor) {
-        initialize(methodSettings, target, distributor);
+    constructor() {
+        _disableInitializers();
     }
-
+    error ERC165CheckFailed(address distributor, bytes4 interfaceId, string interfaceName);
     function initialize(
         SimpleAccessManagerInitializer[] memory methodSettings,
         address target,
@@ -45,14 +45,15 @@ contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
         Storage storage s = getStorage();
         s.distributor = distributor;
         s.target = target;
-        require(
-            ERC165Checker.supportsInterface(address(distributor), type(IDistributor).interfaceId),
-            "SimpleAccessManager: distributor does not support IDistributor"
-        );
-        for (uint256 i = 0; i < methodSettings.length; i++) {
+        if (!ERC165Checker.supportsInterface(address(distributor), type(IDistributor).interfaceId)) {
+            revert ERC165CheckFailed(address(distributor), type(IDistributor).interfaceId, "IDistributor");
+        }
+        uint256 length = methodSettings.length;
+        for (uint256 i; i < length; ++i) {
             s.methodSettings[methodSettings[i].selector].isDistributionOnly = methodSettings[i]
                 .distributionComponentsOnly;
-            for (uint256 j = 0; j < methodSettings[i].dissallowedAddresses.length; j++) {
+            uint256 dissalowedMethodsLength = methodSettings[i].dissallowedAddresses.length;
+            for (uint256 j; j < dissalowedMethodsLength; ++j) {
                 s.methodSettings[methodSettings[i].selector].dissallowedAddresses[
                     methodSettings[i].dissallowedAddresses[j]
                 ] = true;
@@ -60,19 +61,22 @@ contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
         }
     }
 
+    error OnlyTargetAllowed(address sender, address target);
+    error dissallowedAddress(address sender, bytes4 selector);
+
     function beforeCall(
-        bytes memory ,
+        bytes memory,
         bytes4 selector,
         address sender,
         uint256 value,
         bytes memory data
-    ) public returns (bytes memory) {
+    ) external returns (bytes memory) {
         Storage storage s = getStorage();
         if (msg.sender != s.target) {
-            revert("SimpleAccessManager: only target can call this function");
+            revert OnlyTargetAllowed(msg.sender, s.target);
         }
         if (s.methodSettings[selector].dissallowedAddresses[sender]) {
-            revert("SimpleAccessManager: sender is not allowed to call this method");
+            revert dissallowedAddress(sender, selector);
         } else {
             if (s.methodSettings[selector].isDistributionOnly) {
                 return s.distributor.beforeCall(abi.encode(msg.sender), selector, sender, value, data);
@@ -82,19 +86,19 @@ contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
     }
 
     function afterCall(
-        bytes memory ,
+        bytes memory,
         bytes4 selector,
         address sender,
         uint256 value,
         bytes memory data,
         bytes memory beforeCallResult
-    ) public {
+    ) external {
         Storage storage s = getStorage();
         if (msg.sender != s.target) {
-            revert("ERC20DistributorsManager: only target can call this function");
+            revert OnlyTargetAllowed(msg.sender, s.target);
         }
         if (s.methodSettings[selector].isDistributionOnly) {
-            s.distributor.afterCall(abi.encode(msg.sender), selector, sender, value, data,beforeCallResult);
+            s.distributor.afterCall(abi.encode(msg.sender), selector, sender, value, data, beforeCallResult);
         }
     }
 

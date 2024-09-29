@@ -17,7 +17,7 @@ library LibInstaller {
         uint256 instancesNum;
     }
 
-    bytes32 constant EDS_INSTALLER_STORAGE_POSITION = keccak256("EDS.INSTALLER.STORAGE.POSITION");
+    bytes32 private constant EDS_INSTALLER_STORAGE_POSITION = keccak256("EDS.INSTALLER.STORAGE.POSITION");
 
     function getStorage() internal pure returns (InstallerStruct storage i) {
         bytes32 position = EDS_INSTALLER_STORAGE_POSITION;

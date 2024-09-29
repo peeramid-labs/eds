@@ -5,6 +5,11 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../interfaces/IInstaller.sol";
 import "../libraries/LibInstaller.sol";
+/**
+ * @title InstallerClonable
+ * @notice Abstract contract that implements the IInstaller interface and is Initializable.
+ * This contract serves as a base for creating clonable installer contracts.
+ */
 abstract contract InstallerClonable is IInstaller, Initializable {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -12,19 +17,19 @@ abstract contract InstallerClonable is IInstaller, Initializable {
     constructor() {
         _disableInitializers();
     }
-
+    // @inheritdoc IInstaller
     function initialize(address targetAddress) public virtual initializer {
         LibInstaller.getStorage()._target = targetAddress;
     }
-
+    // @inheritdoc IInstaller
     function isDistributor(IDistributor distributor) public view returns (bool) {
         return LibInstaller.getStorage().whitelistedDistributors.contains(address(distributor));
     }
-
+    // @inheritdoc IInstaller
     function getWhitelistedDistributors() public view returns (address[] memory) {
         return LibInstaller.getStorage().whitelistedDistributors.values();
     }
-
+    // @inheritdoc IInstaller
     function whitelistedDistributions(IDistributor distributor) public view returns (bytes32[] memory) {
         if (LibInstaller.getStorage().whitelistedDistributors.contains(address(distributor))) {
             return distributor.getDistributions();
@@ -50,7 +55,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
 
     function _disallowDistribution(IDistributor distributor, bytes32 distributionId) internal virtual {
         if (LibInstaller.getStorage().whitelistedDistributors.contains(address(distributor))) {
-            revert("cannot dissalow distribution on whitelisted distributor");
+            revert DissalowDistOnWhitelistedDistributor(distributor, distributionId);
         }
         LibInstaller.getStorage()._permittedDistributions[address(distributor)].remove(distributionId);
     }
@@ -80,7 +85,8 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         (address[] memory installation, , ) = distributor.instantiate(distributionId, args);
         strg.instancesNum++;
         strg._instanceEnum[strg.instancesNum] = installation;
-        for (uint i = 0; i < installation.length; i++) {
+        uint256 installationlength = installation.length;
+        for (uint256 i; i < installationlength; ++i) {
             strg._distributorOf[installation[i]] = address(distributor);
             emit Installed(installation[0], distributionId, "0x", args);
         }
@@ -90,40 +96,43 @@ abstract contract InstallerClonable is IInstaller, Initializable {
     function _uninstall(uint256 instanceId) internal virtual {
         LibInstaller.InstallerStruct storage strg = LibInstaller.getStorage();
         address[] memory instance = strg._instanceEnum[instanceId];
-        for (uint i = 0; i < instance.length; i++) {
+        uint256 length = instance.length;
+        for (uint256 i; i < length; ++i) {
             strg._distributorOf[instance[i]] = address(0);
             emit Uninstalled(instance[i]);
         }
         strg.instancesNum--;
     }
-
+    // @inheritdoc IInstaller
     function getInstance(uint256 instanceId) public view returns (address[] memory instaneContracts) {
         return LibInstaller.getStorage()._instanceEnum[instanceId];
     }
-
+    // @inheritdoc IInstaller
     function getInstancesNum() public view returns (uint256) {
         return LibInstaller.getStorage().instancesNum;
     }
-
+    // @inheritdoc IInstaller
     function isInstance(address instance) public view returns (bool) {
         return LibInstaller.getStorage()._distributorOf[instance] != address(0);
     }
-
+    // @inheritdoc IInstaller
     function distributorOf(address instance) public view returns (IDistributor) {
         return IDistributor(LibInstaller.getStorage()._distributorOf[instance]);
     }
-
+    // @inheritdoc IInstaller
     function target() public view returns (address) {
         return LibInstaller.getStorage()._target;
     }
-
+    // @inheritdoc IERC7746
+    // @notice this will revert if the sender is not the target or requesting instance is not a valid instance
+    // @dev it will daisy-chain the call to the distributor, if instance is valid and active distribution
     function beforeCall(
         bytes memory layerConfig,
         bytes4 selector,
         address requestingInstance,
         uint256 value,
         bytes memory data
-    ) public virtual returns (bytes memory) {
+    ) external virtual returns (bytes memory) {
         LibInstaller.InstallerStruct storage installerSettings = LibInstaller.getStorage();
         if (msg.sender != installerSettings._target) {
             revert InvalidTarget(msg.sender);
@@ -143,7 +152,9 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         }
         revert NotAnInstance(requestingInstance);
     }
-
+    // @inheritdoc IERC7746
+    // @notice this will revert if the sender is not the target or requesting instance is not a valid instance
+    // @dev it will daisy-chain the call to the distributor, if instance is valid and active distribution
     function afterCall(
         bytes memory layerConfig,
         bytes4 selector,
@@ -151,7 +162,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         uint256 value,
         bytes memory data,
         bytes memory beforeCallResult
-    ) public virtual {
+    ) external virtual {
         LibInstaller.InstallerStruct storage installerSettings = LibInstaller.getStorage();
         if (msg.sender != installerSettings._target) {
             revert InvalidTarget(msg.sender);

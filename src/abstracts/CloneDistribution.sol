@@ -6,24 +6,28 @@ import "../interfaces/IDistribution.sol";
 import "./CodeIndexer.sol";
 
 abstract contract CloneDistribution is IDistribution, CodeIndexer {
-
+    error CodeNotFoundInIndex(bytes32 codeId);
 
     function sources() internal view virtual returns (address[] memory, bytes32 name, uint256 version);
 
-    function instantiate(bytes memory) public virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
-        (address[] memory _sources,bytes32 _distributionName,uint256 _distributionVersion) = sources();
-        instances = new address[](_sources.length);
-        for (uint256 i = 0; i < _sources.length; i++) {
+    // @inheritdoc IDistribution
+    function instantiate(
+        bytes memory
+    ) external virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
+        (address[] memory _sources, bytes32 _distributionName, uint256 _distributionVersion) = sources();
+        uint256 srcsLength = _sources.length;
+        instances = new address[](srcsLength);
+        for (uint256 i; i < srcsLength; ++i) {
             address clone = Clones.clone(_sources[i]);
             instances[i] = clone;
         }
         emit Distributed(msg.sender, instances);
         return (instances, _distributionName, _distributionVersion);
     }
-
-    function get() public view virtual returns (address[] memory src, bytes32 name, uint256 version) {
+    // @inheritdoc IDistribution
+    function get() external view virtual returns (address[] memory src, bytes32 name, uint256 version) {
         return sources();
     }
-
-    function getMetadata() public view virtual returns (string memory);
+    // @inheritdoc IDistribution
+    function getMetadata() external view virtual returns (string memory);
 }

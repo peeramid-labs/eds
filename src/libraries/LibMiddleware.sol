@@ -3,7 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 import {IERC7746} from "../interfaces/IERC7746.sol";
 
 library LibMiddleware {
-    bytes32 constant ACCESS_LAYERS_STORAGE_POSITION = keccak256("lib.access.layer.storage");
+    bytes32 private constant ACCESS_LAYERS_STORAGE_POSITION = keccak256("lib.access.layer.storage");
 
     struct LayerStruct {
         address layerAddess;
@@ -17,13 +17,7 @@ library LibMiddleware {
         }
     }
 
-    function setLayer(
-        address layerAddress,
-        uint256 layerIndex,
-        bytes memory layerConfigData
-        // bytes4 beforeCallMethodSignature,
-        // bytes4 afterCallMethodSignature
-    ) internal {
+    function setLayer(address layerAddress, uint256 layerIndex, bytes memory layerConfigData) internal {
         LayerStruct[] storage ls = accessLayersStorage();
         ls[layerIndex].layerAddess = layerAddress;
         ls[layerIndex].layerConfigData = layerConfigData;
@@ -35,20 +29,15 @@ library LibMiddleware {
     }
 
     function setLayers(LayerStruct[] memory newLayers) internal {
-        for (uint256 i = 0; i < newLayers.length; i++) {
+        uint256 length = newLayers.length;
+        for (uint256 i; i < length; ++i) {
             addLayer(newLayers[i]);
         }
     }
 
-    function addLayer(
-        address layerAddress,
-        bytes memory layerConfigData
-    ) internal {
+    function addLayer(address layerAddress, bytes memory layerConfigData) internal {
         LayerStruct[] storage ls = accessLayersStorage();
-        LayerStruct memory newLayer = LayerStruct({
-            layerAddess: layerAddress,
-            layerConfigData: layerConfigData
-        });
+        LayerStruct memory newLayer = LayerStruct({layerAddess: layerAddress, layerConfigData: layerConfigData});
         ls.push(newLayer);
     }
 
@@ -69,8 +58,9 @@ library LibMiddleware {
         uint256 value
     ) internal returns (bytes[] memory) {
         LayerStruct[] storage ls = accessLayersStorage();
-        bytes[] memory layerReturns = new bytes[](ls.length);
-        for (uint256 i = 0; i < ls.length; i++) {
+        uint256 length = ls.length;
+        bytes[] memory layerReturns = new bytes[](length);
+        for (uint256 i; i < length; ++i) {
             layerReturns[i] = validateLayerBeforeCall(ls[i], _selector, sender, data, value);
         }
         return layerReturns;
@@ -102,15 +92,16 @@ library LibMiddleware {
         bytes[] memory beforeCallReturns
     ) internal {
         LayerStruct[] storage ls = accessLayersStorage();
-        for (uint256 i = 0; i < ls.length; i++) {
-            validateLayerAfterCall(ls[ls.length - 1 - i], _selector, sender, data, value, beforeCallReturns[i]);
+        uint256 length = ls.length;
+        for (uint256 i; i < length; ++i) {
+            validateLayerAfterCall(ls[length - 1 - i], _selector, sender, data, value, beforeCallReturns[i]);
         }
     }
 
     function extractRevertReason(bytes memory revertData) internal pure returns (string memory reason) {
-        uint l = revertData.length;
+        uint256 l = revertData.length;
         if (l < 68) return "";
-        uint t;
+        uint256 t;
         assembly {
             revertData := add(revertData, 4)
             t := mload(revertData) // Save the content of the length slot
