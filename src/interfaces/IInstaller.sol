@@ -17,7 +17,6 @@ interface IInstaller is IERC7746 {
     event DistributionAllowed(IDistributor indexed distributor, bytes32 indexed distributionId);
     event DistributionDisallowed(IDistributor indexed distributor, bytes32 indexed distributionId);
 
-
     function allowDistribution(IDistributor distributor, bytes32 distributionId) external;
 
     function disallowDistribution(IDistributor distributor, bytes32 distributionId) external;

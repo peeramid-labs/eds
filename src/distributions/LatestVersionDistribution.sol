@@ -6,8 +6,8 @@ import "../interfaces/IRepository.sol";
 import "../libraries/LibSemver.sol";
 
 contract LatestVersionDistribution is CloneDistribution {
-    bytes32 immutable private metadata;
-    IRepository immutable public repository;
+    bytes32 private immutable metadata;
+    IRepository public immutable repository;
 
     constructor(IRepository _repository, bytes32 _metadata) {
         metadata = _metadata;
@@ -18,7 +18,7 @@ contract LatestVersionDistribution is CloneDistribution {
         address[] memory _sources = new address[](1);
         IRepository.Source memory latest = repository.getLatest();
         _sources[0] = getContractsIndex().get(latest.sourceId);
-        return (_sources, repository.repositoryName(),LibSemver.toUint256(latest.version));
+        return (_sources, repository.repositoryName(), LibSemver.toUint256(latest.version));
     }
 
     function getMetadata() external view virtual override returns (string memory) {

@@ -8,11 +8,12 @@ import "./CodeIndexer.sol";
 abstract contract CloneDistribution is IDistribution, CodeIndexer {
     error CodeNotFoundInIndex(bytes32 codeId);
 
-
     function sources() internal view virtual returns (address[] memory, bytes32 name, uint256 version);
 
-    function instantiate(bytes memory) external virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
-        (address[] memory _sources,bytes32 _distributionName,uint256 _distributionVersion) = sources();
+    function instantiate(
+        bytes memory
+    ) external virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
+        (address[] memory _sources, bytes32 _distributionName, uint256 _distributionVersion) = sources();
         uint256 srcsLength = _sources.length;
         instances = new address[](srcsLength);
         for (uint256 i; i < srcsLength; ++i) {

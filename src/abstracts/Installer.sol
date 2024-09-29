@@ -50,7 +50,7 @@ abstract contract Installer is IInstaller {
 
     function _disallowDistribution(IDistributor distributor, bytes32 distributionId) internal virtual {
         if (whitelistedDistributors.contains(address(distributor))) {
-            revert DissalowDistOnWhitelistedDistributor(distributor,distributionId);
+            revert DissalowDistOnWhitelistedDistributor(distributor, distributionId);
         }
         _permittedDistributions[address(distributor)].remove(distributionId);
     }
@@ -125,8 +125,14 @@ abstract contract Installer is IInstaller {
         }
         address distributor = _distributorOf[requestingInstance];
         if (distributor != address(0)) {
-            bytes memory beforeCallValue = IDistributor(distributor).beforeCall(layerConfig, selector, requestingInstance, value, data);
-            (bytes32 id, )= abi.decode(beforeCallValue, (bytes32, bytes));
+            bytes memory beforeCallValue = IDistributor(distributor).beforeCall(
+                layerConfig,
+                selector,
+                requestingInstance,
+                value,
+                data
+            );
+            (bytes32 id, ) = abi.decode(beforeCallValue, (bytes32, bytes));
             enforceActiveDistribution(IDistributor(distributor), id);
             return abi.encode(id, distributor);
         }

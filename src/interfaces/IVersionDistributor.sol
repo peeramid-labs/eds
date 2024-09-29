@@ -38,6 +38,9 @@ interface IVersionDistributor is IERC7746 {
 
     function getVersionedDistributions() external view returns (address[] memory repositories);
     function getVersionedDistributionURI(IRepository repository) external view returns (string memory);
-    function instantiate(IRepository repository, bytes calldata args) external returns (address[] memory, bytes32, uint256);
+    function instantiate(
+        IRepository repository,
+        bytes calldata args
+    ) external returns (address[] memory, bytes32, uint256);
     function removeVersionedDistribution(IRepository repository) external;
 }

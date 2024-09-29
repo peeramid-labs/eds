@@ -131,9 +131,7 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
     ) external virtual {
         address target = config.length > 0 ? abi.decode(config, (address)) : msg.sender;
         bytes32 distributorsId = distributionOf[getInstanceId(maybeInstance)];
-        if (
-            (getInstanceId(target) != getInstanceId(maybeInstance)) && distirbutionsSet.contains(distributorsId)
-        ) {
+        if ((getInstanceId(target) != getInstanceId(maybeInstance)) && distirbutionsSet.contains(distributorsId)) {
             revert InvalidInstance(maybeInstance);
         }
     }

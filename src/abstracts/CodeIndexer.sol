@@ -4,7 +4,6 @@ pragma solidity >=0.8.0 <0.9.0;
 import "../ICodeIndex.sol";
 
 abstract contract CodeIndexer {
-
     //Create2 contract
     ICodeIndex private constant INDEX_CONTRACT = ICodeIndex(0xc0D31d398c5ee86C5f8a23FA253ee8a586dA03Ce);
     constructor() {}

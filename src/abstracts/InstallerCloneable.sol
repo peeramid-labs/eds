@@ -50,7 +50,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
 
     function _disallowDistribution(IDistributor distributor, bytes32 distributionId) internal virtual {
         if (LibInstaller.getStorage().whitelistedDistributors.contains(address(distributor))) {
-            revert DissalowDistOnWhitelistedDistributor(distributor,distributionId);
+            revert DissalowDistOnWhitelistedDistributor(distributor, distributionId);
         }
         LibInstaller.getStorage()._permittedDistributions[address(distributor)].remove(distributionId);
     }

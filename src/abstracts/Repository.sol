@@ -5,8 +5,7 @@ import "../libraries/LibSemver.sol";
 import "../interfaces/IRepository.sol";
 
 abstract contract Repository is IRepository {
-
-    bytes32 immutable public repositoryName;
+    bytes32 public immutable repositoryName;
     using LibSemver for LibSemver.Version;
     mapping(uint256 => bytes32) internal versionedSources; // Flat version -> Source
     mapping(uint64 => bytes) internal releaseMetadata; // Major version -> Metadata

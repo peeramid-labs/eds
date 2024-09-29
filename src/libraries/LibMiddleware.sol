@@ -3,7 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 import {IERC7746} from "../interfaces/IERC7746.sol";
 
 library LibMiddleware {
-    bytes32 constant private ACCESS_LAYERS_STORAGE_POSITION = keccak256("lib.access.layer.storage");
+    bytes32 private constant ACCESS_LAYERS_STORAGE_POSITION = keccak256("lib.access.layer.storage");
 
     struct LayerStruct {
         address layerAddess;
@@ -21,9 +21,9 @@ library LibMiddleware {
         address layerAddress,
         uint256 layerIndex,
         bytes memory layerConfigData
-        // bytes4 beforeCallMethodSignature,
-        // bytes4 afterCallMethodSignature
-    ) internal {
+    ) internal // bytes4 beforeCallMethodSignature,
+    // bytes4 afterCallMethodSignature
+    {
         LayerStruct[] storage ls = accessLayersStorage();
         ls[layerIndex].layerAddess = layerAddress;
         ls[layerIndex].layerConfigData = layerConfigData;
@@ -41,15 +41,9 @@ library LibMiddleware {
         }
     }
 
-    function addLayer(
-        address layerAddress,
-        bytes memory layerConfigData
-    ) internal {
+    function addLayer(address layerAddress, bytes memory layerConfigData) internal {
         LayerStruct[] storage ls = accessLayersStorage();
-        LayerStruct memory newLayer = LayerStruct({
-            layerAddess: layerAddress,
-            layerConfigData: layerConfigData
-        });
+        LayerStruct memory newLayer = LayerStruct({layerAddess: layerAddress, layerConfigData: layerConfigData});
         ls.push(newLayer);
     }
 

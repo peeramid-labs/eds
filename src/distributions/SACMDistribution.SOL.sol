@@ -4,10 +4,10 @@ pragma solidity >=0.8.0 <0.9.0;
 import "../abstracts/CloneDistribution.sol";
 
 contract SACMDistribution is CloneDistribution {
-    bytes32 immutable private metadata;
-    address immutable private _reference;
-    bytes32 immutable public distributionName;
-    uint256 immutable  public distributionVersion;
+    bytes32 private immutable metadata;
+    address private immutable _reference;
+    bytes32 public immutable distributionName;
+    uint256 public immutable distributionVersion;
 
     constructor(bytes32 codeHash, bytes32 _metadata, bytes32 name, uint256 version) {
         distributionName = name;
