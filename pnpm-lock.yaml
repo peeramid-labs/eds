@@ -132,6 +132,9 @@ importers:
       hardhat-deploy:
         specifier: ^0.12.2
         version: 0.12.4(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      hardhat-tracer:
+        specifier: ^3.1.0
+        version: 3.1.0(bufferutil@4.0.8)(chai@4.5.0)(hardhat@2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.5.4))(typescript@5.5.4)(utf-8-validate@5.0.10))(utf-8-validate@5.0.10)
       keccak:
         specifier: ^3.0.1
         version: 3.0.4
@@ -2280,6 +2283,12 @@ packages:
     resolution: {integrity: sha512-02N4+So/fZrzJ88ci54GqwVA3Zrf0C9duuTyGt0CFRIh/CdNwbnTgkXkRfojOMLBQ+6t+lBIkgbsOtqMvNwikA==}
     peerDependencies:
       hardhat: ^2.0.2
+
+  hardhat-tracer@3.1.0:
+    resolution: {integrity: sha512-Ip16HQAuzbqbNJUIEVfqmbPmOY90bxZSpwu5Q73cwloy+LUYA04BATUM9Gui5H7zcgsgZ1IVy7pSYn6ZMjLmag==}
+    peerDependencies:
+      chai: 4.x
+      hardhat: '>=2.22.5 <3.x'
 
   hardhat@2.22.8:
     resolution: {integrity: sha512-hPh2feBGRswkXkoXUFW6NbxgiYtEzp/3uvVFjYROy6fA9LH8BobUyxStlyhSKj4+v1Y23ZoUBOVWL84IcLACrA==}
@@ -7347,6 +7356,19 @@ snapshots:
       - '@codechecks/client'
       - bufferutil
       - debug
+      - utf-8-validate
+
+  hardhat-tracer@3.1.0(bufferutil@4.0.8)(chai@4.5.0)(hardhat@2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.5.4))(typescript@5.5.4)(utf-8-validate@5.0.10))(utf-8-validate@5.0.10):
+    dependencies:
+      chai: 4.5.0
+      chalk: 4.1.2
+      debug: 4.3.6(supports-color@8.1.1)
+      ethers: 5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
+      hardhat: 2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.5.4))(typescript@5.5.4)(utf-8-validate@5.0.10)
+      semver: 7.6.3
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
       - utf-8-validate
 
   hardhat@2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.5.4))(typescript@5.5.4)(utf-8-validate@5.0.10):

@@ -6,6 +6,7 @@ import "hardhat-gas-reporter";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import "solidity-docgen";
+import "hardhat-tracer";
 // import "@nomicfoundation/hardhat-verify";
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();
@@ -18,7 +19,8 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 export default {
   docgen: {
     outputDir: "./docs/contracts",
-    pages: "single",
+    pages: "files",
+    templates: "docs/templates",
     sourcesDir: "./src",
     pageExtension: ".md",
     exclude: ["mocks", "initializers", "vendor", "modifiers", "fixtures"],
