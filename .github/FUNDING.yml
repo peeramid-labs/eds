@@ -12,4 +12,4 @@ lfx_crowdfunding: # Replace with a single LFX Crowdfunding project-name e.g., cl
 polar: # Replace with a single Polar username
 buy_me_a_coffee: # Replace with a single Buy Me a Coffee username
 thanks_dev: # Replace with a single thanks.dev username
-custom: 'https://explorer.gitcoin.co/#/projects/0xd4427d0ffc2b8f58c4ef28410deed1158a7d5e405d6cd5bedb0487441d2ba452' #
+custom: [ 'https://explorer.gitcoin.co/#/projects/0xd4427d0ffc2b8f58c4ef28410deed1158a7d5e405d6cd5bedb0487441d2ba452' ] #
