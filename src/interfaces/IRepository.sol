@@ -3,12 +3,13 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import "../libraries/LibSemver.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IContractURI} from "./IContractURI.sol";
 /**
  * @title IRepository Interface
  * @notice It is intended to be implemented by contracts that manage a collection of versions of a byte code.
  * @author Peeramid Labs, 2024
  */
-interface IRepository is IERC165 {
+interface IRepository is IERC165, IContractURI {
     /**
      * @notice Represents a source with version information, a unique identifier, and associated metadata.
      * @param version The version of the source, represented using the LibSemver.Version struct.
@@ -87,12 +88,8 @@ interface IRepository is IERC165 {
     function getLatest() external view returns (Source memory);
     /**
      * @notice Retrieves a specific item from the repository.
-     * @param baseVersion the base of required version
-     * @param requirement the requirement of the version
+     * @param required the required version
      * @return The requested `Source`.
      */
-    function get(
-        LibSemver.Version calldata baseVersion,
-        LibSemver.requirements requirement
-    ) external view returns (Source memory);
+    function get(LibSemver.VersionRequirement calldata required) external view returns (Source memory);
 }

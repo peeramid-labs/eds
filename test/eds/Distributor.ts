@@ -1,12 +1,10 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import {
-  CodeIndex,
-  Distributor,
-  MockCloneDistribution__factory,
-  OwnableDistributor,
-  OwnableDistributor__factory,
-  TestFacet__factory,
+    CodeIndex, MockCloneDistribution__factory,
+    OwnableDistributor,
+    OwnableDistributor__factory,
+    TestFacet__factory
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -54,12 +52,12 @@ describe("Distributor", function () {
     expect(
       await distributor
         .connect(owner)
-        .addDistribution(cloneDistributionId, ethers.constants.AddressZero)
+        ["addDistribution(bytes32,address)"](cloneDistributionId, ethers.constants.AddressZero)
     ).to.emit(distributor, "DistributionAdded");
     await expect(
       distributor
         .connect(deployer)
-        .addDistribution(cloneDistributionId, ethers.constants.AddressZero)
+        ["addDistribution(bytes32,address)"](cloneDistributionId, ethers.constants.AddressZero)
     ).to.be.revertedWithCustomError(distributor, "OwnableUnauthorizedAccount");
   });
 
@@ -83,7 +81,7 @@ describe("Distributor", function () {
     beforeEach(async function () {
       await distributor
         .connect(owner)
-        .addDistribution(cloneDistributionId, ethers.constants.AddressZero);
+        ["addDistribution(bytes32,address)"](cloneDistributionId, ethers.constants.AddressZero);
     });
 
     it("Is possible to instantiate a contract", async function () {

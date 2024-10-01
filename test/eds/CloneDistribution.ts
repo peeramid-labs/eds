@@ -20,7 +20,7 @@ describe("CloneDistribution", function () {
   });
 
   it("Should read metadata", async function () {
-    const metadata = await cloneDistribution.getMetadata();
+    const metadata = await cloneDistribution.contractURI();
     expect(metadata).to.equal("MockCloneDistribution");
   });
 

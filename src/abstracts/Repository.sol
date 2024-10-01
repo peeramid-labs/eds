@@ -10,6 +10,7 @@ import "../interfaces/IRepository.sol";
  */
 abstract contract Repository is IRepository {
     bytes32 public immutable repositoryName;
+    string private _cURI;
     using LibSemver for LibSemver.Version;
     mapping(uint256 => bytes32) internal versionedSources; // Flat version -> Source
     mapping(uint64 => bytes) internal releaseMetadata; // Major version -> Metadata
@@ -20,8 +21,9 @@ abstract contract Repository is IRepository {
     uint64 internal majorReleases;
     uint256 internal latestVersion;
 
-    constructor(bytes32 _repositoryName) {
+    constructor(bytes32 _repositoryName, string memory cURI) {
         repositoryName = _repositoryName;
+        _cURI = cURI;
     }
 
     function _updateReleaseMetadata(LibSemver.Version memory version, bytes memory metadata) internal {
@@ -78,58 +80,63 @@ abstract contract Repository is IRepository {
         return src;
     }
     // @inheritdoc IRepository
-    function get(
-        LibSemver.Version memory version,
-        LibSemver.requirements requirement
-    ) public view returns (Source memory) {
+    function get(LibSemver.VersionRequirement calldata required) public view returns (Source memory) {
         Source memory src;
-        uint256 versionFlat = version.toUint256();
+        uint256 versionFlat = required.version.toUint256();
         uint256 resolvedVersion;
-        if (version.major == 0) revert VersionDoesNotExist(versionFlat);
-        if (requirement == LibSemver.requirements.EXACT) resolvedVersion = versionFlat;
-        else if (requirement == LibSemver.requirements.MAJOR) {
-            if (version.major > majorReleases) revert VersionDoesNotExist(version.toUint256());
-            uint128 minorReleaseId = (uint128(version.major) << 64) | uint128(minorReleases[version.major]);
+        if (required.version.major == 0) revert VersionDoesNotExist(versionFlat);
+        if (required.requirement == LibSemver.requirements.EXACT) resolvedVersion = versionFlat;
+        else if (required.requirement == LibSemver.requirements.MAJOR) {
+            if (required.version.major > majorReleases) revert VersionDoesNotExist(required.version.toUint256());
+            uint128 minorReleaseId = (uint128(required.version.major) << 64) |
+                uint128(minorReleases[required.version.major]);
             resolvedVersion = (uint256(minorReleaseId) << 128) | uint256(patchReleases[minorReleaseId]);
             src.sourceId = versionedSources[resolvedVersion];
             src.version = LibSemver.parse(resolvedVersion);
-        } else if (requirement == LibSemver.requirements.MAJOR_MINOR) {
-            if (version.major > majorReleases) revert VersionDoesNotExist(version.toUint256());
-            if (version.major == majorReleases) {
-                if (version.minor > minorReleases[version.major]) revert VersionDoesNotExist(version.toUint256());
+        } else if (required.requirement == LibSemver.requirements.MAJOR_MINOR) {
+            if (required.version.major > majorReleases) revert VersionDoesNotExist(required.version.toUint256());
+            if (required.version.major == majorReleases) {
+                if (required.version.minor > minorReleases[required.version.major])
+                    revert VersionDoesNotExist(required.version.toUint256());
             }
-            uint128 minorReleaseId = (uint128(version.major) << 64) | uint128(version.minor);
+            uint128 minorReleaseId = (uint128(required.version.major) << 64) | uint128(required.version.minor);
             resolvedVersion = (uint256(minorReleaseId) << 128) | uint256(patchReleases[minorReleaseId]);
-        } else if (requirement == LibSemver.requirements.GREATER_EQUAL) {
-            if (version.major > majorReleases) revert VersionDoesNotExist(version.toUint256());
-            if (version.major == majorReleases) {
-                if (version.minor > minorReleases[version.major]) revert VersionDoesNotExist(version.toUint256());
-                if (version.minor == minorReleases[version.major]) {
-                    if (version.patch > patchReleases[(uint128(version.major) << 64) | uint128(version.minor)])
-                        revert VersionDoesNotExist(version.toUint256());
+        } else if (required.requirement == LibSemver.requirements.GREATER_EQUAL) {
+            if (required.version.major > majorReleases) revert VersionDoesNotExist(required.version.toUint256());
+            if (required.version.major == majorReleases) {
+                if (required.version.minor > minorReleases[required.version.major])
+                    revert VersionDoesNotExist(required.version.toUint256());
+                if (required.version.minor == minorReleases[required.version.major]) {
+                    if (
+                        required.version.patch >
+                        patchReleases[(uint128(required.version.major) << 64) | uint128(required.version.minor)]
+                    ) revert VersionDoesNotExist(required.version.toUint256());
                 }
             }
             uint128 minorReleaseId = (uint128(majorReleases) << 64) | uint128(minorReleases[majorReleases]);
             resolvedVersion = (uint256(minorReleaseId) << 128) | uint256(patchReleases[minorReleaseId]);
-        } else if (requirement == LibSemver.requirements.GREATER) {
-            if (version.major > majorReleases) revert VersionDoesNotExist(version.toUint256());
-            if (version.major == majorReleases) {
-                if (version.minor > minorReleases[version.major]) revert VersionDoesNotExist(version.toUint256());
-                if (version.minor == minorReleases[version.major]) {
-                    if (version.patch >= patchReleases[(uint128(version.major) << 64) | uint128(version.minor)])
-                        revert VersionDoesNotExist(version.toUint256());
+        } else if (required.requirement == LibSemver.requirements.GREATER) {
+            if (required.version.major > majorReleases) revert VersionDoesNotExist(required.version.toUint256());
+            if (required.version.major == majorReleases) {
+                if (required.version.minor > minorReleases[required.version.major])
+                    revert VersionDoesNotExist(required.version.toUint256());
+                if (required.version.minor == minorReleases[required.version.major]) {
+                    if (
+                        required.version.patch >=
+                        patchReleases[(uint128(required.version.major) << 64) | uint128(required.version.minor)]
+                    ) revert VersionDoesNotExist(required.version.toUint256());
                 }
             }
             uint128 minorReleaseId = (uint128(majorReleases) << 64) | uint128(minorReleases[majorReleases]);
             resolvedVersion = (uint256(minorReleaseId) << 128) | uint256(patchReleases[minorReleaseId]);
-        } else if (requirement == LibSemver.requirements.LESSER_EQUAL) {
+        } else if (required.requirement == LibSemver.requirements.LESSER_EQUAL) {
             revert("Not implemented");
-        } else if (requirement == LibSemver.requirements.LESSER) {
+        } else if (required.requirement == LibSemver.requirements.LESSER) {
             revert("Not implemented");
-        } else if (requirement == LibSemver.requirements.ANY) {
+        } else if (required.requirement == LibSemver.requirements.ANY) {
             resolvedVersion = latestVersion;
         } else {
-            revert VersionDoesNotExist(version.toUint256());
+            revert VersionDoesNotExist(required.version.toUint256());
         }
         src.sourceId = versionedSources[resolvedVersion];
         src.version = LibSemver.parse(resolvedVersion);
@@ -168,5 +175,9 @@ abstract contract Repository is IRepository {
     // @inheritdoc IRepository
     function getPatchReleases(uint64 major, uint64 minor) public view returns (uint128) {
         return patchReleases[(uint128(major) << 64) | uint128(minor)];
+    }
+
+    function contractURI() public view returns (string memory) {
+        return _cURI;
     }
 }

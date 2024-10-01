@@ -25,6 +25,10 @@ contract LatestVersionDistribution is CloneDistribution {
         repository = _repository;
     }
 
+    function instantiate(bytes memory) external returns (address[] memory instances, bytes32, uint256) {
+        return super._instantiate();
+    }
+
     function sources() internal view virtual override returns (address[] memory srcs, bytes32 name, uint256 version) {
         address[] memory _sources = new address[](1);
         IRepository.Source memory latest = repository.getLatest();
@@ -32,7 +36,7 @@ contract LatestVersionDistribution is CloneDistribution {
         return (_sources, repository.repositoryName(), LibSemver.toUint256(latest.version));
     }
 
-    function getMetadata() external view virtual override returns (string memory) {
+    function contractURI() external view virtual override returns (string memory) {
         return string(abi.encodePacked(metadata)); //ToDo: Add IPFS link with readme!
     }
 }

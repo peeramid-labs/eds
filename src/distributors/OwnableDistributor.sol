@@ -11,8 +11,22 @@ contract OwnableDistributor is Distributor, Ownable {
         return super._instantiate(id, args);
     }
 
-    function addDistribution(bytes32 id, address initializer) public onlyOwner {
+    function addDistribution(bytes32 id, address initializer) external onlyOwner {
         super._addDistribution(id, initializer);
+    }
+    function addDistribution(
+        IRepository repository,
+        address initializer,
+        LibSemver.VersionRequirement memory requirement
+    ) external onlyOwner {
+        super._addDistribution(address(repository), initializer, requirement);
+    }
+
+    function changeVersion(
+        bytes32 distributionId,
+        LibSemver.VersionRequirement memory newRequirement
+    ) public onlyOwner {
+        super._changeVersion(distributionId, newRequirement);
     }
 
     function removeDistribution(bytes32 id) public onlyOwner {

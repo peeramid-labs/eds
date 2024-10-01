@@ -5,7 +5,7 @@ import "../abstracts/Repository.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import "../interfaces/IRepository.sol";
 contract OwnableRepository is Repository, Ownable, ERC165 {
-    constructor(address owner, bytes32 name) Ownable(owner) Repository(name) {}
+    constructor(address owner, bytes32 name, string memory cURI) Ownable(owner) Repository(name, cURI) {}
 
     function updateReleaseMetadata(LibSemver.Version memory version, bytes calldata releaseMetadata) public onlyOwner {
         super._updateReleaseMetadata(version, releaseMetadata);
