@@ -22,7 +22,10 @@ contract OwnableDistributor is Distributor, Ownable {
         super._addDistribution(address(repository), initializer, requirement);
     }
 
-    function changeVersion(bytes32 distributionId, LibSemver.VersionRequirement memory newRequirement) public onlyOwner {
+    function changeVersion(
+        bytes32 distributionId,
+        LibSemver.VersionRequirement memory newRequirement
+    ) public onlyOwner {
         super._changeVersion(distributionId, newRequirement);
     }
 

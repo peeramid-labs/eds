@@ -153,5 +153,4 @@ interface IDistributor is IERC7746, IERC165 {
      * @param newRequirement The new version requirement to be set for the distribution.
      */
     function changeVersion(bytes32 distributionId, LibSemver.VersionRequirement memory newRequirement) external;
-
 }

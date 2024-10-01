@@ -79,10 +79,7 @@ library LibSemver {
         return toUint256(_version1) == toUint256(_version2);
     }
 
-    function compare(
-        Version memory has,
-        VersionRequirement memory needs
-    ) internal pure returns (bool) {
+    function compare(Version memory has, VersionRequirement memory needs) internal pure returns (bool) {
         if (needs.requirement == requirements.ANY) return true;
         if (needs.requirement == requirements.EXACT) return toUint256(has) == toUint256(needs.version);
         if (needs.requirement == requirements.MAJOR) return has.major == needs.version.major;
