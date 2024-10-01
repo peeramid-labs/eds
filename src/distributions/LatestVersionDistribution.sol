@@ -25,6 +25,10 @@ contract LatestVersionDistribution is CloneDistribution {
         repository = _repository;
     }
 
+    function instantiate(bytes memory) external returns (address[] memory instances, bytes32, uint256) {
+        return super._instantiate();
+    }
+
     function sources() internal view virtual override returns (address[] memory srcs, bytes32 name, uint256 version) {
         address[] memory _sources = new address[](1);
         IRepository.Source memory latest = repository.getLatest();
