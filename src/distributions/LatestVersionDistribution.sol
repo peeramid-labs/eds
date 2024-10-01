@@ -32,7 +32,7 @@ contract LatestVersionDistribution is CloneDistribution {
         return (_sources, repository.repositoryName(), LibSemver.toUint256(latest.version));
     }
 
-    function getMetadata() external view virtual override returns (string memory) {
+    function contractURI() external view virtual override returns (string memory) {
         return string(abi.encodePacked(metadata)); //ToDo: Add IPFS link with readme!
     }
 }

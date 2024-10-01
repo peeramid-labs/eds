@@ -38,7 +38,7 @@ contract CodeHashDistribution is CloneDistribution {
         return (_sources, distributionName, distributionVersion);
     }
     // @inheritdoc IDistribution
-    function getMetadata() external view virtual override returns (string memory) {
+    function contractURI() external view virtual override returns (string memory) {
         return string(abi.encodePacked(metadata)); //ToDo: Add IPFS link with readme!
     }
 }

@@ -29,5 +29,5 @@ abstract contract CloneDistribution is IDistribution, CodeIndexer {
         return sources();
     }
     // @inheritdoc IDistribution
-    function getMetadata() external view virtual returns (string memory);
+    function contractURI() external view virtual returns (string memory);
 }

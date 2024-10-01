@@ -20,6 +20,11 @@ library LibSemver {
         LESSER // <
     }
 
+    struct VersionRequirement {
+        Version version;
+        requirements requirement;
+    }
+
     function toUint256(Version memory _version) internal pure returns (uint256) {
         return (uint256(_version.major) << 192) | (uint256(_version.minor) << 128) | uint256(_version.patch);
     }
@@ -70,24 +75,23 @@ library LibSemver {
         if (toUint256(_version1) >= toUint256(_version2)) revert versionMissmatch("Version is not lesser");
     }
 
-    function compare(Version memory _version1, Version memory _version2) internal pure returns (uint256) {
-        return toUint256(_version1) - toUint256(_version2);
+    function areEqual(Version memory _version1, Version memory _version2) internal pure returns (bool) {
+        return toUint256(_version1) == toUint256(_version2);
     }
 
     function compare(
-        Version memory _version1,
-        Version memory _version2,
-        requirements _requirement
+        Version memory has,
+        VersionRequirement memory needs
     ) internal pure returns (bool) {
-        if (_requirement == requirements.ANY) return true;
-        if (_requirement == requirements.EXACT) return toUint256(_version1) == toUint256(_version2);
-        if (_requirement == requirements.MAJOR) return _version1.major == _version2.major;
-        if (_requirement == requirements.MAJOR_MINOR)
-            return _version1.major == _version2.major && _version1.minor == _version2.minor;
-        if (_requirement == requirements.GREATER_EQUAL) return toUint256(_version1) >= toUint256(_version2);
-        if (_requirement == requirements.GREATER) return toUint256(_version1) > toUint256(_version2);
-        if (_requirement == requirements.LESSER_EQUAL) return toUint256(_version1) <= toUint256(_version2);
-        if (_requirement == requirements.LESSER) return toUint256(_version1) < toUint256(_version2);
+        if (needs.requirement == requirements.ANY) return true;
+        if (needs.requirement == requirements.EXACT) return toUint256(has) == toUint256(needs.version);
+        if (needs.requirement == requirements.MAJOR) return has.major == needs.version.major;
+        if (needs.requirement == requirements.MAJOR_MINOR)
+            return has.major == needs.version.major && has.minor == needs.version.minor;
+        if (needs.requirement == requirements.GREATER_EQUAL) return toUint256(has) >= toUint256(needs.version);
+        if (needs.requirement == requirements.GREATER) return toUint256(has) > toUint256(needs.version);
+        if (needs.requirement == requirements.LESSER_EQUAL) return toUint256(has) <= toUint256(needs.version);
+        if (needs.requirement == requirements.LESSER) return toUint256(has) < toUint256(needs.version);
         return false;
     }
 

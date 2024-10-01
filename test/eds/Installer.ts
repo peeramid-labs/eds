@@ -1,14 +1,12 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import {
-  CodeIndex,
-  Distributor,
-  MockCloneDistribution,
-  MockCloneDistribution__factory,
-  MockInstaller,
-  MockInstaller__factory,
-  OwnableDistributor,
-  OwnableDistributor__factory,
+    CodeIndex, MockCloneDistribution,
+    MockCloneDistribution__factory,
+    MockInstaller,
+    MockInstaller__factory,
+    OwnableDistributor,
+    OwnableDistributor__factory
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -45,7 +43,9 @@ describe("Installer", function () {
     const code = await cloneDistribution.provider.getCode(cloneDistribution.address);
     cloneDistributionId = ethers.utils.keccak256(code);
     await codeIndex.register(cloneDistribution.address);
-    distributor.connect(owner).addDistribution(cloneDistributionId, ethers.constants.AddressZero);
+    distributor
+      .connect(owner)
+      ["addDistribution(bytes32,address)"](cloneDistributionId, ethers.constants.AddressZero);
     distributorsId = ethers.utils.keccak256(
       ethers.utils.defaultAbiCoder.encode(
         ["bytes32", "address"],
