@@ -11,9 +11,9 @@ abstract contract CloneDistribution is IDistribution, CodeIndexer {
     function sources() internal view virtual returns (address[] memory, bytes32 name, uint256 version);
 
     // @inheritdoc IDistribution
-    function instantiate(
+    function _instantiate(
         bytes memory
-    ) external virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
+    ) internal virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
         (address[] memory _sources, bytes32 _distributionName, uint256 _distributionVersion) = sources();
         uint256 srcsLength = _sources.length;
         instances = new address[](srcsLength);
