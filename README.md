@@ -30,7 +30,7 @@ In order to provide functionality to users, developers may pack their code to _D
 
 We are working on setting up a token and deploying governing body as a DAO. 
 
-If you want to be up to date and not miss a thiing, please 
+If you want to be up to date and not miss a thing, please 
 - subscribe to our twitter: https://x.com/peeramid_labs
 - join our discord: https://discord.gg/EddGgGUuWC
 
