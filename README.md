@@ -26,6 +26,14 @@ If the developer wants to manage multiple versions of the same resource, they ca
 
 In order to provide functionality to users, developers may pack their code to _Distributions_, which have hardcoded instructions for instantiation. Such hardcoded bytecode later can be itself consumed by Distributors, which are responsible for determining custom instantiation arguments and initializer interfaces that will wrap the Distribution. Finally, Installers are used by end-users to manage resources and permissions
 
+## Project status: Alpha
+
+We are workin on setting up a token and deploying governing body as a DAO. 
+
+If you want to be up to date and not miss a thiing, please 
+- subscribe to our twitter: https://x.com/peeramid_labs
+- join our discord: https://discord.gg/EddGgGUuWC
+- 
 ### Key Features
 
 - **Verifiable:** Stateless distribution components are easily verifiable by anyone through their bytecode.
