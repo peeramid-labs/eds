@@ -17,6 +17,14 @@ System provisions for generic interfaces for distributors, developers and instal
 
 - It paves the door for a better, more performant Ethereum ecosystem, provisioning software abstracted features such as objects passing between same distribution instances. (e.g., don’t need approve for ERC20 transfers between such)
 
+## Use cases 
+
+- **Factory Framework**: Instead of writing own factory, just write a distribution and register it
+- **Security oracles**: Disconnect vulnerable code from your users in O(1)
+- **Semantic versioning with EIP712**: Instead of having to figure out "what to write in EIP712 constructor" just use built in version control system!
+- **User owned upgradability**: Get more user trust by alllowing them to decide when to upgrade
+- **Improve user UX**: Configure trust within instance or distribution, so that you'r users do not need to set allowances and issue permits anymore!    
+
 ## Overview
 
 This system acts as generalized and efficient factory which is designed in one-fits-all principle. It achieves this by referring bytecode instead of location, enabling code queries by bytecode hash (`address.codehash`). Developers when interacting with the system first must register their bytecode to the code indexer contract which is defined by [ERC7744](https://eips.ethereum.org/EIPS/eip-7744).
