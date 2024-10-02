@@ -5,34 +5,27 @@ Using EDS enables developers to publish and reuse each other's code in a trustle
 
 System provisions for generic interfaces for distributors, developers and installers, each with their own responsibilities and constraints. 
 
-## Why is EDS Important?
-
-- It enables developers to efficiently reuse each other's code, effectively reducing the number of needed deployment artifacts in order to get projects going. 
-
-- It enables distributors to act as a source of trust for users, packing the global permissionless domain of available packages into a distributor entity specific instantiation that may be parametrized in predictable ways.
-
-- It enables security firms to attest for security of deployed code and revoke such signatures in O(1) for every instance in case of vulnerabilities. 
-
-- It enables users (smart accounts) to manage their trusted distributions and distributors while delegating runtime security as needed. 
-
-- It paves the door for a better, more performant Ethereum ecosystem, provisioning software abstracted features such as objects passing between same distribution instances. (e.g., don’t need approve for ERC20 transfers between such)
-
 ## Use cases 
 
 - **Factory Framework**: Instead of writing own factory, just write a distribution and register it
+- **Ship faster**: Reduce the number of needed deployment artifacts in order to ship your project. Re-using others packages instead!
 - **Security oracles**: Disconnect vulnerable code from your users in O(1)
 - **Semantic versioning with EIP712**: Instead of having to figure out "what to write in EIP712 constructor" just use built in version control system!
 - **User owned upgradability**: Get more user trust by alllowing them to decide when to upgrade
-- **Improve user UX**: Configure trust within instance or distribution, so that you'r users do not need to set allowances and issue permits anymore!    
+- **Improve user UX**: Configure trust within instance or distribution, so that you'r users do not need to set allowances and issue permits anymore!
+-  **On-chain github**: Refer bytecode instead of location using ([ERC7744](https://eips.ethereum.org/EIPS/eip-7744))
+-  **Better Monitize your apps and services**: As your application becomes distributed, and wrapped, you may directly build in payment systems and subscription models on-chain! 
 
 ## Overview
 
-This system acts as generalized and efficient factory which is designed in one-fits-all principle. It achieves this by referring bytecode instead of location, enabling code queries by bytecode hash (`address.codehash`). Developers when interacting with the system first must register their bytecode to the code indexer contract which is defined by [ERC7744](https://eips.ethereum.org/EIPS/eip-7744).
-After that, they may create a distribution contract that links multiple various required code hashes in one place. 
+This system acts as generalized and efficient factory which is designed in one-fits-all principle. It achieves this by splitting EDS users in following groups: 
+- **Developers**: Create a distributable (statless) software that can be instantiated. It can use already deployed contracts and functionality!
+- **Distributors**: Security firms and traditional distributor agencies. Ensure that distributions they list are secure, trusted and act in their user interest!
+- **Smart accounts**: Use Distributor softeware to plug it into you'r smart account! 
+
+IN the background, there is extensive use of proxies to map instances, that are proxies, to a right functionality. Instances are also treated as middelwares that are hooked to distributor with use of [ERC7746](https://eips.ethereum.org/EIPS/eip-7746), in such way that caller cannot reach the functionality without first checking with distributor. The distributor in his turn, by default checks if the instance is valid distribution.
 
 If the developer wants to manage multiple versions of the same resource, they can create a _Repository_ contract to add own index on top of global. 
-
-In order to provide functionality to users, developers may pack their code to _Distributions_, which have hardcoded instructions for instantiation. Such hardcoded bytecode later can be itself consumed by Distributors, which are responsible for determining custom instantiation arguments and initializer interfaces that will wrap the Distribution. Finally, Installers are used by end-users to manage resources and permissions
 
 ## Project status: Alpha
 
