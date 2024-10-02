@@ -20,7 +20,7 @@ System provisions for generic interfaces for distributors, developers and instal
 
 This system acts as generalized and efficient factory which is designed in one-fits-all principle. It achieves this by splitting EDS users in following groups: 
 - **Developers**: Create a distributable (statless) software that can be instantiated. It can use already deployed contracts and functionality!
-- **Distributors**: Security firms and traditional distributor agencies. Ensure that distributions they list are secure, trusted and act in their user interest!
+- **Distributors**: Security firms and traditional distributor agencies. Ensure that distributions they list are secure (think of this as a runtime checked audit attestation), trusted and act in their user interest!
 - **Smart accounts**: Use Distributor softeware to plug it into you'r smart account! 
 
 IN the background, there is extensive use of proxies to map instances, that are proxies, to a right functionality. Instances are also treated as middelwares that are hooked to distributor with use of [ERC7746](https://eips.ethereum.org/EIPS/eip-7746), in such way that caller cannot reach the functionality without first checking with distributor. The distributor in his turn, by default checks if the instance is valid distribution.
