@@ -28,12 +28,13 @@ In order to provide functionality to users, developers may pack their code to _D
 
 ## Project status: Alpha
 
-We are workin on setting up a token and deploying governing body as a DAO. 
+We are working on setting up a token and deploying governing body as a DAO. 
 
 If you want to be up to date and not miss a thiing, please 
 - subscribe to our twitter: https://x.com/peeramid_labs
 - join our discord: https://discord.gg/EddGgGUuWC
-- 
+
+
 ### Key Features
 
 - **Verifiable:** Stateless distribution components are easily verifiable by anyone through their bytecode.
