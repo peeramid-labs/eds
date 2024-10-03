@@ -29,9 +29,9 @@ If the developer wants to manage multiple versions of the same resource, they ca
 
 ## Project status: Alpha
 
-We are working on setting up a token and deploying governing body as a DAO. 
+We are open for discussion, whether this should be managed trough a governing body as a DAO. 
 
-If you want to be up to date and not miss a thing, please 
+If you want to be up to date, express your opinion or not miss a thing, please 
 - subscribe to our twitter: https://x.com/peeramid_labs
 - join our discord: https://discord.gg/EddGgGUuWC
 
