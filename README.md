@@ -1,31 +1,29 @@
-# Ethereum Distribution System
+# **Ethereum Distribution System**
 
-The Ethereum Distribution System (EDS) is an open and decentralized, fully on-chain distribution (factory) system for Ethereum smart contracts. 
-Using EDS enables developers to publish and reuse each other's code in a trustless manner. Built-in system for [semantic versioning](http://semver.org/), managing versions and combining into higher level distributions allows developers to avoid using upgradability patterns, instead relying on version control. 
+The Ethereum Distribution System (EDS) is an open and decentralized, fully on-chain distribution (factory) system for Ethereum smart contracts. Using EDS enables developers to publish and reuse each other's code in a trustless manner. Built-in system for [semantic versioning](http://semver.org/), managing versions and combining into higher level distributions allows developers to avoid using upgradability patterns, instead relying on version control.  
+System provisions for generic interfaces for distributors, developers and installers, each with their own responsibilities and constraints.
 
-System provisions for generic interfaces for distributors, developers and installers, each with their own responsibilities and constraints. 
+## **Use cases**
 
-## Use cases 
+* **Factory Framework**: Instead of writing own factory, just write a distribution and register it  
+* **Ship faster**: Reduce the number of needed deployment artifacts to ship your project. Re-using other packages instead\!  
+* **Security oracles**: Disconnect vulnerable code from your users in O(1)  
+* **Semantic versioning with EIP712**: Instead of having to figure out "what to write in EIP712 constructor" just use the built in version control system\!  
+* **User owned upgradability**: Get more user trust by allowing them to decide when to upgrade  
+* **Improve user UX**: Configure trust within instance or distribution, so that your users do not need to set allowances and issue permits anymore\!  
+* **On-chain github**: Refer bytecode instead of location using ([ERC7744](https://eips.ethereum.org/EIPS/eip-7744))  
+* **Better Monetize your apps and services**: As your application becomes distributed, and wrapped, you may directly build in payment systems and subscription models on-chain\!
 
-- **Factory Framework**: Instead of writing own factory, just write a distribution and register it
-- **Ship faster**: Reduce the number of needed deployment artifacts in order to ship your project. Re-using others packages instead!
-- **Security oracles**: Disconnect vulnerable code from your users in O(1)
-- **Semantic versioning with EIP712**: Instead of having to figure out "what to write in EIP712 constructor" just use built in version control system!
-- **User owned upgradability**: Get more user trust by alllowing them to decide when to upgrade
-- **Improve user UX**: Configure trust within instance or distribution, so that you'r users do not need to set allowances and issue permits anymore!
--  **On-chain github**: Refer bytecode instead of location using ([ERC7744](https://eips.ethereum.org/EIPS/eip-7744))
--  **Better Monitize your apps and services**: As your application becomes distributed, and wrapped, you may directly build in payment systems and subscription models on-chain! 
+## **Overview**
 
-## Overview
+This system acts as a generalized and efficient factory which is designed in one-fits-all principle. It achieves this by splitting EDS users in following groups:
 
-This system acts as generalized and efficient factory which is designed in one-fits-all principle. It achieves this by splitting EDS users in following groups: 
-- **Developers**: Create a distributable (statless) software that can be instantiated. It can use already deployed contracts and functionality!
-- **Distributors**: Security firms and traditional distributor agencies. Ensure that distributions they list are secure (think of this as a runtime checked audit attestation), trusted and act in their user interest!
-- **Smart accounts**: Use Distributor softeware to plug it into you'r smart account! 
+* **Developers**: Create a distributable (stateless) software that can be instantiated. It can use already deployed contracts and functionality\!  
+* **Distributors**: Security firms and traditional distributor agencies. Ensure that distributions they list are secure (think of this as a runtime checked audit attestation), trusted and act in their user interest\!  
+* **Smart accounts**: Use Distributor software to plug it into your smart account\!
 
-IN the background, there is extensive use of proxies to map instances, that are proxies, to a right functionality. Instances are also treated as middelwares that are hooked to distributor with use of [ERC7746](https://eips.ethereum.org/EIPS/eip-7746), in such way that caller cannot reach the functionality without first checking with distributor. The distributor in his turn, by default checks if the instance is valid distribution.
-
-If the developer wants to manage multiple versions of the same resource, they can create a _Repository_ contract to add own index on top of global. 
+IN the background, there is extensive use of proxies to map instances, that are proxies, to a right functionality. Instances are also treated as middlewares that are hooked to the distributor with use of [ERC7746](https://eips.ethereum.org/EIPS/eip-7746), in such a way that the caller cannot reach the functionality without first checking with the distributor. The distributor in turn, by default, checks if the instance is a valid distribution.  
+If the developer wants to manage multiple versions of the same resource, they can create a *Repository* contract to add their own index on top of global.
 
 ## Project status: Alpha
 
