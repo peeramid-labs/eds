@@ -1,5 +1,11 @@
 # @peeramid-labs/eds
 
+## 2.1.0
+
+### Minor Changes
+
+- [#24](https://github.com/peeramid-labs/eds/pull/24) [`2b2da271d61f6f1fc9314dc1ecc7401d9a988f4e`](https://github.com/peeramid-labs/eds/commit/2b2da271d61f6f1fc9314dc1ecc7401d9a988f4e) Thanks [@peersky](https://github.com/peersky)! - added paid distributor contract
+
 ## 2.0.1
 
 ### Patch Changes
