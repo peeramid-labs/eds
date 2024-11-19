@@ -18,8 +18,8 @@
     "build": "pnpm hardhat compile",
     "lint:sol": "prettier --loglevel warn --ignore-path .prettierignore '{src,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
     "lint:sol:fix": "prettier --loglevel warn --ignore-path .prettierignore '{src,test}/**/*.sol' --write",
-    "version": "pnpm build && changeset version",
-    "release": "pnpm lint:fix && pnpm build && changeset publish"
+    "version": "pnpm lint:fix && pnpm build && changeset version",
+    "release": "pnpm build && changeset publish"
   },
   "keywords": [],
   "author": "Tim Pechersky (@Peersky)",
