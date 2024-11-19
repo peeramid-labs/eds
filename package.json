@@ -16,8 +16,8 @@
     "test": "export NODE_ENV=TEST && pnpm hardhat test",
     "test:parallel": "export NODE_ENV=TEST && pnpm hardhat test --parallel",
     "build": "pnpm hardhat compile",
-    "lint:sol": "prettier --loglevel warn --ignore-path .prettierignore '{src,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
-    "lint:sol:fix": "prettier --loglevel warn --ignore-path .prettierignore '{src,test}/**/*.sol' --write",
+    "lint:sol": "prettier --log-level warn --ignore-path .prettierignore '{src,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
+    "lint:sol:fix": "prettier --log-level warn --ignore-path .prettierignore '{src,test}/**/*.sol' --write",
     "version": "pnpm lint:fix && pnpm build && changeset version",
     "release": "pnpm build && changeset publish"
   },

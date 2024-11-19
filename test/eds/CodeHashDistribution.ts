@@ -80,7 +80,7 @@ describe("CloneHashDistribution", function () {
       0
     )) as CodeHashDistribution;
 
-    const { src, name, version } = await codeHashDistribution.get();
+    const { name, version } = await codeHashDistribution.get();
     expect(ethers.utils.parseBytes32String(name)).to.be.equal("testDistribution");
     expect(version).to.be.equal(0);
   });

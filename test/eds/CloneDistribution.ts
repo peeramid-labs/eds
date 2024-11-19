@@ -1,16 +1,11 @@
 import { ethers } from "hardhat";
-import { Signer } from "ethers";
 import { expect } from "chai";
 
 describe("CloneDistribution", function () {
   let cloneDistribution: any;
-  let owner: Signer;
-  let addr1: Signer;
-  let addr2: Signer;
 
   beforeEach(async function () {
     const CloneDistribution = await ethers.getContractFactory("MockCloneDistribution");
-    [owner, addr1, addr2] = await ethers.getSigners();
     cloneDistribution = await CloneDistribution.deploy();
     await cloneDistribution.deployed();
   });
