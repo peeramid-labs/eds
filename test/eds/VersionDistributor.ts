@@ -1,11 +1,14 @@
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import {
-    CloneDistribution, CodeIndex, MockCloneDistribution__factory,
-    OwnableDistributor__factory,
-    OwnableRepository__factory,
-    Repository, TestFacet__factory,
-    OwnableDistributor
+  CloneDistribution,
+  CodeIndex,
+  MockCloneDistribution__factory,
+  OwnableDistributor__factory,
+  OwnableRepository__factory,
+  Repository,
+  TestFacet__factory,
+  OwnableDistributor
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -51,7 +54,7 @@ describe("Version Distributor", function () {
       .newRelease(mockDistributionId, ethers.utils.formatBytes32String("test"), {
         major: 1,
         minor: 0,
-        patch: 0,
+        patch: 0
       });
 
     const Distributor = (await ethers.getContractFactory(
@@ -64,20 +67,16 @@ describe("Version Distributor", function () {
     expect(
       await distributor
         .connect(owner)
-        ["addDistribution(address,address,((uint64,uint64,uint128),uint8))"](
-          repository.address,
-          ethers.constants.AddressZero,
-          { version: { major: 1, minor: 0, patch: 0 }, requirement: 1 }
-        )
+        [
+          "addDistribution(address,address,((uint64,uint64,uint128),uint8))"
+        ](repository.address, ethers.constants.AddressZero, { version: { major: 1, minor: 0, patch: 0 }, requirement: 1 })
     ).to.emit(distributor, "VersionedDistributionAdded");
     await expect(
       distributor
         .connect(deployer)
-        ["addDistribution(address,address,((uint64,uint64,uint128),uint8))"](
-          repository.address,
-          ethers.constants.AddressZero,
-          { version: { major: 1, minor: 0, patch: 0 }, requirement: 1 }
-        )
+        [
+          "addDistribution(address,address,((uint64,uint64,uint128),uint8))"
+        ](repository.address, ethers.constants.AddressZero, { version: { major: 1, minor: 0, patch: 0 }, requirement: 1 })
     ).to.be.revertedWithCustomError(distributor, "OwnableUnauthorizedAccount");
   });
 
@@ -103,11 +102,9 @@ describe("Version Distributor", function () {
     beforeEach(async function () {
       await distributor
         .connect(owner)
-        ["addDistribution(address,address,((uint64,uint64,uint128),uint8))"](
-          repository.address,
-          ethers.constants.AddressZero,
-          { version: { major: 1, minor: 0, patch: 0 }, requirement: 1 }
-        );
+        [
+          "addDistribution(address,address,((uint64,uint64,uint128),uint8))"
+        ](repository.address, ethers.constants.AddressZero, { version: { major: 1, minor: 0, patch: 0 }, requirement: 1 });
     });
 
     it("Is possible to instantiate a contract", async function () {
@@ -152,7 +149,7 @@ describe("Version Distributor", function () {
       const impersonatedSigner = await ethers.getImpersonatedSigner(instanceAddress);
       await network.provider.send("hardhat_setBalance", [
         impersonatedSigner.address,
-        "0x9000000000000000000",
+        "0x9000000000000000000"
       ]);
       await distributor
         .connect(owner)

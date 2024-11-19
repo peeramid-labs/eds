@@ -13,7 +13,7 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const result = await deploy("CodeIndex", {
     deterministicDeployment: salt,
     from: deployer,
-    skipIfAlreadyDeployed: true,
+    skipIfAlreadyDeployed: true
   });
 
   console.log("CodeIndex deployed at", result.address);

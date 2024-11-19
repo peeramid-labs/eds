@@ -1,6 +1,3 @@
-/* eslint-disable no-undef */
-/* eslint-disable arrow-body-style */
-/* eslint-disable no-await-in-loop */
 // import { time } from "@openzeppelin/test-helpers";
 import { ethers } from "hardhat";
 // @ts-ignore
@@ -34,5 +31,5 @@ const getSuperInterface = () => {
 };
 
 export default {
-  getSuperInterface,
+  getSuperInterface
 };
