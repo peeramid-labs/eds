@@ -11,7 +11,7 @@
   ],
   "description": "Generalized factory implementation for reproducible ethereum smart contract instantiation",
   "scripts": {
-    "lint:fix": "eslint --fix --no-ignore && pnpm run lint:sol:fix",
+    "lint:fix": "eslint --fix && pnpm run lint:sol:fix",
     "lint": "eslint && pnpm run lint:sol",
     "test": "export NODE_ENV=TEST && pnpm hardhat test",
     "test:parallel": "export NODE_ENV=TEST && pnpm hardhat test --parallel",
@@ -19,7 +19,7 @@
     "lint:sol": "prettier --loglevel warn --ignore-path .prettierignore '{src,test}/**/*.sol' --check && solhint '{contracts,test}/**/*.sol'",
     "lint:sol:fix": "prettier --loglevel warn --ignore-path .prettierignore '{src,test}/**/*.sol' --write",
     "version": "pnpm build && changeset version",
-    "release": "pnpm build && changeset publish"
+    "release": "pnpm lint:fix && pnpm build && changeset publish"
   },
   "keywords": [],
   "author": "Tim Pechersky (@Peersky)",
@@ -46,7 +46,9 @@
     "chai": "^4.3.6",
     "crypto-js": "^4.1.1",
     "eslint": "^9.9.1",
+    "prettier": "^3.3.3",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-promise": "^7.1.0",
     "eth-create2-calculator": "^1.1.5",
     "ethers": "^5.6.6",
