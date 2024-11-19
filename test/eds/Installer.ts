@@ -1,12 +1,13 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import {
-    CodeIndex, MockCloneDistribution,
-    MockCloneDistribution__factory,
-    MockInstaller,
-    MockInstaller__factory,
-    OwnableDistributor,
-    OwnableDistributor__factory
+  CodeIndex,
+  MockCloneDistribution,
+  MockCloneDistribution__factory,
+  MockInstaller,
+  MockInstaller__factory,
+  OwnableDistributor,
+  OwnableDistributor__factory
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -89,7 +90,7 @@ describe("Installer", function () {
   it("can List distributors", async function () {
     await installer.connect(owner).whitelistDistributor(distributor.address);
     expect(await installer.connect(owner).getWhitelistedDistributors()).to.be.deep.eq([
-      distributor.address,
+      distributor.address
     ]);
   });
   it("Can get instances by id", async function () {

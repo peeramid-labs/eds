@@ -1,5 +1,11 @@
 # @peeramid-labs/eds
 
+## 2.0.1
+
+### Patch Changes
+
+- [#20](https://github.com/peeramid-labs/eds/pull/20) [`8e4ec30a087fa01402c9f5f588ba451caf7d6390`](https://github.com/peeramid-labs/eds/commit/8e4ec30a087fa01402c9f5f588ba451caf7d6390) Thanks [@peersky](https://github.com/peersky)! - updated linter config
+
 ## 2.0.0
 
 ### Major Changes

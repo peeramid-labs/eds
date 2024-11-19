@@ -1,13 +1,14 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import {
-    CodeIndex, MockCloneDistribution__factory,
-    MockInstaller,
-    MockInstaller__factory,
-    OwnableDistributor,
-    OwnableDistributor__factory,
-    OwnableRepository__factory,
-    Repository
+  CodeIndex,
+  MockCloneDistribution__factory,
+  MockInstaller,
+  MockInstaller__factory,
+  OwnableDistributor,
+  OwnableDistributor__factory,
+  OwnableRepository__factory,
+  Repository
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -74,7 +75,7 @@ describe("Installer", function () {
       repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
         major: 1,
         minor: 0,
-        patch: 0,
+        patch: 0
       })
     ).to.emit(repository, "VersionAdded");
   });
@@ -83,7 +84,7 @@ describe("Installer", function () {
       repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
         major: 2,
         minor: 0,
-        patch: 0,
+        patch: 0
       })
     ).to.be.revertedWithCustomError(repository, "VersionIncrementInvalid");
   });
@@ -92,7 +93,7 @@ describe("Installer", function () {
       repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
         major: 0,
         minor: 0,
-        patch: 0,
+        patch: 0
       })
     ).to.be.revertedWithCustomError(repository, "ReleaseZeroNotAllowed");
   });
@@ -103,13 +104,13 @@ describe("Installer", function () {
         .newRelease(firstId, ethers.utils.formatBytes32String("test"), {
           major: 1,
           minor: 0,
-          patch: 0,
+          patch: 0
         });
     });
     it("Can get versions", async function () {
       const src = await repository.get({
         version: { major: 1, minor: 0, patch: 0 },
-        requirement: 1,
+        requirement: 1
       });
       expect(src.sourceId).to.be.eq(firstId);
     });
@@ -118,7 +119,7 @@ describe("Installer", function () {
         repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
           major: 1,
           minor: 0,
-          patch: 0,
+          patch: 0
         })
       ).to.be.revertedWithCustomError(repository, "VersionExists");
     });
@@ -127,7 +128,7 @@ describe("Installer", function () {
         repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
           major: 1,
           minor: 1,
-          patch: 0,
+          patch: 0
         })
       ).to.emit(repository, "VersionAdded");
     });
@@ -138,27 +139,27 @@ describe("Installer", function () {
           .newRelease(secondId, ethers.utils.formatBytes32String("test"), {
             major: 2,
             minor: 0,
-            patch: 0,
+            patch: 0
           });
         await repository
           .connect(owner)
           .newRelease(thirdId, ethers.utils.formatBytes32String("test"), {
             major: 1,
             minor: 1,
-            patch: 0,
+            patch: 0
           });
         await repository
           .connect(owner)
           .newRelease(fourthId, ethers.utils.formatBytes32String("test"), {
             major: 2,
             minor: 1,
-            patch: 0,
+            patch: 0
           });
       });
       it("Can get version by MAJOR", async () => {
         let src = await repository.get({
           version: { major: 1, minor: 0, patch: 0 },
-          requirement: 2,
+          requirement: 2
         });
         expect(src.sourceId).to.be.eq(thirdId);
         src = await repository.get({ version: { major: 2, minor: 0, patch: 0 }, requirement: 2 });
@@ -167,7 +168,7 @@ describe("Installer", function () {
       it("Can get version by MAJOR_MINOR", async () => {
         let src = await repository.get({
           version: { major: 1, minor: 0, patch: 1 },
-          requirement: 3,
+          requirement: 3
         });
         expect(src.sourceId).to.be.eq(firstId);
         src = await repository.get({ version: { major: 1, minor: 1, patch: 4 }, requirement: 3 });
@@ -179,7 +180,7 @@ describe("Installer", function () {
       it("Can get version by GREATER_EQUAL", async () => {
         let src = await repository.get({
           version: { major: 1, minor: 0, patch: 0 },
-          requirement: 4,
+          requirement: 4
         });
         expect(src.sourceId).to.be.eq(fourthId);
         src = await repository.get({ version: { major: 2, minor: 0, patch: 0 }, requirement: 4 });
@@ -193,7 +194,7 @@ describe("Installer", function () {
       it("Can get version by GREATER", async () => {
         let src = await repository.get({
           version: { major: 1, minor: 0, patch: 0 },
-          requirement: 5,
+          requirement: 5
         });
         expect(src.sourceId).to.be.eq(fourthId);
         src = await repository.get({ version: { major: 2, minor: 0, patch: 0 }, requirement: 5 });

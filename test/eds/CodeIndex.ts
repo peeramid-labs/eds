@@ -24,7 +24,7 @@ describe("CloneDistribution", function () {
     const result = await hre.deployments.deploy("CodeIndex", {
       deterministicDeployment: hexValue,
       from: deployer.address,
-      skipIfAlreadyDeployed: true,
+      skipIfAlreadyDeployed: true
     });
     codeIndex = new ethers.Contract(result.address, CodeIndex.interface).connect(
       deployer

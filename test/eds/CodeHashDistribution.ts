@@ -34,7 +34,10 @@ describe("CloneHashDistribution", function () {
       ethers.utils.formatBytes32String("testDistribution"),
       0
     )) as CodeHashDistribution;
-    expect(await codeHashDistribution.instantiate("0x")).to.emit(codeHashDistribution, "Distributed");
+    expect(await codeHashDistribution.instantiate("0x")).to.emit(
+      codeHashDistribution,
+      "Distributed"
+    );
   });
   it("Instantiated contract code hash matches", async function () {
     const TestFacet = await ethers.getContractFactory("TestFacet");
@@ -55,7 +58,7 @@ describe("CloneHashDistribution", function () {
     const superInterface = utils.getSuperInterface();
     const parsed = receipt.logs.map((log) => ({
       rawLog: log,
-      ...superInterface.parseLog(log),
+      ...superInterface.parseLog(log)
     }));
     const instance = parsed[0].args.instances[0];
     const code2 = await testFacet.provider.getCode(instance);
