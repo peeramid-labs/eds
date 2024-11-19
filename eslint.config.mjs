@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import js from "@eslint/js";
 import { FlatCompat } from "@eslint/eslintrc";
+import prettier from "eslint-plugin-prettier";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,16 +17,18 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ["docs/templates/", "**/node_modules/"],
+    ignores: ["deployments/", "coverage/**", "docs/templates/", "**/node_modules/"],
   },
   ...compat.extends(
     "eslint:recommended",
     "plugin:promise/recommended",
-    "prettier"
+    "plugin:prettier/recommended", // Add Prettier recommended config
+    "prettier",
   ),
   {
     plugins: {
       promise,
+      prettier, // Add Prettier plugin
     },
     languageOptions: {
       globals: {
@@ -40,7 +43,9 @@ export default [
       parser: tsParser,
     },
     rules: {
-      "no-unused-vars": "off",
+      "no-unused-vars": "warn",
+      "prettier/prettier": "error", // Add Prettier as an ESLint rule
     },
+    files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
   },
 ];
