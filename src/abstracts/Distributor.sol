@@ -28,7 +28,7 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
     }
 
     using EnumerableSet for EnumerableSet.Bytes32Set;
-    EnumerableSet.Bytes32Set private distirbutionsSet;
+    EnumerableSet.Bytes32Set private distributionsSet;
     mapping(address instance => uint256 instanceId) private instanceIds;
     mapping(uint256 instance => bytes32 distributorsId) public distributionOf;
     mapping(bytes32 distributorsId => DistributionComponent distirbution) public distributionComponents;
@@ -38,7 +38,7 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
     uint256 public numInstances;
     // @inheritdoc IDistributor
     function getDistributions() external view returns (bytes32[] memory) {
-        return distirbutionsSet.values();
+        return distributionsSet.values();
     }
     // @inheritdoc IDistributor
     function getDistributionId(address instance) external view virtual returns (bytes32) {
@@ -58,36 +58,44 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         address repository,
         address initializer,
         LibSemver.VersionRequirement memory requirement
-    ) internal {
+    ) internal virtual returns (bytes32 distributorId) {
         if (!ERC165Checker.supportsInterface(address(repository), type(IRepository).interfaceId)) {
             revert InvalidRepository(repository);
         }
-        bytes32 distributorId = keccak256(abi.encode(repository, initializer));
+        distributorId = keccak256(abi.encode(repository, initializer));
         if (LibSemver.toUint256(requirement.version) == 0) {
             revert InvalidVersionRequested(distributorId, LibSemver.toString(requirement.version));
         }
-        _newDistriubutionRecord(distributorId, repository, initializer);
+        _newDistributionRecord(distributorId, repository, initializer);
         versionRequirements[distributorId] = requirement;
         emit VersionChanged(distributorId, requirement, requirement);
     }
 
-    function _newDistriubutionRecord(bytes32 distributorId, address source, address initializer) private {
-        if (distirbutionsSet.contains(distributorId)) revert DistributionExists(distributorId);
-        distirbutionsSet.add(distributorId);
+    function calculateDistributorId(address repository, address initializer) public pure returns (bytes32) {
+        return keccak256(abi.encode(repository, initializer));
+    }
+
+    function calculateDistributorId(bytes32 sourceId, address initializer) public pure returns (bytes32) {
+        return keccak256(abi.encode(sourceId, initializer));
+    }
+
+    function _newDistributionRecord(bytes32 distributorId, address source, address initializer) private {
+        if (distributionsSet.contains(distributorId)) revert DistributionExists(distributorId);
+        distributionsSet.add(distributorId);
         distributionComponents[distributorId] = DistributionComponent(source, initializer);
         emit DistributionAdded(distributorId, source, initializer);
     }
-    function _addDistribution(bytes32 id, address initializerAddress) internal {
+    function _addDistribution(bytes32 id, address initializerAddress) internal virtual returns (bytes32 distributorId) {
         ICodeIndex codeIndex = getContractsIndex();
         address distributionLocation = codeIndex.get(id);
         if (distributionLocation == address(0)) revert DistributionNotFound(id);
-        bytes32 distributorsId = keccak256(abi.encode(id, initializerAddress));
-        _newDistriubutionRecord(distributorsId, distributionLocation, initializerAddress);
+        distributorId = keccak256(abi.encode(id, initializerAddress));
+        _newDistributionRecord(distributorId, distributionLocation, initializerAddress);
     }
 
     function _removeDistribution(bytes32 distributorsId) internal virtual {
-        if (!distirbutionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
-        distirbutionsSet.remove(distributorsId);
+        if (!distributionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
+        distributionsSet.remove(distributorsId);
         delete distributionComponents[distributorsId];
         delete versionRequirements[distributorsId];
         emit DistributionRemoved(distributorsId);
@@ -101,7 +109,7 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         bytes32 distributorsId,
         bytes memory args
     ) internal virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
-        if (!distirbutionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
+        if (!distributionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
         DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
         LibSemver.VersionRequirement memory versionRequirement = versionRequirements[distributorsId];
 
@@ -182,7 +190,7 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         if (
             distributorsId != bytes32(0) &&
             getInstanceId(target) == instanceId &&
-            distirbutionsSet.contains(distributorsId)
+            distributionsSet.contains(distributorsId)
         ) {
             // ToDo: This check could be based on DistributionOf, hence allowing cross-instance calls
             // Use layerConfig to allow client to configure requirement for the call
@@ -209,7 +217,7 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         address target = config.length > 0 ? abi.decode(config, (address)) : msg.sender;
         bytes32 distributorsId = distributionOf[getInstanceId(maybeInstance)];
         uint256 instanceId = getInstanceId(maybeInstance);
-        if ((getInstanceId(target) != getInstanceId(maybeInstance)) && distirbutionsSet.contains(distributorsId)) {
+        if ((getInstanceId(target) != getInstanceId(maybeInstance)) && distributionsSet.contains(distributorsId)) {
             revert InvalidInstance(maybeInstance);
         }
         if (!LibSemver.compare(instanceVersions[instanceId], versionRequirements[distributorsId])) {
@@ -222,7 +230,7 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
     }
 
     function _changeVersion(bytes32 distributionId, LibSemver.VersionRequirement memory newRequirement) internal {
-        if (!distirbutionsSet.contains(distributionId)) revert DistributionNotFound(distributionId);
+        if (!distributionsSet.contains(distributionId)) revert DistributionNotFound(distributionId);
         LibSemver.VersionRequirement memory oldRequirement = versionRequirements[distributionId];
         if (LibSemver.toUint256(oldRequirement.version) == 0) {
             revert UniversionedDistribution(distributionId);
