@@ -1,5 +1,11 @@
 # @peeramid-labs/eds
 
+## 2.1.1
+
+### Patch Changes
+
+- [#26](https://github.com/peeramid-labs/eds/pull/26) [`ceecabe3ab9f0e7f6c8d45ba816f99a76260098d`](https://github.com/peeramid-labs/eds/commit/ceecabe3ab9f0e7f6c8d45ba816f99a76260098d) Thanks [@peersky](https://github.com/peersky)! - fixed typos
+
 ## 2.1.0
 
 ### Minor Changes
