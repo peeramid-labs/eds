@@ -18,7 +18,7 @@ interface IDistributor is IERC7746, IERC165 {
     error RepositoryAlreadyExists(address repository);
     error VersionOutdated(bytes32 distributionId, string version);
     error InvalidInstance(address instance);
-    error UniversionedDistribution(bytes32 distributionId);
+    error UnversionedDistribution(bytes32 distributionId);
 
     /**
      * @notice Emitted when the version of the distributor is changed.
@@ -52,7 +52,7 @@ interface IDistributor is IERC7746, IERC165 {
      * @notice Event emitted when a new distribution is instantiated.
      * @param distributionId The unique identifier of the distribution.
      * @param newInstanceId The unique identifier of the instance.
-     * @param version The version of the distribution, taken either from IDsitribution or from IRepository.
+     * @param version The version of the distribution, taken either from IDistribution or from IRepository.
      * @param instances The addresses of the instances that were created.
      * @param args The arguments that were used for instantiation.
      * @dev It MUST emit when {IDistributor.instantiate} is called.

@@ -233,7 +233,7 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         if (!distributionsSet.contains(distributionId)) revert DistributionNotFound(distributionId);
         LibSemver.VersionRequirement memory oldRequirement = versionRequirements[distributionId];
         if (LibSemver.toUint256(oldRequirement.version) == 0) {
-            revert UniversionedDistribution(distributionId);
+            revert UnversionedDistribution(distributionId);
         }
         if (LibSemver.toUint256(newRequirement.version) == 0) {
             revert InvalidVersionRequested(distributionId, LibSemver.toString(newRequirement.version));
