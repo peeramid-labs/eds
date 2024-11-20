@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
     struct MethodSettings {
         bool isDistributionOnly;
-        mapping(address => bool) dissallowedAddresses;
+        mapping(address => bool) disallowedAddresses;
     }
 
     struct Storage {
@@ -29,7 +29,7 @@ contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
 
     struct SimpleAccessManagerInitializer {
         bytes4 selector;
-        address[] dissallowedAddresses;
+        address[] disallowedAddresses;
         bool distributionComponentsOnly;
     }
 
@@ -52,17 +52,17 @@ contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
         for (uint256 i; i < length; ++i) {
             s.methodSettings[methodSettings[i].selector].isDistributionOnly = methodSettings[i]
                 .distributionComponentsOnly;
-            uint256 dissalowedMethodsLength = methodSettings[i].dissallowedAddresses.length;
-            for (uint256 j; j < dissalowedMethodsLength; ++j) {
-                s.methodSettings[methodSettings[i].selector].dissallowedAddresses[
-                    methodSettings[i].dissallowedAddresses[j]
+            uint256 disallowedMethodsLength = methodSettings[i].disallowedAddresses.length;
+            for (uint256 j; j < disallowedMethodsLength; ++j) {
+                s.methodSettings[methodSettings[i].selector].disallowedAddresses[
+                    methodSettings[i].disallowedAddresses[j]
                 ] = true;
             }
         }
     }
 
     error OnlyTargetAllowed(address sender, address target);
-    error dissallowedAddress(address sender, bytes4 selector);
+    error disallowedAddress(address sender, bytes4 selector);
 
     function beforeCall(
         bytes memory,
@@ -75,8 +75,8 @@ contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
         if (msg.sender != s.target) {
             revert OnlyTargetAllowed(msg.sender, s.target);
         }
-        if (s.methodSettings[selector].dissallowedAddresses[sender]) {
-            revert dissallowedAddress(sender, selector);
+        if (s.methodSettings[selector].disallowedAddresses[sender]) {
+            revert disallowedAddress(sender, selector);
         } else {
             if (s.methodSettings[selector].isDistributionOnly) {
                 return s.distributor.beforeCall(abi.encode(msg.sender), selector, sender, value, data);
