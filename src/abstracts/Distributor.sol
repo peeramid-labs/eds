@@ -31,7 +31,7 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
     EnumerableSet.Bytes32Set private distributionsSet;
     mapping(address instance => uint256 instanceId) private instanceIds;
     mapping(uint256 instance => bytes32 distributorsId) public distributionOf;
-    mapping(bytes32 distributorsId => DistributionComponent distirbution) public distributionComponents;
+    mapping(bytes32 distributorsId => DistributionComponent distribution) public distributionComponents;
     mapping(bytes32 distributorsId => LibSemver.VersionRequirement VersionRequirement) public versionRequirements;
     mapping(uint256 instanceId => LibSemver.Version instanceVersion) public instanceVersions;
 
@@ -114,7 +114,7 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         LibSemver.VersionRequirement memory versionRequirement = versionRequirements[distributorsId];
 
         // External initializer is provided, delegatecall to it
-        // Countrary, if no initializer is provided, the distribution is expected to be self-initializing
+        // Contrary, if no initializer is provided, the distribution is expected to be self-initializing
         bool externallyInitialized = distributionComponent.initializer == address(0);
         bytes4 selector = IInitializer.initialize.selector;
         bytes memory instantiationArgs = externallyInitialized ? args : bytes("");
@@ -130,7 +130,7 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
                 instantiationArgs
             );
             // Unversioned distributions are considered to be at version 0, and are not expected to change
-            // This might change in the future, as it could make sence to inherit `distributionVersion` from the distribution
+            // This might change in the future, as it could make sense to inherit `distributionVersion` from the distribution
             // Yet for ease of runtime validation and to avoid potential issues, we keep it at 0
             instanceVersions[numInstances] = LibSemver.parse(0);
         } else {

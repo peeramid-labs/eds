@@ -2,7 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 import "@openzeppelin/contracts/utils/Strings.sol";
 library LibSemver {
-    error versionMissmatch(string message);
+    error versionMismatch(string message);
     struct Version {
         uint64 major;
         uint64 minor;
@@ -47,32 +47,32 @@ library LibSemver {
     }
 
     function require_exact(Version memory _version1, Version memory _version2) internal pure {
-        if (toUint256(_version1) != toUint256(_version2)) revert versionMissmatch("Version mismatch");
+        if (toUint256(_version1) != toUint256(_version2)) revert versionMismatch("Version mismatch");
     }
 
     function require_major(Version memory _version1, Version memory _version2) internal pure {
-        if (_version1.major != _version2.major) revert versionMissmatch("Major version mismatch");
+        if (_version1.major != _version2.major) revert versionMismatch("Major version mismatch");
     }
 
     function require_major_minor(Version memory _version1, Version memory _version2) internal pure {
         if (_version1.major != _version2.major || _version1.minor != _version2.minor)
-            revert versionMissmatch("Major and minor version mismatch");
+            revert versionMismatch("Major and minor version mismatch");
     }
 
     function require_greater_equal(Version memory _version1, Version memory _version2) internal pure {
-        if (toUint256(_version1) < toUint256(_version2)) revert versionMissmatch("Version is not greater or equal");
+        if (toUint256(_version1) < toUint256(_version2)) revert versionMismatch("Version is not greater or equal");
     }
 
     function require_greater(Version memory _version1, Version memory _version2) internal pure {
-        if (toUint256(_version1) <= toUint256(_version2)) revert versionMissmatch("Version is not greater");
+        if (toUint256(_version1) <= toUint256(_version2)) revert versionMismatch("Version is not greater");
     }
 
     function require_lesser_equal(Version memory _version1, Version memory _version2) internal pure {
-        if (toUint256(_version1) > toUint256(_version2)) revert versionMissmatch("Version is not lesser or equal");
+        if (toUint256(_version1) > toUint256(_version2)) revert versionMismatch("Version is not lesser or equal");
     }
 
     function require_lesser(Version memory _version1, Version memory _version2) internal pure {
-        if (toUint256(_version1) >= toUint256(_version2)) revert versionMissmatch("Version is not lesser");
+        if (toUint256(_version1) >= toUint256(_version2)) revert versionMismatch("Version is not lesser");
     }
 
     function areEqual(Version memory _version1, Version memory _version2) internal pure returns (bool) {
