@@ -1,5 +1,13 @@
 # @peeramid-labs/eds
 
+## 2.1.3
+
+### Patch Changes
+
+- [#30](https://github.com/peeramid-labs/eds/pull/30) [`48570f031cd080d3e324b0244741452698a99bbd`](https://github.com/peeramid-labs/eds/commit/48570f031cd080d3e324b0244741452698a99bbd) Thanks [@peersky](https://github.com/peersky)! - added aux file for codeIndex interface in more loose pragma to be more reusable as library
+
+- [#30](https://github.com/peeramid-labs/eds/pull/30) [`48570f031cd080d3e324b0244741452698a99bbd`](https://github.com/peeramid-labs/eds/commit/48570f031cd080d3e324b0244741452698a99bbd) Thanks [@peersky](https://github.com/peersky)! - changed code indexer dependency
+
 ## 2.1.2
 
 ### Patch Changes
