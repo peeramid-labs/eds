@@ -25,6 +25,7 @@ jobs:
       - name: generate docs
         run: pnpm hardhat docgen
       - name: Create Release Pull Request or Publish to npm
+        id: changesets
         uses: changesets/action@v1
         with:
           publish: pnpm run release
@@ -34,3 +35,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Send Discord notification
+        if: steps.changesets.outputs.published == 'true'
+        uses: Ilshidur/action-discord@master
+        with:
+          args: |
+            New release published! Check out the changes: https://github.com/${{ github.repository }}/releases/tag/${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASE_NOTIFIER }}
