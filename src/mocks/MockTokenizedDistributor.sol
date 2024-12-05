@@ -23,7 +23,6 @@ contract MockTokenizedDistributor is TokenizedDistributor, AccessControlDefaultA
      */
     function addDistribution(bytes32 id, address initializer) external onlyRole(DEFAULT_ADMIN_ROLE) {
         super._addDistribution(id, initializer);
-        instantiationCosts[keccak256(abi.encode(id, initializer))] = defaultInstantiationCost;
     }
 
     /**
@@ -87,8 +86,14 @@ contract MockTokenizedDistributor is TokenizedDistributor, AccessControlDefaultA
         address initializer,
         LibSemver.VersionRequirement memory requirement
     ) external override onlyRole(DEFAULT_ADMIN_ROLE) {
-        bytes32 distributorId = keccak256(abi.encode(repository, initializer));
-        instantiationCosts[distributorId] = defaultInstantiationCost;
         super._addDistribution(address(repository), initializer, requirement);
+    }
+
+    function addNamedDistribution(
+        bytes32 name,
+        bytes32 distributorId,
+        address initializer
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        super._addDistribution(name, distributorId, initializer);
     }
 }

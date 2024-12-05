@@ -153,4 +153,12 @@ interface IDistributor is IERC7746, IERC165 {
      * @param newRequirement The new version requirement to be set for the distribution.
      */
     function changeVersion(bytes32 distributionId, LibSemver.VersionRequirement memory newRequirement) external;
+
+    /**
+     * @notice Adds a new versioned distribution to the repository.
+     * @param name The name of the distribution.
+     * @param distributorId The unique identifier of the distributor.
+     * @param initializer The address that initializes the distribution.
+     */
+    function addNamedDistribution(bytes32 name, bytes32 distributorId, address initializer) external;
 }
