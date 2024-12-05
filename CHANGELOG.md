@@ -1,5 +1,13 @@
 # @peeramid-labs/eds
 
+## 2.2.0
+
+### Minor Changes
+
+- [#34](https://github.com/peeramid-labs/eds/pull/34) [`f43876e7cba08a68e87ff724cdea7289bd359b0e`](https://github.com/peeramid-labs/eds/commit/f43876e7cba08a68e87ff724cdea7289bd359b0e) Thanks [@peersky](https://github.com/peersky)! - added devnet deployment arfifacts
+
+- [#33](https://github.com/peeramid-labs/eds/pull/33) [`3ca5234d820bbbd7328aeed73aad057319fd6ba5`](https://github.com/peeramid-labs/eds/commit/3ca5234d820bbbd7328aeed73aad057319fd6ba5) Thanks [@peersky](https://github.com/peersky)! - added interface to add named distributions
+
 ## 2.1.3
 
 ### Patch Changes
