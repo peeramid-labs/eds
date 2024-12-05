@@ -93,6 +93,18 @@ abstract contract Distributor is IDistributor, CodeIndexer, ERC165 {
         _newDistributionRecord(distributorId, distributionLocation, initializerAddress);
     }
 
+    function _addDistribution(
+        bytes32 readableName,
+        bytes32 id,
+        address initializerAddress
+    ) internal virtual returns (bytes32 distributorId) {
+        ICodeIndex codeIndex = getContractsIndex();
+        address distributionLocation = codeIndex.get(id);
+        if (distributionLocation == address(0)) revert DistributionNotFound(id);
+        distributorId = readableName;
+        _newDistributionRecord(distributorId, distributionLocation, initializerAddress);
+    }
+
     function _removeDistribution(bytes32 distributorsId) internal virtual {
         if (!distributionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
         distributionsSet.remove(distributorsId);

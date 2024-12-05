@@ -22,6 +22,10 @@ contract OwnableDistributor is Distributor, Ownable {
         super._addDistribution(address(repository), initializer, requirement);
     }
 
+    function addNamedDistribution(bytes32 name, bytes32 distributorId, address initializer) external onlyOwner {
+        super._addDistribution(name, distributorId, initializer);
+    }
+
     function changeVersion(
         bytes32 distributionId,
         LibSemver.VersionRequirement memory newRequirement

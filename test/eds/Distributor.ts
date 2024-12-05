@@ -78,6 +78,38 @@ describe("Distributor", function () {
     ).to.be.revertedWithCustomError(distributor, "DistributionNotFound");
   });
 
+  describe("addNamedDistribution", function () {
+    it("should allow owner to add a named distribution", async function () {
+      const name = ethers.utils.formatBytes32String("test-distribution");
+      const initializer = ethers.constants.AddressZero;
+
+      await expect(
+        distributor.connect(owner).addNamedDistribution(name, cloneDistributionId, initializer)
+      )
+        .to.emit(distributor, "DistributionAdded")
+        .withArgs(name, await codeIndex.get(cloneDistributionId), initializer);
+    });
+
+    it("should revert when non-owner tries to add a named distribution", async function () {
+      const name = ethers.utils.formatBytes32String("test-distribution");
+      const initializer = ethers.constants.AddressZero;
+
+      await expect(
+        distributor.connect(deployer).addNamedDistribution(name, cloneDistributionId, initializer)
+      ).to.be.revertedWithCustomError(distributor, "OwnableUnauthorizedAccount");
+    });
+
+    it("should revert when distribution ID does not exist", async function () {
+      const name = ethers.utils.formatBytes32String("test-distribution");
+      const initializer = ethers.constants.AddressZero;
+      const nonExistentId = ethers.utils.formatBytes32String("non-existent");
+
+      await expect(
+        distributor.connect(owner).addNamedDistribution(name, nonExistentId, initializer)
+      ).to.be.revertedWithCustomError(distributor, "DistributionNotFound");
+    });
+  });
+
   describe("when distribution is added", function () {
     beforeEach(async function () {
       await distributor

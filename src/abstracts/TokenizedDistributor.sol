@@ -39,6 +39,24 @@ abstract contract TokenizedDistributor is Distributor {
         _setInstantiationCost(distributorsId, defaultInstantiationCost);
     }
 
+    function _addDistribution(
+        bytes32 readableName,
+        bytes32 id,
+        address initializerAddress
+    ) internal override returns (bytes32 distributorsId) {
+        distributorsId = super._addDistribution(readableName, id, initializerAddress);
+        _setInstantiationCost(distributorsId, defaultInstantiationCost);
+    }
+
+    function _addDistribution(
+        address repository,
+        address initializer,
+        LibSemver.VersionRequirement memory requirement
+    ) internal override returns (bytes32 distributorsId) {
+        distributorsId = super._addDistribution(repository, initializer, requirement);
+        _setInstantiationCost(distributorsId, defaultInstantiationCost);
+    }
+
     /**
      * @inheritdoc Distributor
      */
