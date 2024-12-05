@@ -40,6 +40,6 @@ jobs:
         uses: Ilshidur/action-discord@master
         with:
           args: |
-            New release published! Check out the changes: https://github.com/${{ github.repository }}/releases/tag/${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
+            New EDS release published! Check out the changes: https://github.com/${{ github.repository }}/releases/tag/v${{ fromJson(steps.changesets.outputs.publishedPackages)[0].version }}
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASE_NOTIFIER }}
