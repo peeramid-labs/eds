@@ -1,4 +1,8 @@
-import { task } from "hardhat/config";
+import { subtask, task } from "hardhat/config";
+import { TASK_COMPILE_SOLIDITY_EMIT_ARTIFACTS } from "hardhat/builtin-tasks/task-names";
+import { join } from "path";
+import { writeFile, mkdir } from "fs/promises";
+import { inspect } from "util";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-abi-exporter";
@@ -8,6 +12,27 @@ import "hardhat-deploy";
 import "solidity-docgen";
 import "hardhat-tracer";
 // import "@nomicfoundation/hardhat-verify";
+
+type ContractMap = Record<string, { abi: object }>;
+
+subtask(TASK_COMPILE_SOLIDITY_EMIT_ARTIFACTS).setAction(async (args, env, next) => {
+  const output = await next();
+  const promises = Object.entries(args.output.contracts).map(async ([sourceName, contract]) => {
+    // Extract the contract name from the full path
+    const contractName = sourceName.split("/").pop()?.replace(".sol", "") || "";
+    const dirPath = join("./abi", sourceName);
+    await mkdir(dirPath, { recursive: true });
+    const file = join(dirPath, `${contractName}.ts`);
+    const { abi } = Object.values(contract as ContractMap)[0];
+    if (JSON.stringify(abi).length > 2) {
+      const data = `export const abi = ${inspect(abi, false, null)} as const; export default abi;`;
+      await writeFile(file, data);
+    }
+  });
+  await Promise.all(promises);
+  return output;
+});
+
 task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   const accounts = await hre.ethers.getSigners();
 
