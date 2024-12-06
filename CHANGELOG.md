@@ -1,5 +1,11 @@
 # @peeramid-labs/eds
 
+## 2.2.2
+
+### Patch Changes
+
+- [#38](https://github.com/peeramid-labs/eds/pull/38) [`79801938a6b449b0bda1dd8f8021195e76d58a4f`](https://github.com/peeramid-labs/eds/commit/79801938a6b449b0bda1dd8f8021195e76d58a4f) Thanks [@peersky](https://github.com/peersky)! - added viem compatible typescript abi exports during release
+
 ## 2.2.1
 
 ### Patch Changes
