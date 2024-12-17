@@ -1,5 +1,11 @@
 # @peeramid-labs/eds
 
+## 2.2.3
+
+### Patch Changes
+
+- [#40](https://github.com/peeramid-labs/eds/pull/40) [`aad52fdf2042ce85a5221b78f23d3e11e8d8137b`](https://github.com/peeramid-labs/eds/commit/aad52fdf2042ce85a5221b78f23d3e11e8d8137b) Thanks [@peersky](https://github.com/peersky)! - added playbook script for running deployments locally
+
 ## 2.2.2
 
 ### Patch Changes
