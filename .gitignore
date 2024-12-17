@@ -277,3 +277,4 @@ types
 abi/
 .secrets/
 docs/contracts
+deployments/localhost
