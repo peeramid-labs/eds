@@ -7,16 +7,22 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
-  const salt = "0x220a70730c743a005cfd55180805d2c0d5b8c7695c5496100dcffa91c02befce";
+  //   generated with cast create2 --starts-with c0de1d
+  //   const bigIntValue = BigInt(
+  //     "50974397650477774973013714513428960054656154370774770732424793889552745009750"
+  //   );
+  //   // Convert to a hexadecimal string
+  //   const salt = "0x" + bigIntValue.toString(16);
+  const salt = "0x70b27c94ed692bfb60748cee464ef910d4bf768ac1f3a63eeb4c05258f629256";
 
   console.log("salt", salt);
-  const result = await deploy("CodeIndex", {
+  const result = await deploy("ERC7744", {
     deterministicDeployment: salt,
     from: deployer,
     skipIfAlreadyDeployed: true
   });
 
-  console.log("CodeIndex deployed at", result.address);
+  console.log("ERC7744 deployed at", result.address);
   if (result.bytecode) {
     const codeHash = ethers.utils.keccak256(result.bytecode);
     console.log(`CodeHash: ${codeHash}`);
@@ -24,4 +30,4 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 };
 
 export default func;
-func.tags = ["code_index"];
+func.tags = ["ERC7744"];

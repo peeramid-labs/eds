@@ -7,7 +7,8 @@
     "src",
     "types",
     "scripts",
-    "docs"
+    "docs",
+    "artifacts"
   ],
   "description": "Generalized factory implementation for reproducible ethereum smart contract instantiation",
   "scripts": {
@@ -77,6 +78,6 @@
     "cli-table": "^0.3.11",
     "hardhat-gas-reporter": "^1.0.9",
     "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "typescript": "^5.7.3"
   }
 }
