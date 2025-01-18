@@ -1,6 +1,6 @@
 {
   "name": "@peeramid-labs/eds",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "files": [
     "abi",
     "deployments",

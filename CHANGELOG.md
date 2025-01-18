@@ -1,5 +1,11 @@
 # @peeramid-labs/eds
 
+## 2.3.1
+
+### Patch Changes
+
+- [`6b10f436d8a9438f13729b284e8a4d5db019e3c9`](https://github.com/peeramid-labs/eds/commit/6b10f436d8a9438f13729b284e8a4d5db019e3c9) Thanks [@peersky](https://github.com/peersky)! - added deploy script to package files
+
 ## 2.3.0
 
 ### Minor Changes
