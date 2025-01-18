@@ -8,12 +8,12 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
 
   const { deployer } = await getNamedAccounts();
   //   generated with cast create2 --starts-with c0de1d
-  const bigIntValue = BigInt(
-    "78378381581284404895893517889493377250775871826728312469548102844709657272918"
-  );
-  // Convert to a hexadecimal string
-  const salt = "0x" + bigIntValue.toString(16);
-  // const salt = "0x3f137ce155bc03d2f15fcd92ce561321f5b240867a6413fb82f386119638fa95";
+  //   const bigIntValue = BigInt(
+  //     "50974397650477774973013714513428960054656154370774770732424793889552745009750"
+  //   );
+  //   // Convert to a hexadecimal string
+  //   const salt = "0x" + bigIntValue.toString(16);
+  const salt = "0x70b27c94ed692bfb60748cee464ef910d4bf768ac1f3a63eeb4c05258f629256";
 
   console.log("salt", salt);
   const result = await deploy("ERC7744", {
