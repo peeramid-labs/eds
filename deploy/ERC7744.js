@@ -1,8 +1,6 @@
-import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
-import { ethers } from "hardhat";
+import { ethers } from "ethers";
 
-const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
+const func = async (hre) => {
   const { deployments, getNamedAccounts } = hre;
   const { deploy } = deployments;
 
@@ -15,7 +13,6 @@ const func: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   //   const salt = "0x" + bigIntValue.toString(16);
   const salt = "0x70b27c94ed692bfb60748cee464ef910d4bf768ac1f3a63eeb4c05258f629256";
 
-  console.log("salt", salt);
   const result = await deploy("ERC7744", {
     deterministicDeployment: salt,
     from: deployer,
