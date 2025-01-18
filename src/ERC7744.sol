@@ -29,7 +29,7 @@ contract ERC7744 is IERC7744 {
         address etalon = index[container.codehash];
         require(isValidContainer(container), "Invalid container");
         if (etalon != address(0)) {
-            revert alreadyExists(container.codehash, container);
+            if (isValidContainer(etalon)) revert alreadyExists(container.codehash, container);
         }
         index[container.codehash] = container;
         emit Indexed(container, container.codehash);
