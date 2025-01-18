@@ -1,5 +1,11 @@
 # @peeramid-labs/eds
 
+## 2.3.2
+
+### Patch Changes
+
+- [`824fe7e716e2bd515f4ecfd35f27c70324df4189`](https://github.com/peeramid-labs/eds/commit/824fe7e716e2bd515f4ecfd35f27c70324df4189) Thanks [@peersky](https://github.com/peersky)! - implemented deploy script as js to avoid compilation need when using as dept
+
 ## 2.3.1
 
 ### Patch Changes
