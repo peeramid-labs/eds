@@ -116,11 +116,14 @@ export default {
   solidity: {
     compilers: [
       {
-        version: "0.8.20",
+        version: "0.8.28",
         settings: {
           optimizer: {
             enabled: true,
             runs: 200000
+          },
+          metadata: {
+            bytecodeHash: "none"
           }
         }
       }

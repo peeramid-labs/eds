@@ -5,7 +5,7 @@ import {
   MockERC20__factory,
   MockTokenizedDistributor,
   MockTokenizedDistributor__factory,
-  CodeIndex,
+  ERC7744,
   MockCloneDistribution__factory
 } from "../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -13,7 +13,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 describe("TokenizedDistributor", function () {
   let mockToken: MockERC20;
   let distributor: MockTokenizedDistributor;
-  let codeIndex: CodeIndex;
+  let codeIndex: ERC7744;
   let deployer: SignerWithAddress;
   let owner: SignerWithAddress;
   let addr1: SignerWithAddress;
@@ -22,13 +22,13 @@ describe("TokenizedDistributor", function () {
   const defaultCost = ethers.utils.parseEther("1");
 
   before(async function () {
-    await deployments.fixture("code_index"); // This is the key addition
-    const CodeIndex = await ethers.getContractFactory("CodeIndex");
+    await deployments.fixture("ERC7744"); // This is the key addition
+    const ERC7744 = await ethers.getContractFactory("ERC7744");
     [deployer, owner] = await ethers.getSigners();
-    const codeIndexDeployment = await deployments.get("CodeIndex");
-    codeIndex = new ethers.Contract(codeIndexDeployment.address, CodeIndex.interface).connect(
+    const codeIndexDeployment = await deployments.get("ERC7744");
+    codeIndex = new ethers.Contract(codeIndexDeployment.address, ERC7744.interface).connect(
       deployer
-    ) as CodeIndex;
+    ) as ERC7744;
     [owner, addr1] = await ethers.getSigners();
     const CloneDistribution = (await ethers.getContractFactory(
       "MockCloneDistribution"

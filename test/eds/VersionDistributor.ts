@@ -1,8 +1,8 @@
 import { ethers, network } from "hardhat";
 import { expect } from "chai";
 import {
-  CloneDistribution,
-  CodeIndex,
+  MockCloneDistribution,
+  ERC7744,
   MockCloneDistribution__factory,
   OwnableDistributor__factory,
   OwnableRepository__factory,
@@ -15,21 +15,21 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import utils from "../utils";
 
 describe("Version Distributor", function () {
-  let codeIndex: CodeIndex;
+  let codeIndex: ERC7744;
   let distributor: OwnableDistributor;
   let deployer: SignerWithAddress;
   let owner: SignerWithAddress;
-  let mockDistr: CloneDistribution;
+  let mockDistr: MockCloneDistribution;
   let repository: Repository;
 
   beforeEach(async function () {
-    await deployments.fixture("code_index"); // This is the key addition
-    const CodeIndex = await ethers.getContractFactory("CodeIndex");
+    await deployments.fixture("ERC7744"); // This is the key addition
+    const ERC7744 = await ethers.getContractFactory("ERC7744");
     [deployer, owner] = await ethers.getSigners();
-    const codeIndexDeployment = await deployments.get("CodeIndex");
-    codeIndex = new ethers.Contract(codeIndexDeployment.address, CodeIndex.interface).connect(
+    const codeIndexDeployment = await deployments.get("ERC7744");
+    codeIndex = new ethers.Contract(codeIndexDeployment.address, ERC7744.interface).connect(
       deployer
-    ) as CodeIndex;
+    ) as ERC7744;
 
     const Repository = (await ethers.getContractFactory(
       "OwnableRepository"

@@ -5,4 +5,4 @@ sed -i '' 's|// import '\''./playbook'\''|import '\''./playbook'\''|' ./hardhat.
 
 rm -rf ./deployments/localhost
 export NODE_ENV=TEST
-pnpm hardhat deploy --tags code_index --network localhost
+pnpm hardhat deploy --tags ERC7744 --network localhost

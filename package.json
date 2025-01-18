@@ -7,7 +7,8 @@
     "src",
     "types",
     "scripts",
-    "docs"
+    "docs",
+    "artifacts"
   ],
   "description": "Generalized factory implementation for reproducible ethereum smart contract instantiation",
   "scripts": {
