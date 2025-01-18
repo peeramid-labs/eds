@@ -1,5 +1,5 @@
 ---
-"@peeramid-labs/eds": major
+"@peeramid-labs/eds": minor
 ---
 
 - Removed metadata from compilation artifact
