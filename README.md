@@ -3,6 +3,10 @@
 The Ethereum Distribution System (EDS) is an open and decentralized, fully on-chain distribution (factory) system for Ethereum smart contracts. Using EDS enables developers to publish and reuse each other's code in a trustless manner. Built-in system for [semantic versioning](http://semver.org/), managing versions and combining into higher level distributions allows developers to avoid using upgradability patterns, instead relying on version control.
 System provisions for generic interfaces for distributors, developers and installers, each with their own responsibilities and constraints.
 
+
+> [!WARNING]  
+> This repository is still in development, parts of code, specifically Repository functionality testing is limited to unit tests. Please treat it as unstable with possible API changes. If you want to use it in production environment please reach back to Peeramid Labs so we can prioritize accoridngly. 
+
 ## **Use cases**
 
 * **Factory Framework**: Instead of writing own factory, just write a distribution and register it
