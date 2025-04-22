@@ -6,7 +6,7 @@ library LibMiddleware {
     bytes32 private constant ACCESS_LAYERS_STORAGE_POSITION = keccak256("lib.access.layer.storage");
 
     struct LayerStruct {
-        address layerAddess;
+        address layerAddress;
         bytes layerConfigData;
     }
 
@@ -19,7 +19,7 @@ library LibMiddleware {
 
     function setLayer(address layerAddress, uint256 layerIndex, bytes memory layerConfigData) internal {
         LayerStruct[] storage ls = accessLayersStorage();
-        ls[layerIndex].layerAddess = layerAddress;
+        ls[layerIndex].layerAddress = layerAddress;
         ls[layerIndex].layerConfigData = layerConfigData;
     }
 
@@ -37,7 +37,7 @@ library LibMiddleware {
 
     function addLayer(address layerAddress, bytes memory layerConfigData) internal {
         LayerStruct[] storage ls = accessLayersStorage();
-        LayerStruct memory newLayer = LayerStruct({layerAddess: layerAddress, layerConfigData: layerConfigData});
+        LayerStruct memory newLayer = LayerStruct({layerAddress: layerAddress, layerConfigData: layerConfigData});
         ls.push(newLayer);
     }
 
@@ -73,7 +73,7 @@ library LibMiddleware {
         bytes memory data,
         uint256 value
     ) internal returns (bytes memory) {
-        bytes memory retval = IERC7746(layer.layerAddess).beforeCall(
+        bytes memory retval = IERC7746(layer.layerAddress).beforeCall(
             layer.layerConfigData,
             _selector,
             sender,
@@ -121,7 +121,7 @@ library LibMiddleware {
         uint256 value,
         bytes memory beforeCallReturnValue
     ) internal {
-        IERC7746(layer.layerAddess).afterCall(
+        IERC7746(layer.layerAddress).afterCall(
             layer.layerConfigData,
             _selector,
             sender,
