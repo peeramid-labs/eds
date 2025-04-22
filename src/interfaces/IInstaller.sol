@@ -37,12 +37,12 @@ interface IInstaller is IERC7746 {
      */
     error DistributionIsNotPermitted(IDistributor distributor, bytes32 distributionId);
     /**
-     * @notice Error indicating that distributor is whitelisted and hence it is not possible to selectively dissalow distriributions.
+     * @notice Error indicating that distributor is whitelisted and hence it is not possible to selectively Disallow distriributions.
      * @param distributor The whitelisted distributor.
-     * @param distributionId The ID of the distribution that was attempted to dissalow.
-     * @dev If getting this error: consider first removing distributor from whitelist, and then dissalowing the distribution.
+     * @param distributionId The ID of the distribution that was attempted to Disallow.
+     * @dev If getting this error: consider first removing distributor from whitelist, and then Disallowing the distribution.
      */
-    error DissalowDistOnWhitelistedDistributor(IDistributor distributor, bytes32 distributionId);
+    error DisallowDistOnWhitelistedDistributor(IDistributor distributor, bytes32 distributionId);
 
     /**
      * @dev Emitted when a distributor is whitelisted.
@@ -158,9 +158,9 @@ interface IInstaller is IERC7746 {
     /**
      * @notice Retrieves the contracts associated with a specific instance.
      * @param instanceId The unique identifier of the instance.
-     * @return instaneContracts An array of addresses representing the contracts of the instance.
+     * @return instanceContracts An array of addresses representing the contracts of the instance.
      */
-    function getInstance(uint256 instanceId) external view returns (address[] memory instaneContracts);
+    function getInstance(uint256 instanceId) external view returns (address[] memory instanceContracts);
 
     /**
      * @notice Retrieves the number of instances.

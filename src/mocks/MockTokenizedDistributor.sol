@@ -45,7 +45,7 @@ contract MockTokenizedDistributor is TokenizedDistributor, AccessControlDefaultA
     function instantiate(
         bytes32 id,
         bytes calldata args
-    ) external returns (address[] memory srcs, bytes32 name, uint256 version) {
+    ) external payable returns (address[] memory srcs, bytes32 name, uint256 version) {
         return super._instantiate(id, args);
     }
 

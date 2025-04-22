@@ -4,7 +4,7 @@ import {IContractURI} from "./IContractURI.sol";
 /**
  * @title IDistribution
  * @notice Interface for distribution-related functionalities. It can get sources and produce a new instances out from them. It also provides metadata about the distribution.
- * @dev It is highly recommended to keep implementation stateless, and use `immutable` variables for any state. This allows your code to be referred in distributor and respositories via ERC7744. It's also easier to reason about, and more gas efficient.
+ * @dev It is highly recommended to keep implementation stateless, and use `immutable` variables for any state. This allows your code to be referred in distributor and repositories via ERC7744. It's also easier to reason about, and more gas efficient.
  * @author Peeramid Labs, 2024
  */
 interface IDistribution is IContractURI {

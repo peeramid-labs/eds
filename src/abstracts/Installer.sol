@@ -56,7 +56,7 @@ abstract contract Installer is IInstaller {
 
     function _disallowDistribution(IDistributor distributor, bytes32 distributionId) internal virtual {
         if (whitelistedDistributors.contains(address(distributor))) {
-            revert DissalowDistOnWhitelistedDistributor(distributor, distributionId);
+            revert DisallowDistOnWhitelistedDistributor(distributor, distributionId);
         }
         _permittedDistributions[address(distributor)].remove(distributionId);
     }
@@ -99,7 +99,7 @@ abstract contract Installer is IInstaller {
         }
     }
 
-    function getInstance(uint256 instanceId) public view returns (address[] memory instaneContracts) {
+    function getInstance(uint256 instanceId) public view returns (address[] memory instanceContracts) {
         return _instanceEnum[instanceId];
     }
 
