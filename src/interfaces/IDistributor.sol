@@ -105,7 +105,7 @@ interface IDistributor is IERC7746, IERC165 {
     function instantiate(
         bytes32 distributorId,
         bytes calldata args
-    ) external returns (address[] memory, bytes32 distributionName, uint256 distributionVersion);
+    ) external payable returns (address[] memory, bytes32 distributionName, uint256 distributionVersion);
 
     /**
      * @notice Adds a new distribution with the specified distributor ID and initializer address.
