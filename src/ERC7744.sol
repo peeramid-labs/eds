@@ -13,10 +13,14 @@ contract ERC7744 is IERC7744 {
 
     function isValidContainer(address container) private view returns (bool) {
         bytes memory code = container.code;
-        bytes32 codeHash = container.codehash;
-        bytes32 eip7702Hash = bytes32(0xeadcdba66a79ab5dce91622d1d75c8cff5cff0b96944c3bf1072cd08ce018329);
+        bytes32 codeHash = address(container).codehash;
+        uint256 containerCodeLength;
+        assembly {
+            containerCodeLength := extcodesize(container)
+        }
+        bool is7702 = containerCodeLength == 23;
         // Contract should have non-empty code and valid codehash
-        return (code.length > 0 && codeHash != bytes32(0) && codeHash != eip7702Hash);
+        return (code.length > 0 && codeHash != bytes32(0) && !is7702);
     }
 
     /**
