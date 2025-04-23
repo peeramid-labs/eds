@@ -36,4 +36,15 @@ contract OwnableDistributor is Distributor, Ownable {
     function removeDistribution(bytes32 id) public onlyOwner {
         super._removeDistribution(id);
     }
+
+    function addVersionMigration(
+        bytes32 distributionId,
+        LibSemver.VersionRequirement memory from,
+        LibSemver.VersionRequirement memory to,
+        address migrationContract,
+        MigrationStrategy strategy
+    ) public onlyOwner {
+        super._addVersionMigration(distributionId, from, to, migrationContract, strategy);
+    }
+
 }

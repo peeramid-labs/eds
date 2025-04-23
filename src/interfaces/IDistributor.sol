@@ -5,6 +5,22 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "../interfaces/IRepository.sol";
 import "../libraries/LibSemver.sol";
 import {IERC7746} from "../interfaces/IERC7746.sol";
+import "../interfaces/IMigration.sol";
+enum MigrationStrategy {
+    None,
+    CALL,
+    DELEGATECALL,
+    REPOSITORY_MANGED
+}
+    struct MigrationPlan {
+        LibSemver.VersionRequirement from;
+        LibSemver.VersionRequirement to;
+        IMigration migrationContract;
+        MigrationStrategy strategy;
+        bytes distributorCalldata;
+        bool exists;
+    }
+
 
 /**
  * @title IDistributor Interface
@@ -42,6 +58,7 @@ interface IDistributor is IERC7746, IERC165 {
      * @param id The unique identifier of the distribution that already exists.
      */
     error DistributionExists(bytes32 id);
+
     /**
      * @notice Error indicating that the initializer for the distribution was not found.
      * @param id The unique identifier of the distribution that was not found.
@@ -65,11 +82,11 @@ interface IDistributor is IERC7746, IERC165 {
         bytes args
     );
     /**
-     * @notice Event emitted when a distribution is removed.
-     * @param id The unique identifier of the distribution that was removed.
-     * @dev It MUST emit when {IDistributor.removeDistribution} is called.
+     * @notice Event emitted when a distribution is disabled.
+     * @param id The unique identifier of the distribution that was disabled.
+     * @dev It MUST emit when {IDistributor.disableDistribution} is called.
      */
-    event DistributionRemoved(bytes32 indexed id);
+    event DistributionDisabled(bytes32 indexed id);
 
     /**
      * @notice Event emitted when a distribution is added.
@@ -161,4 +178,52 @@ interface IDistributor is IERC7746, IERC165 {
      * @param initializer The address that initializes the distribution.
      */
     function addNamedDistribution(bytes32 name, bytes32 distributorId, address initializer) external;
+
+    event MigrationContractAddedFromVersions(
+        bytes32 indexed distributionId,
+        uint256 indexed baseVersion,
+        LibSemver.requirements indexed semanticRequirement,
+        MigrationStrategy strategy,
+        address migrationContract,
+        bytes32 migrationId
+    );
+    event MigrationContractAddedToVersions(
+        bytes32 indexed distributionId,
+        uint256 indexed baseVersion,
+        LibSemver.requirements indexed semanticRequirement,
+        MigrationStrategy strategy,
+        address migrationContract,
+        bytes32 migrationId
+    );
+
+    event VersionMigrationRemoved(
+        bytes32 indexed distributionId,
+        bytes32 indexed migrationId
+    );
+
+    function addVersionMigration(
+        bytes32 distributionId,
+        LibSemver.VersionRequirement memory from,
+        LibSemver.VersionRequirement memory to,
+        address migrationContract,
+        MigrationStrategy strategy,
+        bytes memory distributorCalldata
+    ) external;
+
+    function removeVersionMigration(bytes32 distributionId, bytes32 migrationId) external;
+
+    function getVersionMigration(bytes32 migrationId) external view returns (MigrationPlan memory migrationPlan);
+
+    function upgradeUserInstance(
+        bytes32 instanceId,
+        bytes32 migrationId,
+        bytes calldata userCalldata
+    ) external;
+
+    error MigrationContractNotFound(bytes32 migrationId);
+    error NotAnInstaller(bytes32 instanceId, address caller, address installer);
+    error MigrationAlreadyExists(bytes32 migrationId);
+    error upgradeFailedWithPanic(uint errorCode);
+    error upgradeFailedWithRevert(string reason);
+    error upgradeFailedWithError(bytes reason);
 }
