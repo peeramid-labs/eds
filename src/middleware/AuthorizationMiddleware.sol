@@ -6,7 +6,7 @@ import {IERC7746} from "../interfaces/IERC7746.sol";
 import {IDistributor} from "../interfaces/IDistributor.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-contract SimpleAccessManager is Initializable, IERC7746, ERC165 {
+contract AuthorizationMiddleware is Initializable, IERC7746, ERC165 {
     struct MethodSettings {
         bool isDistributionOnly;
         mapping(address => bool) disallowedAddresses;

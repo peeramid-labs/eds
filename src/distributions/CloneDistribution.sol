@@ -3,9 +3,8 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "../interfaces/IDistribution.sol";
-import "./CodeIndexer.sol";
 
-abstract contract CloneDistribution is IDistribution, CodeIndexer {
+abstract contract CloneDistribution is IDistribution {
     error CodeNotFoundInIndex(bytes32 codeId);
 
     function sources() internal view virtual returns (address[] memory, bytes32 name, uint256 version);

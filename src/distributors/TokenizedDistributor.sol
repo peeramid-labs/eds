@@ -10,7 +10,7 @@ abstract contract TokenizedDistributor is Distributor {
     event InstantiationCostChanged(bytes32 indexed id, uint256 cost);
     IERC20 public paymentToken;
     address public _beneficiary;
-    mapping(bytes32 id => uint256) public instantiationCosts;
+    mapping(bytes32 codeHash => uint256) public instantiationCosts;
     uint256 public defaultInstantiationCost;
     constructor(IERC20 token, uint256 defaultCost, address beneficiary) Distributor() {
         paymentToken = token;
@@ -32,28 +32,21 @@ abstract contract TokenizedDistributor is Distributor {
      * @inheritdoc Distributor
      */
     function _addDistribution(
-        bytes32 id,
-        address initializerAddress
+        bytes32 codeHash,
+        address initializerAddress,
+        string memory readableName
     ) internal override returns (bytes32 distributorsId) {
-        distributorsId = super._addDistribution(id, initializerAddress);
-        _setInstantiationCost(distributorsId, defaultInstantiationCost);
-    }
-
-    function _addDistribution(
-        bytes32 readableName,
-        bytes32 id,
-        address initializerAddress
-    ) internal override returns (bytes32 distributorsId) {
-        distributorsId = super._addDistribution(readableName, id, initializerAddress);
+        distributorsId = super._addDistribution(codeHash, initializerAddress, readableName);
         _setInstantiationCost(distributorsId, defaultInstantiationCost);
     }
 
     function _addDistribution(
         address repository,
         address initializer,
-        LibSemver.VersionRequirement memory requirement
+        LibSemver.VersionRequirement memory requirement,
+        string memory readableName
     ) internal override returns (bytes32 distributorsId) {
-        distributorsId = super._addDistribution(repository, initializer, requirement);
+        distributorsId = super._addDistribution(repository, initializer, requirement, readableName);
         _setInstantiationCost(distributorsId, defaultInstantiationCost);
     }
 

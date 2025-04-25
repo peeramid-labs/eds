@@ -28,6 +28,18 @@ library LibMiddleware {
         ls.push(newLayer);
     }
 
+    function changeLayers(LayerStruct[] memory newLayers) internal {
+        LayerStruct[] storage ls = accessLayersStorage();
+        for (uint256 i; i < newLayers.length; ++i) {
+            ls[i] = newLayers[i];
+        }
+        if (newLayers.length < ls.length) {
+            for (uint256 i; i < ls.length - newLayers.length; ++i) {
+                ls.pop();
+            }
+        }
+    }
+
     function setLayers(LayerStruct[] memory newLayers) internal {
         uint256 length = newLayers.length;
         for (uint256 i; i < length; ++i) {

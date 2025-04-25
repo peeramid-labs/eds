@@ -5,6 +5,8 @@ import {
   MockCloneDistribution__factory,
   MockInstaller,
   MockInstaller__factory,
+  MockMigration,
+  MockMigration__factory,
   OwnableDistributor,
   OwnableDistributor__factory,
   OwnableRepository__factory,
@@ -12,6 +14,7 @@ import {
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { constants } from "ethers";
 
 describe("Repository", function () {
   let codeIndex: ERC7744;
@@ -25,6 +28,7 @@ describe("Repository", function () {
   let fourthId: any;
   let installer: MockInstaller;
   let repository: Repository;
+  let dummyMigrationAddress: MockMigration;
 
   beforeEach(async function () {
     await deployments.fixture("ERC7744"); // This is the key addition
@@ -63,49 +67,75 @@ describe("Repository", function () {
     await codeIndex.register(cloneDistribution.address);
     distributor
       .connect(owner)
-      ["addDistribution(bytes32,address)"](firstId, ethers.utils.formatBytes32String(""));
+      [
+        "addDistribution(bytes32,address,string)"
+      ](firstId, ethers.utils.formatBytes32String(""), "testDistribution");
     const Installer = (await ethers.getContractFactory("MockInstaller")) as MockInstaller__factory;
     installer = await Installer.deploy(target.address, owner.address);
 
     const installerCode = await installer.provider.getCode(installer.address);
     secondId = ethers.utils.keccak256(installerCode);
+
+    const MockMigration = (await ethers.getContractFactory(
+      "MockMigration"
+    )) as MockMigration__factory;
+    dummyMigrationAddress = await MockMigration.deploy();
+    await dummyMigrationAddress.deployed();
   });
   it("Can add new versions to the repository", async function () {
     await expect(
-      repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
-        major: 1,
-        minor: 0,
-        patch: 0
-      })
+      repository.connect(owner).newRelease(
+        firstId,
+        ethers.utils.formatBytes32String("test"),
+        {
+          major: 1,
+          minor: 0,
+          patch: 0
+        },
+        dummyMigrationAddress.address
+      )
     ).to.emit(repository, "VersionAdded");
   });
   it("Can cannot create version with gap number ", async function () {
     await expect(
-      repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
-        major: 2,
-        minor: 0,
-        patch: 0
-      })
+      repository.connect(owner).newRelease(
+        firstId,
+        ethers.utils.formatBytes32String("test"),
+        {
+          major: 2,
+          minor: 0,
+          patch: 0
+        },
+        dummyMigrationAddress.address
+      )
     ).to.be.revertedWithCustomError(repository, "VersionIncrementInvalid");
   });
   it("Can cannot create version with zero major ", async function () {
     await expect(
-      repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
-        major: 0,
-        minor: 0,
-        patch: 0
-      })
+      repository.connect(owner).newRelease(
+        firstId,
+        ethers.utils.formatBytes32String("test"),
+        {
+          major: 0,
+          minor: 0,
+          patch: 0
+        },
+        dummyMigrationAddress.address
+      )
     ).to.be.revertedWithCustomError(repository, "ReleaseZeroNotAllowed");
   });
   describe("When version was created", function () {
     beforeEach(async () => {
-      await repository
-        .connect(owner)
-        .newRelease(firstId, ethers.utils.formatBytes32String("test"), {
+      await repository.connect(owner).newRelease(
+        firstId,
+        ethers.utils.formatBytes32String("test"),
+        {
           major: 1,
           minor: 0,
           patch: 0
-        });
+        },
+        dummyMigrationAddress.address
+      );
     });
     it("Can get versions", async function () {
       const src = await repository.get({
@@ -116,45 +146,64 @@ describe("Repository", function () {
     });
     it("Cannot create same version again", async function () {
       await expect(
-        repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
-          major: 1,
-          minor: 0,
-          patch: 0
-        })
+        repository.connect(owner).newRelease(
+          firstId,
+          ethers.utils.formatBytes32String("test"),
+          {
+            major: 1,
+            minor: 0,
+            patch: 0
+          },
+          dummyMigrationAddress.address
+        )
       ).to.be.revertedWithCustomError(repository, "VersionExists");
     });
     it("Can create minor release", async function () {
       await expect(
-        repository.connect(owner).newRelease(firstId, ethers.utils.formatBytes32String("test"), {
-          major: 1,
-          minor: 1,
-          patch: 0
-        })
+        repository.connect(owner).newRelease(
+          firstId,
+          ethers.utils.formatBytes32String("test"),
+          {
+            major: 1,
+            minor: 1,
+            patch: 0
+          },
+          constants.AddressZero
+        )
       ).to.emit(repository, "VersionAdded");
     });
     describe("When minor and second major versions were created", function () {
       beforeEach(async () => {
-        await repository
-          .connect(owner)
-          .newRelease(secondId, ethers.utils.formatBytes32String("test"), {
+        await repository.connect(owner).newRelease(
+          secondId,
+          ethers.utils.formatBytes32String("test"),
+          {
             major: 2,
             minor: 0,
             patch: 0
-          });
-        await repository
-          .connect(owner)
-          .newRelease(thirdId, ethers.utils.formatBytes32String("test"), {
+          },
+          dummyMigrationAddress.address
+        );
+        await repository.connect(owner).newRelease(
+          thirdId,
+          ethers.utils.formatBytes32String("test"),
+          {
             major: 1,
             minor: 1,
             patch: 0
-          });
-        await repository
-          .connect(owner)
-          .newRelease(fourthId, ethers.utils.formatBytes32String("test"), {
+          },
+          constants.AddressZero
+        );
+        await repository.connect(owner).newRelease(
+          fourthId,
+          ethers.utils.formatBytes32String("test"),
+          {
             major: 2,
             minor: 1,
             patch: 0
-          });
+          },
+          constants.AddressZero
+        );
       });
       it("Can get version by MAJOR", async () => {
         let src = await repository.get({

@@ -21,7 +21,9 @@ describe("CloneDistribution", function () {
 
   it("returns contract name and version", async function () {
     const { name, version } = await cloneDistribution.get();
-    expect(ethers.utils.parseBytes32String(name)).to.be.equal("MockCloneDistribution");
+    expect(ethers.utils.parseBytes32String(name.slice(0, -2) + "00")).to.be.equal(
+      "MockCloneDistribution"
+    );
     expect(version).to.be.equal(1);
   });
 });

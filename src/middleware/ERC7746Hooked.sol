@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 pragma solidity >=0.8.0 <0.9.0;
-import "../libraries/LibMiddleware.sol";
+import "./LibMiddleware.sol";
 
 /**
  * @title ERC7746Middleware
@@ -11,7 +11,7 @@ import "../libraries/LibMiddleware.sol";
  * that can be extended and customized by derived contracts.
  * @author Peeramid Labs, 2024
  */
-abstract contract ERC7746Middleware {
+abstract contract ERC7746Hooked {
     /**
      * @notice Modifier to apply custom logic for ERC7746 compliance.
      * @param _selector The function selector to be checked.

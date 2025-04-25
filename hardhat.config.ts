@@ -10,6 +10,7 @@ import "hardhat-gas-reporter";
 import "hardhat-contract-sizer";
 import "hardhat-deploy";
 import "solidity-docgen";
+import "solidity-coverage";
 import "hardhat-tracer";
 // import "@nomicfoundation/hardhat-verify";
 
@@ -118,6 +119,7 @@ export default {
       {
         version: "0.8.28",
         settings: {
+          evmVersion: "cancun",
           viaIR: true,
           optimizer: {
             enabled: true,
@@ -129,6 +131,22 @@ export default {
         }
       }
     ]
+    // overrides: {
+    //   "src/erc7744/ERC7744.sol": {
+    //     version: "0.8.28",
+    //     settings: {
+    //       evmVersion: "cancun",
+    //       viaIR: true,
+    //       optimizer: {
+    //         enabled: true,
+    //         runs: 2000
+    //       },
+    //       metadata: {
+    //         bytecodeHash: "none"
+    //       }
+    //     }
+    //   }
+    // }
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY

@@ -2,29 +2,32 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "../abstracts/Distributor.sol";
-
+import "./Distributor.sol";
+import "../interfaces/IMigration.sol";
+import "../versioning/LibSemver.sol";
+import "../interfaces/IMigration.sol";
 contract OwnableDistributor is Distributor, Ownable {
     constructor(address _owner) Ownable(_owner) {}
 
-    function instantiate(bytes32 id, bytes calldata args) external payable returns (address[] memory, bytes32, uint256) {
+    function instantiate(
+        bytes32 id,
+        bytes calldata args
+    ) external payable returns (address[] memory, bytes32, uint256) {
         return super._instantiate(id, args);
     }
 
-    function addDistribution(bytes32 id, address initializer) external onlyOwner {
-        super._addDistribution(id, initializer);
+    function addDistribution(bytes32 id, address initializer, string memory readableName) external onlyOwner {
+        super._addDistribution(id, initializer, readableName);
     }
     function addDistribution(
         IRepository repository,
         address initializer,
-        LibSemver.VersionRequirement memory requirement
+        LibSemver.VersionRequirement memory requirement,
+        string memory readableName
     ) external onlyOwner {
-        super._addDistribution(address(repository), initializer, requirement);
+        _addDistribution(address(repository), initializer, requirement, readableName);
     }
 
-    function addNamedDistribution(bytes32 name, bytes32 distributorId, address initializer) external onlyOwner {
-        super._addDistribution(name, distributorId, initializer);
-    }
 
     function changeVersion(
         bytes32 distributionId,
@@ -33,18 +36,28 @@ contract OwnableDistributor is Distributor, Ownable {
         super._changeVersion(distributionId, newRequirement);
     }
 
-    function removeDistribution(bytes32 id) public onlyOwner {
-        super._removeDistribution(id);
+    function disableDistribution(bytes32 id) public onlyOwner {
+        super._disableDistribution(id);
     }
 
     function addVersionMigration(
         bytes32 distributionId,
         LibSemver.VersionRequirement memory from,
         LibSemver.VersionRequirement memory to,
-        address migrationContract,
-        MigrationStrategy strategy
+        IMigration migrationContract,
+        MigrationStrategy strategy,
+        bytes memory distributorCalldata
     ) public onlyOwner {
-        super._addVersionMigration(distributionId, from, to, migrationContract, strategy);
+        _addVersionMigration(distributionId, from, to, migrationContract, strategy, distributorCalldata);
     }
 
+    function removeVersionMigration(bytes32 migrationId) public onlyOwner {
+        _removeVersionMigration(migrationId);
+    }
+
+    function getDistribution(bytes32 distributionId) public view returns (DistributionComponent memory) {
+        return distributionComponents[distributionId];
+    }
+
+    function upgradeUserInstance(bytes32 migrationId, bytes calldata userCalldata) public onlyOwner {}
 }

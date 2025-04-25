@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "../abstracts/Installer.sol";
+import "../middleware/InstallerClonable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-contract MockInstaller is Installer, Ownable {
-    constructor(address targetAddress, address owner) Ownable(owner) Installer(targetAddress) {}
+contract MockInstaller is InstallerClonable, Ownable {
+    constructor(address targetAddress, address owner) Ownable(owner) InstallerClonable(true) {
+        initialize(targetAddress);
+    }
 
     function install(
         IDistributor distributor,
@@ -33,4 +35,12 @@ contract MockInstaller is Installer, Ownable {
     function revokeWhitelistedDistributor(IDistributor distributor) public onlyOwner {
         super._disallowAllDistributions(distributor);
     }
+
+   function changeDistributor(uint256 appId, IDistributor newDistributor, bytes[] memory appData) public onlyOwner {
+    _changeDistributor(appId, newDistributor, appData);
+   }
+
+   function upgradeApp(uint256 appId, bytes32 migrationId, bytes calldata userCalldata) public onlyOwner {
+    _upgradeApp(appId, migrationId, userCalldata);
+   }
 }

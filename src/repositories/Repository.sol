@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "../libraries/LibSemver.sol";
+import "../versioning/LibSemver.sol";
 import "../interfaces/IRepository.sol";
-
+import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 /**
  * @title Repository
  * @notice Abstract contract that implements the IRepository interface. This contract serves as a base for other contracts that require repository functionalities.
@@ -14,6 +14,7 @@ abstract contract Repository is IRepository {
     using LibSemver for LibSemver.Version;
     mapping(uint256 => bytes32) internal versionedSources; // Flat version -> Source
     mapping(uint64 => bytes) internal releaseMetadata; // Major version -> Metadata
+    mapping(uint64 => IMigration) internal releaseMigration; // Major version -> Migration
     mapping(uint128 => bytes) internal minorReleaseMetadata; // Major + Minor -> Metadata
     mapping(uint256 => bytes) internal patchReleaseMetadata; // Major + Minor + Patch -> Metadata
     mapping(uint64 => uint64) internal minorReleases;
@@ -45,21 +46,26 @@ abstract contract Repository is IRepository {
         }
         emit ReleaseMetadataUpdated(versionFlat, metadata);
     }
-    function _newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version) internal {
+    function _newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version, IMigration migration) internal {
         uint256 versionFlat = version.toUint256();
         if (versionFlat == 0 && version.major == 0) revert ReleaseZeroNotAllowed();
         if (version.major > majorReleases) {
+            require(migration != IMigration(address(0)), "Migration is required for major releases");
+            require(ERC165Checker.supportsInterface(address(migration), type(IMigration).interfaceId), "Invalid migration");
             if (version.major != majorReleases + 1) revert VersionIncrementInvalid(versionFlat);
             majorReleases = version.major;
             minorReleases[version.major] = 0;
             patchReleases[(uint128(version.major) << 64)] = 0;
             releaseMetadata[version.major] = metadata;
+            releaseMigration[version.major] = migration;
         } else if (version.minor > minorReleases[version.major]) {
+            require(migration == IMigration(address(0)), "Migration is not allowed for minor releases");
             if (version.minor != minorReleases[version.major] + 1) revert VersionIncrementInvalid(versionFlat);
             minorReleases[version.major] = version.minor;
             patchReleases[(uint128(version.major) << 64) | uint128(version.minor)] = 0;
             minorReleaseMetadata[(uint128(version.major) << 64) | uint128(version.minor)] = metadata;
         } else if (version.patch > patchReleases[(uint128(version.major) << 64) | uint128(version.minor)]) {
+            require(migration == IMigration(address(0)), "Migration is not allowed for patch releases");
             if (version.patch != patchReleases[(uint128(version.major) << 64) | uint128(version.minor)] + 1)
                 revert VersionIncrementInvalid(versionFlat);
             patchReleases[(uint128(version.major) << 64) | uint128(version.minor)] = version.patch;
@@ -79,20 +85,19 @@ abstract contract Repository is IRepository {
         src.metadata = releaseMetadata[uint64(latestVersion)];
         return src;
     }
-    // @inheritdoc IRepository
-    function get(LibSemver.VersionRequirement calldata required) public view returns (Source memory) {
-        Source memory src;
+
+    function resolveVersion(
+        LibSemver.VersionRequirement calldata required
+    ) public view returns (uint256) {
         uint256 versionFlat = required.version.toUint256();
         uint256 resolvedVersion;
-        if (required.version.major == 0) revert VersionDoesNotExist(versionFlat);
+        if (versionFlat == 0) revert VersionDoesNotExist(versionFlat);
         if (required.requirement == LibSemver.requirements.EXACT) resolvedVersion = versionFlat;
         else if (required.requirement == LibSemver.requirements.MAJOR) {
-            if (required.version.major > majorReleases) revert VersionDoesNotExist(required.version.toUint256());
+            if (required.version.major > 0 && required.version.major > majorReleases) revert VersionDoesNotExist(required.version.toUint256());
             uint128 minorReleaseId = (uint128(required.version.major) << 64) |
                 uint128(minorReleases[required.version.major]);
             resolvedVersion = (uint256(minorReleaseId) << 128) | uint256(patchReleases[minorReleaseId]);
-            src.sourceId = versionedSources[resolvedVersion];
-            src.version = LibSemver.parse(resolvedVersion);
         } else if (required.requirement == LibSemver.requirements.MAJOR_MINOR) {
             if (required.version.major > majorReleases) revert VersionDoesNotExist(required.version.toUint256());
             if (required.version.major == majorReleases) {
@@ -138,6 +143,12 @@ abstract contract Repository is IRepository {
         } else {
             revert VersionDoesNotExist(required.version.toUint256());
         }
+        return resolvedVersion;
+    }
+    // @inheritdoc IRepository
+    function get(LibSemver.VersionRequirement calldata required) public view returns (Source memory) {
+        Source memory src;
+        uint256 resolvedVersion = resolveVersion(required);
         src.sourceId = versionedSources[resolvedVersion];
         src.version = LibSemver.parse(resolvedVersion);
         src.metadata = combineMetadata(resolvedVersion);
@@ -180,4 +191,16 @@ abstract contract Repository is IRepository {
     function contractURI() public view returns (string memory) {
         return _cURI;
     }
+
+    function _changeMigrationScript(uint64 major, IMigration migration) internal {
+        require(ERC165Checker.supportsInterface(address(migration), type(IMigration).interfaceId), "Invalid migration");
+        require(major <= majorReleases, "Major version does not exist");
+        releaseMigration[major] = migration;
+        emit MigrationScriptAdded(major, migration);
+    }
+
+    function getMigrationScript(uint64 major) public view returns (IMigration) {
+        return releaseMigration[major];
+    }
+
 }

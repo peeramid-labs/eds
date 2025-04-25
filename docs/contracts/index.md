@@ -266,16 +266,16 @@ function _install(contract IDistributor distributor, bytes32 distributionId, byt
 function _uninstall(uint256 instanceId) internal virtual
 ```
 
-### getInstance
+### getApp
 
 ```solidity
-function getInstance(uint256 instanceId) public view returns (address[] instaneContracts)
+function getApp(uint256 instanceId) public view returns (address[] instaneContracts)
 ```
 
-### getInstancesNum
+### getAppsNum
 
 ```solidity
-function getInstancesNum() public view returns (uint256)
+function getAppsNum() public view returns (uint256)
 ```
 
 ### isInstance
@@ -814,16 +814,16 @@ function install(contract IDistributor distributor, bytes32 distributionId, byte
 function uninstall(uint256 instanceId) external
 ```
 
-### getInstance
+### getApp
 
 ```solidity
-function getInstance(uint256 instanceId) external view returns (address[] instaneContracts)
+function getApp(uint256 instanceId) external view returns (address[] instaneContracts)
 ```
 
-### getInstancesNum
+### getAppsNum
 
 ```solidity
-function getInstancesNum() external view returns (uint256)
+function getAppsNum() external view returns (uint256)
 ```
 
 ### isInstance

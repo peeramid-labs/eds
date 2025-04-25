@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "../abstracts/CloneDistribution.sol";
+import "./CloneDistribution.sol";
 import "../interfaces/IRepository.sol";
-import "../libraries/LibSemver.sol";
+import "../versioning/LibSemver.sol";
+import "../erc7744/LibERC7744.sol";
 
 /**
  * @title LatestVersionDistribution
@@ -14,6 +15,7 @@ import "../libraries/LibSemver.sol";
 contract LatestVersionDistribution is CloneDistribution {
     bytes32 private immutable metadata;
     IRepository public immutable repository;
+    using LibERC7744 for bytes32;
 
     /**
      * @notice Constructor for the LatestVersionDistribution contract.
@@ -32,7 +34,7 @@ contract LatestVersionDistribution is CloneDistribution {
     function sources() internal view virtual override returns (address[] memory srcs, bytes32 name, uint256 version) {
         address[] memory _sources = new address[](1);
         IRepository.Source memory latest = repository.getLatest();
-        _sources[0] = getContractsIndex().get(latest.sourceId);
+        _sources[0] = latest.sourceId.getContainerOrThrow();
         return (_sources, repository.repositoryName(), LibSemver.toUint256(latest.version));
     }
 

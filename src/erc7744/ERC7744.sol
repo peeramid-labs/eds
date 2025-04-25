@@ -5,29 +5,32 @@ import {IERC7744} from "./IERC7744.sol";
 /**
  * @title Byte Code Indexer Contract
  * @notice You can use this contract to index contracts by their bytecode.
- * @dev This allows to query contracts by their bytecode instead of addresses.
+ * @dev This is global immutable library for functional code.
  * @author Tim Pechersky (@Peersky)
  */
 contract ERC7744 is IERC7744 {
     mapping(bytes32 => address) private index;
 
+    function isEIP7702(address account) public view returns (bool) {
+        bytes3 prefix;
+        assembly {
+            extcodecopy(account, 0, mload(0x40), 3) // Copy first 3 bytes to memory
+            prefix := mload(0x40) // Load the 3 bytes from memory
+        }
+        return prefix == bytes3(0xef0100);
+    }
+
     function isValidContainer(address container) private view returns (bool) {
         bytes memory code = container.code;
         bytes32 codeHash = address(container).codehash;
-        uint256 containerCodeLength;
-        assembly {
-            containerCodeLength := extcodesize(container)
-        }
-        bool is7702 = containerCodeLength == 23;
-        // Contract should have non-empty code and valid codehash
-        return (code.length > 0 && codeHash != bytes32(0) && !is7702);
+        return (code.length > 0 && codeHash != bytes32(0) && !isEIP7702(container));
     }
 
     /**
      * @notice Registers a contract in the index by its bytecode hash
      * @param container The contract to register
      * @dev `msg.codeHash` will be used
-     * @dev It will revert if the contract is already indexed or if returns EIP7702 hash
+     * @dev It will revert if the contract is already indexed or if returns EIP7702 delegated EOA
      */
     function register(address container) external {
         address etalon = index[container.codehash];

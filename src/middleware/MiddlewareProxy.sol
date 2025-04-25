@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity >=0.8.0 <0.9.0;
-import "./ERC7746Middleware.sol";
-import "../libraries/LibMiddleware.sol";
+import "./ERC7746Hooked.sol";
+import "./LibMiddleware.sol";
 
 /**
  * @dev This contract is a modified OpenZeppelin proxy v5.0.0.
  * Modification wraps a fallback function within ERC7746.
  * Rest is similar to Proxy.sol
  */
-contract MiddlewareProxy is ERC7746Middleware {
+contract MiddlewareProxy is ERC7746Hooked {
     address private immutable implementationAddress;
 
     constructor(LibMiddleware.LayerStruct[] memory layers, address implementation) {
