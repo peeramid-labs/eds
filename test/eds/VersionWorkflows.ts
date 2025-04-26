@@ -8,7 +8,10 @@ import {
   VersionDistribution__factory,
   MockMigration__factory,
   MockERC20__factory,
-  OwnableRepository__factory
+  OwnableRepository__factory,
+  OwnableRepository,
+  MockInstaller,
+  MockMigration
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -21,9 +24,10 @@ describe("Version Workflows", function () {
   let owner: SignerWithAddress;
   let user: SignerWithAddress;
   let erc20CodeHash: string;
-  let repository: any;
-  let mockMigration: any;
-  let installer: any;
+  let repository: OwnableRepository;
+  let mockMigration: MockMigration;
+  let installer: MockInstaller;
+  let migrationHash: string;
   let distributionId: string;
   let appId: number | null = null;
   let appInstances: string[] = [];
@@ -95,6 +99,10 @@ describe("Version Workflows", function () {
     )) as MockMigration__factory;
     mockMigration = await MockMigrationFactory.deploy();
     await mockMigration.deployed();
+    migrationHash = ethers.utils.keccak256(
+      await mockMigration.provider.getCode(mockMigration.address)
+    );
+    await codeIndex.register(mockMigration.address);
 
     // Deploy repository for versioning
     const RepositoryFactory = (await ethers.getContractFactory(
@@ -118,7 +126,7 @@ describe("Version Workflows", function () {
         erc20CodeHash,
         "0x", // metadata
         createVersion(1, 0, 0),
-        mockMigration.address
+        migrationHash
       );
 
       // Add second version to the repository (v1.0.1)
@@ -126,7 +134,7 @@ describe("Version Workflows", function () {
         erc20CodeHash,
         "0x", // metadata
         createVersion(1, 0, 1),
-        ethers.constants.AddressZero // No migration for patch releases
+        ethers.constants.HashZero // No migration for patch releases
       );
 
       // Add third version to the repository (v1.1.0)
@@ -134,7 +142,7 @@ describe("Version Workflows", function () {
         erc20CodeHash,
         "0x", // metadata
         createVersion(1, 1, 0),
-        ethers.constants.AddressZero // No migration for minor releases
+        ethers.constants.HashZero // No migration for minor releases
       );
 
       // Add fourth version to the repository (v2.0.0)
@@ -142,7 +150,7 @@ describe("Version Workflows", function () {
         erc20CodeHash,
         "0x", // metadata
         createVersion(2, 0, 0),
-        mockMigration.address
+        migrationHash
       );
 
       // Check that all versions are registered
@@ -165,7 +173,7 @@ describe("Version Workflows", function () {
         erc20CodeHash,
         "0x", // metadata
         createVersion(1, 0, 0),
-        mockMigration.address
+        migrationHash
       );
 
       // Add second version to the repository
@@ -173,7 +181,7 @@ describe("Version Workflows", function () {
         erc20CodeHash,
         "0x", // metadata
         createVersion(2, 0, 0),
-        mockMigration.address
+        migrationHash
       );
 
       // Register versioned distribution with distributor (requiring v1.0.0 or higher)
@@ -210,7 +218,7 @@ describe("Version Workflows", function () {
         erc20CodeHash,
         "0x", // metadata
         createVersion(1, 0, 0),
-        mockMigration.address
+        migrationHash
       );
 
       // Register versioned distribution with distributor
@@ -263,7 +271,7 @@ describe("Version Workflows", function () {
         erc20CodeHash,
         "0x", // metadata
         createVersion(1, 0, 0),
-        mockMigration.address
+        migrationHash
       );
 
       // Add second version to the repository
@@ -271,7 +279,7 @@ describe("Version Workflows", function () {
         erc20CodeHash,
         "0x", // metadata
         createVersion(2, 0, 0),
-        mockMigration.address
+        migrationHash
       );
 
       //   try {
@@ -301,7 +309,7 @@ describe("Version Workflows", function () {
         distributionId,
         createVersionRequirement(1, 0, 0, 1), // From v1.0.0
         createVersionRequirement(2, 0, 0, 1), // To v2.0.0
-        mockMigration.address,
+        migrationHash,
         0, // MigrationStrategy.CALL
         "0x" // No special calldata
       );
@@ -321,8 +329,8 @@ describe("Version Workflows", function () {
       // Calculate migration ID
       const migrationId = ethers.utils.keccak256(
         ethers.utils.defaultAbiCoder.encode(
-          ["bytes32", "address", "uint8"],
-          [distributionId, mockMigration.address, 0]
+          ["bytes32", "bytes32", "uint8"],
+          [distributionId, migrationHash, 0]
         )
       );
 
@@ -337,7 +345,7 @@ describe("Version Workflows", function () {
           migrationId,
           "0x" // No user calldata
         )
-      ).to.emit(mockMigration, "Migrated");
+      ).to.emit(distributor, "AppUpgraded");
 
       // Verify the new version
       const newVersion = await distributor.appVersions(appId);

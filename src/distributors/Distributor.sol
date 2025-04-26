@@ -307,14 +307,15 @@ abstract contract Distributor is IDistributor, ERC165 {
         if (LibSemver.toUint256(versionRequirements[distributionId].version) == 0) {
             revert UnversionedDistribution(distributionId);
         }
-        if(from.version.major == to.version.major)
-         require(strategy != MigrationStrategy.REPOSITORY_MANGED, "Repository managed migration is not allowed for minor version migrations");
+        if(from.version.major == to.version.major) {
+            require(strategy != MigrationStrategy.REPOSITORY_MANGED, "Repository managed migration is not allowed for minor version migrations");
+        }
         bytes32 migrationId;
-            migrationId = keccak256(abi.encode(distributionId, migrationHash, strategy));
-            require(migrations[migrationId].distributionId == bytes32(0), MigrationAlreadyExists(migrationId));
-            require(distributionComponents[distributionId].distributionLocation != address(0), "Distribution not found");
-            require(from.version.major < to.version.major, "Major version mismatch");
-            migrations[migrationId] = MigrationPlan(from, to, migrationHash, strategy, distributorCalldata, distributionId);
+        migrationId = keccak256(abi.encode(distributionId, migrationHash, strategy));
+        require(migrations[migrationId].distributionId == bytes32(0), MigrationAlreadyExists(migrationId));
+        require(distributionComponents[distributionId].distributionLocation != address(0), "Distribution not found");
+        require(from.version.major < to.version.major, "Major version mismatch");
+        migrations[migrationId] = MigrationPlan(from, to, migrationHash, strategy, distributorCalldata, distributionId);
 
         emit MigrationContractAddedFromVersions(
             distributionId,
@@ -347,7 +348,7 @@ abstract contract Distributor is IDistributor, ERC165 {
         uint256 appId,
         bytes32 migrationId,
         bytes calldata userCalldata
-    ) public returns (LibSemver.Version memory newVersion) {
+    ) public virtual returns (LibSemver.Version memory newVersion) {
         bytes32 distributorsId = distributionOf[appId];
         require(distributionsSet.contains(distributorsId), "Distribution not found");
         require(msg.sender == installers[appId], NotAnInstaller(msg.sender));

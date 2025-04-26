@@ -59,5 +59,11 @@ contract OwnableDistributor is Distributor, Ownable {
         return distributionComponents[distributionId];
     }
 
-    function upgradeUserInstance(bytes32 migrationId, bytes calldata userCalldata) public onlyOwner {}
+    function upgradeUserInstance(
+        uint256 appId,
+        bytes32 migrationId,
+        bytes calldata userCalldata
+    ) public override returns (LibSemver.Version memory) {
+        return super.upgradeUserInstance(appId, migrationId, userCalldata);
+    }
 }

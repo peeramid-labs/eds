@@ -39,7 +39,7 @@ describe("Installer", function () {
     const CloneDistribution = (await ethers.getContractFactory(
       "MockCloneDistribution"
     )) as MockCloneDistribution__factory;
-    const cloneDistribution = await CloneDistribution.deploy();
+    const cloneDistribution = await CloneDistribution.deploy("MockCloneDistribution");
     await cloneDistribution.deployed();
     const code = await cloneDistribution.provider.getCode(cloneDistribution.address);
     cloneDistributionId = ethers.utils.keccak256(code);

@@ -6,7 +6,7 @@ describe("CloneDistribution", function () {
 
   beforeEach(async function () {
     const CloneDistribution = await ethers.getContractFactory("MockCloneDistribution");
-    cloneDistribution = await CloneDistribution.deploy();
+    cloneDistribution = await CloneDistribution.deploy("MockCloneDistribution");
     await cloneDistribution.deployed();
   });
 

@@ -27,7 +27,7 @@ contract LatestVersionDistribution is CloneDistribution {
         repository = _repository;
     }
 
-    function instantiate(bytes memory) external returns (address[] memory instances, bytes32, uint256) {
+    function instantiate(bytes memory) external virtual returns (address[] memory instances, bytes32, uint256) {
         return super._instantiate();
     }
 

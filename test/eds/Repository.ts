@@ -61,7 +61,7 @@ describe("Repository", function () {
     const CloneDistribution = (await ethers.getContractFactory(
       "MockCloneDistribution"
     )) as MockCloneDistribution__factory;
-    const cloneDistribution = await CloneDistribution.deploy();
+    const cloneDistribution = await CloneDistribution.deploy("MockCloneDistribution");
     await cloneDistribution.deployed();
     const code = await cloneDistribution.provider.getCode(cloneDistribution.address);
     firstId = ethers.utils.keccak256(code);
@@ -101,7 +101,7 @@ describe("Repository", function () {
       )
     ).to.emit(repository, "VersionAdded");
   });
-  it("Can cannot create version with gap number ", async function () {
+  it("Cannot create version with gap number", async function () {
     await expect(
       repository.connect(owner).newRelease(
         firstId,
@@ -115,7 +115,7 @@ describe("Repository", function () {
       )
     ).to.be.revertedWithCustomError(repository, "VersionIncrementInvalid");
   });
-  it("Can cannot create version with zero major ", async function () {
+  it("Cannot create version with zero major", async function () {
     await expect(
       repository.connect(owner).newRelease(
         firstId,

@@ -65,7 +65,7 @@ describe("Version Distributor", function () {
     const CloneDistribution = (await ethers.getContractFactory(
       "MockCloneDistribution"
     )) as MockCloneDistribution__factory;
-    mockDistr = await CloneDistribution.deploy();
+    mockDistr = await CloneDistribution.deploy("MockCloneDistribution");
     await mockDistr.deployed();
     const code = await mockDistr.provider.getCode(mockDistr.address);
     const mockDistributionId = ethers.utils.keccak256(code);

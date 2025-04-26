@@ -8,8 +8,8 @@ contract MockCloneDistribution is CloneDistribution {
     ShortString private immutable distributionName;
     uint256 private constant distributionVersion = 1;
 
-    constructor() {
-        distributionName = ShortStrings.toShortString("MockCloneDistribution");
+    constructor(string memory name) {
+        distributionName = ShortStrings.toShortString(name);
     }
 
     function contractURI() external pure override returns (string memory) {

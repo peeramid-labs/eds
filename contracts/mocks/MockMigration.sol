@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "../interfaces/IMigration.sol";
-import "../interfaces/IRepository.sol";
-import "../versioning/LibSemver.sol";
+import "../../src/interfaces/IMigration.sol";
+import "../../src/interfaces/IRepository.sol";
+import "../../src/versioning/LibSemver.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 contract MockMigration is IMigration, ERC165 {
