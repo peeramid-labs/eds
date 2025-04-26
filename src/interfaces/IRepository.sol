@@ -51,9 +51,9 @@ interface IRepository is IERC165, IContractURI {
     /**
      * @notice Emitted when a migration script is added to the repository.
      * @param version The version number of the added item.
-     * @param migrationScript The migration script to be used for the new release.
+     * @param migrationHash The hash of the migration script to be used for the new release.
      */
-    event MigrationScriptAdded(uint64 indexed version, IMigration migrationScript);
+    event MigrationScriptAdded(uint64 indexed version, bytes32 indexed migrationHash);
     /**
      * @notice Emitted when a new version is added to the repository.
      * @param version The version number of the added item.
@@ -87,23 +87,23 @@ interface IRepository is IERC165, IContractURI {
      * @param version The semantic version of the new release.
      * @dev It MUST emit `VersionAdded` event.
      */
-    function newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version, IMigration migration) external;
+    function newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version, bytes32 migrationHash) external;
 
     /**
      * @notice Changes the migration script for a specific major version.
      * @param majorVersion The major version number of the migration script to change.
-     * @param migrationScript The new migration script to be used for the specified major version.
+     * @param migrationHash The new migration script to be used for the specified major version.
      * @dev It MUST emit `MigrationScriptAdded` event.
      */
-    function changeMigrationScript(uint64 majorVersion, IMigration migrationScript) external;
+    function changeMigrationScript(uint64 majorVersion, bytes32 migrationHash) external;
 
     /**
      * @notice Retrieves the migration script for a specific version.
      * @param majorVersion The major version number of the migration script to retrieve.
-     * @return The migration script for the specified version.
+     * @return migrationHash The hash of the migration script for the specified version.
      * @dev this script must execute logic of migrating from the previous (majorVersion-1) to the new one.
      */
-    function getMigrationScript(uint64 majorVersion) external view returns (IMigration);
+    function getMigrationScript(uint64 majorVersion) external view returns (bytes32 migrationHash);
 
     /**
      * @notice Retrieves the latest source.

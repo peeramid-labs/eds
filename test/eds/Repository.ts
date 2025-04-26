@@ -29,6 +29,7 @@ describe("Repository", function () {
   let installer: MockInstaller;
   let repository: Repository;
   let dummyMigrationAddress: MockMigration;
+  let dummyMigrationCodeHash: string;
 
   beforeEach(async function () {
     await deployments.fixture("ERC7744"); // This is the key addition
@@ -81,6 +82,10 @@ describe("Repository", function () {
     )) as MockMigration__factory;
     dummyMigrationAddress = await MockMigration.deploy();
     await dummyMigrationAddress.deployed();
+    await codeIndex.register(dummyMigrationAddress.address);
+    dummyMigrationCodeHash = ethers.utils.keccak256(
+      await dummyMigrationAddress.provider.getCode(dummyMigrationAddress.address)
+    );
   });
   it("Can add new versions to the repository", async function () {
     await expect(
@@ -92,7 +97,7 @@ describe("Repository", function () {
           minor: 0,
           patch: 0
         },
-        dummyMigrationAddress.address
+        dummyMigrationCodeHash
       )
     ).to.emit(repository, "VersionAdded");
   });
@@ -106,7 +111,7 @@ describe("Repository", function () {
           minor: 0,
           patch: 0
         },
-        dummyMigrationAddress.address
+        dummyMigrationCodeHash
       )
     ).to.be.revertedWithCustomError(repository, "VersionIncrementInvalid");
   });
@@ -120,7 +125,7 @@ describe("Repository", function () {
           minor: 0,
           patch: 0
         },
-        dummyMigrationAddress.address
+        dummyMigrationCodeHash
       )
     ).to.be.revertedWithCustomError(repository, "ReleaseZeroNotAllowed");
   });
@@ -134,7 +139,7 @@ describe("Repository", function () {
           minor: 0,
           patch: 0
         },
-        dummyMigrationAddress.address
+        dummyMigrationCodeHash
       );
     });
     it("Can get versions", async function () {
@@ -154,7 +159,7 @@ describe("Repository", function () {
             minor: 0,
             patch: 0
           },
-          dummyMigrationAddress.address
+          dummyMigrationCodeHash
         )
       ).to.be.revertedWithCustomError(repository, "VersionExists");
     });
@@ -168,7 +173,7 @@ describe("Repository", function () {
             minor: 1,
             patch: 0
           },
-          constants.AddressZero
+          dummyMigrationCodeHash
         )
       ).to.emit(repository, "VersionAdded");
     });
@@ -182,7 +187,7 @@ describe("Repository", function () {
             minor: 0,
             patch: 0
           },
-          dummyMigrationAddress.address
+          dummyMigrationCodeHash
         );
         await repository.connect(owner).newRelease(
           thirdId,
@@ -192,7 +197,7 @@ describe("Repository", function () {
             minor: 1,
             patch: 0
           },
-          constants.AddressZero
+          dummyMigrationCodeHash
         );
         await repository.connect(owner).newRelease(
           fourthId,
@@ -202,7 +207,7 @@ describe("Repository", function () {
             minor: 1,
             patch: 0
           },
-          constants.AddressZero
+          dummyMigrationCodeHash
         );
       });
       it("Can get version by MAJOR", async () => {

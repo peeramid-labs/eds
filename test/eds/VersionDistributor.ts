@@ -10,7 +10,9 @@ import {
   TestFacet__factory,
   OwnableDistributor,
   MockInstaller,
-  MockInstaller__factory
+  MockInstaller__factory,
+  MockMigration__factory,
+  MockMigration
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -24,6 +26,8 @@ describe("Version Distributor", function () {
   let mockDistr: MockCloneDistribution;
   let repository: Repository;
   let mockInstaller: MockInstaller;
+  let dummyMigration: MockMigration;
+  let dummyMigrationCodeHash: string;
 
   beforeEach(async function () {
     await deployments.fixture("ERC7744"); // This is the key addition
@@ -34,9 +38,20 @@ describe("Version Distributor", function () {
       "MockInstaller"
     )) as MockInstaller__factory;
     mockInstaller = await MockInstaller.deploy(deployer.address, owner.address);
+
     codeIndex = new ethers.Contract(codeIndexDeployment.address, ERC7744.interface).connect(
       deployer
     ) as ERC7744;
+
+    const DummyMigration = (await ethers.getContractFactory(
+      "MockMigration"
+    )) as MockMigration__factory;
+    dummyMigration = await DummyMigration.deploy();
+    await dummyMigration.deployed();
+    await codeIndex.register(dummyMigration.address);
+    dummyMigrationCodeHash = ethers.utils.keccak256(
+      await dummyMigration.provider.getCode(dummyMigration.address)
+    );
 
     const Repository = (await ethers.getContractFactory(
       "OwnableRepository"
@@ -60,11 +75,11 @@ describe("Version Distributor", function () {
       mockDistributionId,
       ethers.utils.formatBytes32String("test"),
       {
-        major: 0,
+        major: 1,
         minor: 0,
-        patch: 1
+        patch: 0
       },
-      ethers.constants.AddressZero
+      dummyMigrationCodeHash
     );
     await tx.wait();
 
@@ -115,7 +130,7 @@ describe("Version Distributor", function () {
         .connect(owner)
         [
           "addDistribution(address,address,((uint64,uint64,uint128),uint8),string)"
-        ](repository.address, ethers.constants.AddressZero, { version: { major: 0, minor: 0, patch: 1 }, requirement: 1 }, "test");
+        ](repository.address, ethers.constants.AddressZero, { version: { major: 1, minor: 0, patch: 0 }, requirement: 1 }, "test");
     });
 
     it("Is possible to instantiate a contract", async function () {
@@ -184,7 +199,7 @@ describe("Version Distributor", function () {
       ).to.be.revertedWithCustomError(distributor, "VersionOutdated");
       await distributor
         .connect(owner)
-        .changeVersion(id, { version: { major: 0, minor: 0, patch: 1 }, requirement: 1 });
+        .changeVersion(id, { version: { major: 1, minor: 0, patch: 0 }, requirement: 1 });
       await expect(
         distributor
           .connect(owner)

@@ -12,12 +12,12 @@ contract OwnableRepository is Repository, Ownable, ERC165 {
     function updateReleaseMetadata(LibSemver.Version memory version, bytes calldata releaseMetadata) public onlyOwner {
         super._updateReleaseMetadata(version, releaseMetadata);
     }
-    function newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version, IMigration migration) public onlyOwner {
-        super._newRelease(sourceId, metadata, version, migration);
+    function newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version, bytes32 migrationHash) public onlyOwner {
+        super._newRelease(sourceId, metadata, version, migrationHash);
     }
 
-    function changeMigrationScript(uint64 major, IMigration migration) public onlyOwner {
-        super._changeMigrationScript(major, migration);
+    function changeMigrationScript(uint64 major, bytes32 migrationHash) public onlyOwner {
+        super._changeMigrationScript(major, migrationHash);
     }
 
 

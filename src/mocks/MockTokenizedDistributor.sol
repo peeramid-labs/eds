@@ -98,11 +98,11 @@ contract MockTokenizedDistributor is TokenizedDistributor, AccessControlDefaultA
         bytes32 distributionId,
         LibSemver.VersionRequirement memory from,
         LibSemver.VersionRequirement memory to,
-        IMigration migrationContract,
+        bytes32 migrationHash,
         MigrationStrategy strategy,
         bytes memory distributorCalldata
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        super._addVersionMigration(distributionId, from, to, migrationContract, strategy, distributorCalldata);
+        super._addVersionMigration(distributionId, from, to, migrationHash, strategy, distributorCalldata);
     }
 
     function removeVersionMigration(bytes32 migrationId) external onlyRole(DEFAULT_ADMIN_ROLE) {

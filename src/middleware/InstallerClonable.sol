@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "../interfaces/IInstaller.sol";
 import "../versioning/LibSemver.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import "../interfaces/IAdminGetter.sol";
 /**
  * @title Installer
  * @notice Abstract contract that implements the IInstaller interface and is Initializable.
@@ -23,6 +24,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         uint256 appNum;
         mapping(uint256 appId => App app) apps;
         LibSemver.Version currentVersion;
+        mapping(uint256 appId => bool isInUpgradeMode) isAppInUpgradeMode;
     }
 
     bytes32 private constant EDS_INSTALLER_STORAGE_POSITION = keccak256("EDS.INSTALLER.STORAGE.POSITION");
@@ -173,6 +175,9 @@ abstract contract InstallerClonable is IInstaller, Initializable {
             revert InvalidTarget(msg.sender);
         }
         if (distributor != address(0)) {
+            // If this is upgrade call, it must be sanctioned by Installer
+            if (selector == IAdminGetter.getWrappedProxyAdmin.selector && origin == distributor)
+                require(strg.isAppInUpgradeMode[appId], "Upgrade call not sanctioned by Installer");
             bytes memory beforeCallValue = IDistributor(distributor).beforeCall(
                 layerConfig,
                 selector,
@@ -220,11 +225,13 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         require(app.middleware != address(0), "App not installed");
         IDistributor distributor = IDistributor(app.middleware);
         uint256 distributorAppId = distributor.getAppId(app.contracts[0]);
+        strg.isAppInUpgradeMode[appId] = true;
         LibSemver.Version memory newVersion = distributor.upgradeUserInstance(
             distributorAppId,
             migrationId,
             userCalldata
         );
+        strg.isAppInUpgradeMode[appId] = false;
         emit AppUpgraded(appId, migrationId, newVersion.toUint256(), userCalldata);
     }
 

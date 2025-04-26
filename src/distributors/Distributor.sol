@@ -44,10 +44,9 @@ abstract contract Distributor is IDistributor, ERC165 {
     mapping(uint256 appId => address[]) public appComponents;
     mapping(bytes32 migrationId => MigrationPlan migrationPlan) public migrations;
     mapping(bytes32 aliasHash => bytes32 distributorsId) public aliasToDistributorId;
-    IDistributor public trustedInstallerRegistry;
-    address public ongoingMigrationContract;
+    mapping(uint256 appId => address undergoingMigration) public appsUndergoingMigration;
 
-    uint256 public numInstances;
+    uint256 public numAppInstances;
     // @inheritdoc IDistributor
     function getDistributions() external view returns (bytes32[] memory) {
         return distributionsSet.values();
@@ -80,6 +79,8 @@ abstract contract Distributor is IDistributor, ERC165 {
         if (LibSemver.toUint256(requirement.version) == 0) {
             revert InvalidVersionRequested(distributorId, LibSemver.toString(requirement.version));
         }
+        IRepository repositoryContract = IRepository(repository);
+        require(repositoryContract.resolveVersion(requirement) != 0, "Version does not exist");
         _newDistributionRecord(distributorId, repository, initializer, readableName);
         versionRequirements[distributorId] = requirement;
         emit VersionChanged(distributorId, requirement, requirement);
@@ -155,20 +156,20 @@ abstract contract Distributor is IDistributor, ERC165 {
         bool externallyInitialized = distributionComponent.initializer == address(0);
         bytes4 selector = IInitializer.initialize.selector;
         address distributionLocation;
-        numInstances++;
-        uint256 appId = numInstances;
+        numAppInstances++;
+        uint256 appId = numAppInstances;
 
         if (LibSemver.toUint256(versionRequirement.version) == 0) {
             // Unversioned distribution, expect IDistribution
             distributionLocation = distributionComponent.distributionLocation;
             // Unversioned distributions are considered to be at version 0
-            appVersions[numInstances] = LibSemver.parse(0);
+            appVersions[numAppInstances] = LibSemver.parse(0);
         } else {
             // Versioned distribution, expect IRepository
             IRepository repository = IRepository(distributionComponent.distributionLocation);
             IRepository.Source memory repoSource = repository.get(versionRequirement);
             distributionLocation = repoSource.sourceId.getContainerOrThrow();
-            appVersions[numInstances] = repoSource.version;
+            appVersions[numAppInstances] = repoSource.version;
         }
         try IDistribution(distributionLocation).instantiate(args) returns (
             address[] memory _newAppComponents,
@@ -232,7 +233,7 @@ abstract contract Distributor is IDistributor, ERC165 {
         bytes32 distributorsId = distributionOf[getAppId(sender)];
         uint256 appId = getAppId(sender);
         if (
-            distributorsId != bytes32(0) && ongoingMigrationContract != address(0) && sender == ongoingMigrationContract
+            distributorsId != bytes32(0) && appsUndergoingMigration[appId] != address(0) && sender == appsUndergoingMigration[appId]
         ) {
             return abi.encode(distributorsId, ""); // Approve migration call
         }
@@ -263,7 +264,7 @@ abstract contract Distributor is IDistributor, ERC165 {
         bytes32 distributorsId = distributionOf[getAppId(sender)];
         uint256 appId = getAppId(sender);
         if (
-            distributorsId != bytes32(0) && ongoingMigrationContract != address(0) && sender == ongoingMigrationContract
+            distributorsId != bytes32(0) && appsUndergoingMigration[appId] != address(0) && sender == appsUndergoingMigration[appId]
         ) {
             return; // Approve migration call
         }
@@ -299,39 +300,36 @@ abstract contract Distributor is IDistributor, ERC165 {
         bytes32 distributionId,
         LibSemver.VersionRequirement memory from,
         LibSemver.VersionRequirement memory to,
-        IMigration migrationContract,
+        bytes32 migrationHash,
         MigrationStrategy strategy,
         bytes memory distributorCalldata
     ) internal {
         if (LibSemver.toUint256(versionRequirements[distributionId].version) == 0) {
             revert UnversionedDistribution(distributionId);
         }
-        bytes32 migrationId = keccak256(abi.encode(distributionId, migrationContract, strategy));
-        require(!migrations[migrationId].exists, MigrationAlreadyExists(migrationId));
-        require(from.version.major < to.version.major, "Major version mismatch");
-        migrations[migrationId] = MigrationPlan(from, to, migrationContract, strategy, distributorCalldata, true);
-        if (strategy == MigrationStrategy.REPOSITORY_MANGED) {
-            DistributionComponent memory distributionComponent = distributionComponents[distributionId];
-            require(
-                IRepository(distributionComponent.distributionLocation).getMigrationScript(to.version.major) ==
-                    migrationContract,
-                "Migration script mismatch"
-            );
-        }
+        if(from.version.major == to.version.major)
+         require(strategy != MigrationStrategy.REPOSITORY_MANGED, "Repository managed migration is not allowed for minor version migrations");
+        bytes32 migrationId;
+            migrationId = keccak256(abi.encode(distributionId, migrationHash, strategy));
+            require(migrations[migrationId].distributionId == bytes32(0), MigrationAlreadyExists(migrationId));
+            require(distributionComponents[distributionId].distributionLocation != address(0), "Distribution not found");
+            require(from.version.major < to.version.major, "Major version mismatch");
+            migrations[migrationId] = MigrationPlan(from, to, migrationHash, strategy, distributorCalldata, distributionId);
+
         emit MigrationContractAddedFromVersions(
             distributionId,
             from.version.toUint256(),
             from.requirement,
             strategy,
-            address(migrationContract),
+            migrationHash,
             migrationId
         );
         emit MigrationContractAddedToVersions(
             distributionId,
-            to.version.toUint256(),
+            migrationHash,
             to.requirement,
             strategy,
-            address(migrationContract),
+            to.version.toUint256(),
             migrationId
         );
     }
@@ -340,7 +338,7 @@ abstract contract Distributor is IDistributor, ERC165 {
     }
 
     function _removeVersionMigration(bytes32 migrationId) internal virtual {
-        migrations[migrationId].exists = false;
+        migrations[migrationId].distributionId = bytes32(0);
         emit VersionMigrationRemoved(migrationId);
     }
 
@@ -357,80 +355,87 @@ abstract contract Distributor is IDistributor, ERC165 {
         MigrationPlan memory migrationPlan = migrations[migrationId];
         require(LibSemver.compare(appVersions[appId], migrationPlan.from), "Version is not in range");
 
-        require(migrationPlan.exists, MigrationContractNotFound(migrationId));
+        require(migrationPlan.distributionId != bytes32(0), MigrationContractNotFound(migrationId));
         address[] memory _appComponents = appComponents[appId];
         LibSemver.Version memory oldVersion = appVersions[appId];
         DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
         IRepository repository = IRepository(distributionComponent.distributionLocation);
         newVersion = LibSemver.parse(repository.resolveVersion(migrationPlan.to));
-
-        ongoingMigrationContract = address(migrationPlan.migrationContract);
-        if (migrationPlan.strategy == MigrationStrategy.CALL) {
-            try
-                migrationPlan.migrationContract.migrate(
-                    _appComponents,
-                    oldVersion,
-                    newVersion,
-                    repository,
-                    migrationPlan.distributorCalldata,
-                    userCalldata
-                )
-            {} catch Error(string memory reason) {
-                revert upgradeFailedWithRevert(reason);
-            } catch Panic(uint errorCode) {
-                revert upgradeFailedWithPanic(errorCode);
-            } catch (bytes memory lowLevelData) {
-                revert upgradeFailedWithError(lowLevelData);
-            }
-        } else if (migrationPlan.strategy == MigrationStrategy.DELEGATECALL) {
-            require(
-                ERC165Checker.supportsInterface(address(migrationPlan.migrationContract), type(IMigration).interfaceId),
-                "Migration contract does not support IMigration interface"
-            );
-            (bool success, bytes memory result) = address(migrationPlan.migrationContract).delegatecall(
-                abi.encodeWithSelector(
-                    IMigration.migrate.selector,
-                    _appComponents,
-                    oldVersion,
-                    newVersion,
-                    repository,
-                    migrationPlan.distributorCalldata,
-                    userCalldata
-                )
-            );
-            if (!success) {
-                revert upgradeFailedWithError(result);
+        address distributorMigrationContract = migrationPlan.migrationHash.getContainerOrThrow();
+        appsUndergoingMigration[appId] = distributorMigrationContract;
+        if (distributorMigrationContract != address(0)) {
+            if (migrationPlan.strategy == MigrationStrategy.CALL) {
+                try
+                    IMigration(distributorMigrationContract).migrate(
+                        _appComponents,
+                        oldVersion,
+                        newVersion,
+                        repository,
+                        migrationPlan.distributorCalldata,
+                        userCalldata
+                    )
+                {} catch Error(string memory reason) {
+                    revert upgradeFailedWithRevert(reason);
+                } catch Panic(uint errorCode) {
+                    revert upgradeFailedWithPanic(errorCode);
+                } catch (bytes memory lowLevelData) {
+                    revert upgradeFailedWithError(lowLevelData);
+                }
+            } else if (migrationPlan.strategy == MigrationStrategy.DELEGATECALL) {
+                require(
+                    ERC165Checker.supportsInterface(
+                        distributorMigrationContract,
+                        type(IMigration).interfaceId
+                    ),
+                    "Migration contract does not support IMigration interface"
+                );
+                (bool success, bytes memory result) = address(distributorMigrationContract).delegatecall(
+                    abi.encodeWithSelector(
+                        IMigration.migrate.selector,
+                        _appComponents,
+                        oldVersion,
+                        newVersion,
+                        repository,
+                        migrationPlan.distributorCalldata,
+                        userCalldata
+                    )
+                );
+                if (!success) {
+                    revert upgradeFailedWithError(result);
+                }
             }
         } else if (migrationPlan.strategy == MigrationStrategy.REPOSITORY_MANGED) {
             // Repository managed migration, expect migration script to be provided by repository
             // NB: Migration scripts may be changed by repository.
             // This strategy assumes distributor trusts repository owner sufficiently to not change migration script maliciously.
             // This however is safe if repository implements timelocks and distributor hence can react to unexpected changes.
-            IMigration migrationScript = repository.getMigrationScript(migrationPlan.from.version.major);
-            require(migrationScript == migrationPlan.migrationContract, "Migration script mismatch");
-            ongoingMigrationContract = address(migrationScript);
-            (bool success, bytes memory result) = address(migrationScript).delegatecall(
-                abi.encodeWithSelector(
-                    IMigration.migrate.selector,
-                    _appComponents,
-                    oldVersion,
-                    newVersion,
-                    repository,
-                    migrationPlan.distributorCalldata,
-                    userCalldata
-                )
-            );
-            if (!success) {
-                revert upgradeFailedWithError(result);
+            // Rationale for not using CodeIndex here is that migration scripts may happen to have state (e.g. incentive counter for users to migrate)
+            for (uint256 i = 0; i < migrationPlan.from.version.major - migrationPlan.to.version.major; i++) {
+                bytes32 migrationHash = repository.getMigrationScript(uint64(migrationPlan.from.version.major + 1 + i));
+                IMigration migration = IMigration(migrationHash.getContainerOrThrow());
+                (bool success, bytes memory result) = address(migration).delegatecall(
+                    abi.encodeWithSelector(
+                        IMigration.migrate.selector,
+                        _appComponents,
+                        oldVersion,
+                        newVersion,
+                        repository,
+                        migrationPlan.distributorCalldata,
+                        userCalldata
+                    )
+                );
+                if (!success) {
+                    revert upgradeFailedWithError(result);
+                }
             }
         }
-        ongoingMigrationContract = address(0);
+        appsUndergoingMigration[appId] = address(0);
         uint256 oldVersionUint = oldVersion.toUint256();
         uint256 newVersionUint = newVersion.toUint256();
         appVersions[appId] = newVersion;
-        emit UserUpgraded(appId, migrationId, msg.sender, newVersionUint, oldVersionUint, userCalldata);
+        emit UserUpgraded(appId, migrationId, msg.sender, newVersionUint, oldVersionUint, abi.encode(userCalldata));
         emit AppUpgraded(appId, oldVersionUint, newVersionUint);
-        emit MigrationExecuted(migrationId, oldVersionUint, newVersionUint, userCalldata);
+        emit MigrationExecuted(migrationId, oldVersionUint, newVersionUint, abi.encode(userCalldata));
         return newVersion;
     }
 
@@ -455,8 +460,7 @@ abstract contract Distributor is IDistributor, ERC165 {
                 (bool success, bytes memory result) = address(_appComponents[i]).call(appData[i]);
                 statuses[i] = success;
                 results[i] = result;
-            }
-            else {
+            } else {
                 statuses[i] = true;
                 results[i] = "";
             }

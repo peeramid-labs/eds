@@ -44,11 +44,11 @@ contract OwnableDistributor is Distributor, Ownable {
         bytes32 distributionId,
         LibSemver.VersionRequirement memory from,
         LibSemver.VersionRequirement memory to,
-        IMigration migrationContract,
+        bytes32 migrationHash,
         MigrationStrategy strategy,
         bytes memory distributorCalldata
     ) public onlyOwner {
-        _addVersionMigration(distributionId, from, to, migrationContract, strategy, distributorCalldata);
+        _addVersionMigration(distributionId, from, to, migrationHash, strategy, distributorCalldata);
     }
 
     function removeVersionMigration(bytes32 migrationId) public onlyOwner {

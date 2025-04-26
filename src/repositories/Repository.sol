@@ -4,17 +4,19 @@ pragma solidity >=0.8.0 <0.9.0;
 import "../versioning/LibSemver.sol";
 import "../interfaces/IRepository.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import "../erc7744/LibERC7744.sol";
 /**
  * @title Repository
  * @notice Abstract contract that implements the IRepository interface. This contract serves as a base for other contracts that require repository functionalities.
  */
 abstract contract Repository is IRepository {
     bytes32 public immutable repositoryName;
+    using LibERC7744 for bytes32;
     string private _cURI;
     using LibSemver for LibSemver.Version;
     mapping(uint256 => bytes32) internal versionedSources; // Flat version -> Source
     mapping(uint64 => bytes) internal releaseMetadata; // Major version -> Metadata
-    mapping(uint64 => IMigration) internal releaseMigration; // Major version -> Migration
+    mapping(uint64 => bytes32) internal releaseMigrationHash; // Major version -> Migration
     mapping(uint128 => bytes) internal minorReleaseMetadata; // Major + Minor -> Metadata
     mapping(uint256 => bytes) internal patchReleaseMetadata; // Major + Minor + Patch -> Metadata
     mapping(uint64 => uint64) internal minorReleases;
@@ -46,26 +48,26 @@ abstract contract Repository is IRepository {
         }
         emit ReleaseMetadataUpdated(versionFlat, metadata);
     }
-    function _newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version, IMigration migration) internal {
+    function _newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version, bytes32 migrationHash) internal {
         uint256 versionFlat = version.toUint256();
         if (versionFlat == 0 && version.major == 0) revert ReleaseZeroNotAllowed();
         if (version.major > majorReleases) {
-            require(migration != IMigration(address(0)), "Migration is required for major releases");
+            address migration = migrationHash.getContainerOrThrow();
             require(ERC165Checker.supportsInterface(address(migration), type(IMigration).interfaceId), "Invalid migration");
             if (version.major != majorReleases + 1) revert VersionIncrementInvalid(versionFlat);
             majorReleases = version.major;
             minorReleases[version.major] = 0;
             patchReleases[(uint128(version.major) << 64)] = 0;
             releaseMetadata[version.major] = metadata;
-            releaseMigration[version.major] = migration;
+            releaseMigrationHash[version.major] = migrationHash;
         } else if (version.minor > minorReleases[version.major]) {
-            require(migration == IMigration(address(0)), "Migration is not allowed for minor releases");
+            require(migrationHash == bytes32(0), "Migration is not allowed for minor releases");
             if (version.minor != minorReleases[version.major] + 1) revert VersionIncrementInvalid(versionFlat);
             minorReleases[version.major] = version.minor;
             patchReleases[(uint128(version.major) << 64) | uint128(version.minor)] = 0;
             minorReleaseMetadata[(uint128(version.major) << 64) | uint128(version.minor)] = metadata;
         } else if (version.patch > patchReleases[(uint128(version.major) << 64) | uint128(version.minor)]) {
-            require(migration == IMigration(address(0)), "Migration is not allowed for patch releases");
+            require(migrationHash == bytes32(0), "Migration is not allowed for patch releases");
             if (version.patch != patchReleases[(uint128(version.major) << 64) | uint128(version.minor)] + 1)
                 revert VersionIncrementInvalid(versionFlat);
             patchReleases[(uint128(version.major) << 64) | uint128(version.minor)] = version.patch;
@@ -149,6 +151,7 @@ abstract contract Repository is IRepository {
     function get(LibSemver.VersionRequirement calldata required) public view returns (Source memory) {
         Source memory src;
         uint256 resolvedVersion = resolveVersion(required);
+        if (versionedSources[resolvedVersion] == bytes32(0)) revert VersionDoesNotExist(resolvedVersion);
         src.sourceId = versionedSources[resolvedVersion];
         src.version = LibSemver.parse(resolvedVersion);
         src.metadata = combineMetadata(resolvedVersion);
@@ -192,15 +195,15 @@ abstract contract Repository is IRepository {
         return _cURI;
     }
 
-    function _changeMigrationScript(uint64 major, IMigration migration) internal {
-        require(ERC165Checker.supportsInterface(address(migration), type(IMigration).interfaceId), "Invalid migration");
+    function _changeMigrationScript(uint64 major, bytes32 migrationHash) internal {
+        require(migrationHash.getContainerOrThrow() != address(0), "Invalid migration");
         require(major <= majorReleases, "Major version does not exist");
-        releaseMigration[major] = migration;
-        emit MigrationScriptAdded(major, migration);
+        releaseMigrationHash[major] = migrationHash;
+        emit MigrationScriptAdded(major, migrationHash);
     }
 
-    function getMigrationScript(uint64 major) public view returns (IMigration) {
-        return releaseMigration[major];
+    function getMigrationScript(uint64 major) public view returns (bytes32) {
+        return releaseMigrationHash[major];
     }
 
 }

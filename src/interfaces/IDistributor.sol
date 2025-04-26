@@ -14,10 +14,10 @@ enum MigrationStrategy {
 struct MigrationPlan {
     LibSemver.VersionRequirement from;
     LibSemver.VersionRequirement to;
-    IMigration migrationContract;
+    bytes32 migrationHash;
     MigrationStrategy strategy;
     bytes distributorCalldata;
-    bool exists;
+    bytes32 distributionId;
 }
 
 /**
@@ -189,15 +189,15 @@ interface IDistributor is IERC7746, IERC165 {
         uint256 indexed baseVersion,
         LibSemver.requirements indexed semanticRequirement,
         MigrationStrategy strategy,
-        address migrationContract,
+        bytes32 migrationHash,
         bytes32 migrationId
     );
     event MigrationContractAddedToVersions(
         bytes32 indexed distributionId,
-        uint256 indexed baseVersion,
+        bytes32 indexed migrationHash,
         LibSemver.requirements indexed semanticRequirement,
         MigrationStrategy strategy,
-        address migrationContract,
+        uint256 baseVersion,
         bytes32 migrationId
     );
 
@@ -207,7 +207,7 @@ interface IDistributor is IERC7746, IERC165 {
         bytes32 distributionId,
         LibSemver.VersionRequirement memory from,
         LibSemver.VersionRequirement memory to,
-        IMigration migrationContract,
+        bytes32 migrationHash,
         MigrationStrategy strategy,
         bytes memory distributorCalldata
     ) external;
@@ -244,6 +244,18 @@ interface IDistributor is IERC7746, IERC165 {
 
     event DistributorChanged(uint256 appId, address newDistributor);
     event AppUpgraded(uint256 indexed appId, uint256 indexed oldVersion, uint256 indexed newVersion);
-    event MigrationExecuted(bytes32 indexed migrationId, uint256 indexed oldVersion, uint256 indexed newVersion, bytes userCalldata);
-    event UserUpgraded(uint256 indexed appId, bytes32 indexed migrationId, address indexed account, uint256 newVersion, uint256 oldVersion, bytes userCalldata);
+    event MigrationExecuted(
+        bytes32 indexed migrationId,
+        uint256 indexed oldVersion,
+        uint256 indexed newVersion,
+        bytes userCalldata
+    );
+    event UserUpgraded(
+        uint256 indexed appId,
+        bytes32 indexed migrationId,
+        address indexed account,
+        uint256 newVersion,
+        uint256 oldVersion,
+        bytes userCalldata
+    );
 }

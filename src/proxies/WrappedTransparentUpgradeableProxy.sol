@@ -7,11 +7,7 @@ import "../middleware/ERC7746Hooked.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {IDistributor} from "../interfaces/IDistributor.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-
-interface IAdminGetter {
-    function getWrappedProxyAdmin() external view returns (address);
-}
-
+import {IAdminGetter} from "../interfaces/IAdminGetter.sol";
 error InvalidMiddleware();
 
 /**
