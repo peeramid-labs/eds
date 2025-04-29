@@ -15,6 +15,19 @@ contract MockRepository is IRepository {
     mapping(uint64 => bytes32) private migrationScripts;
     bytes32 private _repositoryName = bytes32("MockRepository");
 
+    // Mock functionality for testing
+    address private mockMigrationScriptAddress;
+    bytes private mockMigrationScriptCalldata;
+    bool private shouldMock;
+
+    function mock(string memory functionName, address addr, bytes memory callData) external {
+        if (keccak256(abi.encodePacked(functionName)) == keccak256(abi.encodePacked("getMigrationScript"))) {
+            mockMigrationScriptAddress = addr;
+            mockMigrationScriptCalldata = callData;
+            shouldMock = true;
+        }
+    }
+
     function addSource(LibSemver.Version memory version, bytes32 sourceId, bytes memory metadata) external {
         sources[version.toUint256()] = sourceId;
         sourceMetadata[version.toUint256()] = metadata;
@@ -48,7 +61,15 @@ contract MockRepository is IRepository {
     }
 
     function getMigrationScript(uint64 majorVersion) external view override returns (bytes32) {
+        if (shouldMock) {
+            return bytes32(uint256(uint160(mockMigrationScriptAddress)));
+        }
         return migrationScripts[majorVersion];
+    }
+
+    // Add a function to get the migration script calldata - not part of interface but needed for testing
+    function getMigrationScriptCalldata() external view returns (bytes memory) {
+        return mockMigrationScriptCalldata;
     }
 
     function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
