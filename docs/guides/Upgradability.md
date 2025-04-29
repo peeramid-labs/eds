@@ -101,3 +101,13 @@ Repositories may not.
 
 In case if minor version migration is specified, Distributor shall not specify strategy as `RepositoryManaged`.
 
+
+## Renouncing distributor
+
+Installer may renounce distributor webhooks by calling `function changeDistributor(uint256 appId, IDistributor newDistributor, bytes[] memory appData) external;`
+
+This will allow to transfer ownership to new distributor or to user.
+
+Proper secure installer should ensure this function call has high level of permissions required, so that it cannot be used to bypass security oracle features Distributors may provide.
+
+This function will not only remove records of distributor, but also call distributor hook to remove distributor from app to inform it of change. This hook is to be used by distributors to support break up process and release app control from their side, for example in case of `WrappedTransparentUpgradeableProxy` it will transfer ownership to user or to a new distributor.
