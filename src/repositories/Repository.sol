@@ -5,6 +5,7 @@ import "../versioning/LibSemver.sol";
 import "../interfaces/IRepository.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "../erc7744/LibERC7744.sol";
+
 /**
  * @title Repository
  * @notice Abstract contract that implements the IRepository interface. This contract serves as a base for other contracts that require repository functionalities.
@@ -53,7 +54,7 @@ abstract contract Repository is IRepository {
         if (versionFlat == 0 && version.major == 0) revert ReleaseZeroNotAllowed();
         if (version.major > majorReleases) {
             address migration = migrationHash.getContainerOrThrow();
-            require(ERC165Checker.supportsInterface(address(migration), type(IMigration).interfaceId), "Invalid migration");
+            require(ERC165Checker.supportsInterface(migration, type(IMigration).interfaceId), "Invalid migration");
             if (version.major != majorReleases + 1) revert VersionIncrementInvalid(versionFlat);
             majorReleases = version.major;
             minorReleases[version.major] = 0;
@@ -76,7 +77,7 @@ abstract contract Repository is IRepository {
             revert VersionExists(versionFlat);
         }
         versionedSources[versionFlat] = sourceId;
-        latestVersion = versionFlat;
+        latestVersion = versionFlat > latestVersion ? versionFlat : latestVersion;
         emit VersionAdded(versionFlat, sourceId, metadata);
     }
     // @inheritdoc IRepository
@@ -137,9 +138,15 @@ abstract contract Repository is IRepository {
             uint128 minorReleaseId = (uint128(majorReleases) << 64) | uint128(minorReleases[majorReleases]);
             resolvedVersion = (uint256(minorReleaseId) << 128) | uint256(patchReleases[minorReleaseId]);
         } else if (required.requirement == LibSemver.requirements.LESSER_EQUAL) {
-            revert("Not implemented");
+            uint64 resolvedMajor = required.version.major <= majorReleases ? required.version.major : majorReleases;
+            uint64 resolvedMinor = required.version.major == resolvedMajor && required.version.minor <= minorReleases[resolvedMajor] ? required.version.minor : minorReleases[resolvedMajor];
+            uint128 resolvedPatch = required.version.major == majorReleases && required.version.minor == minorReleases[resolvedMajor] && required.version.patch <= patchReleases[(uint128(resolvedMajor) << 64) | uint128(resolvedMinor)] ? required.version.patch : patchReleases[(uint128(resolvedMajor) << 64) | uint128(resolvedMinor)];
+            resolvedVersion = (uint256(resolvedMajor) << 192) | (uint256(resolvedMinor) << 128) | uint256(resolvedPatch);
         } else if (required.requirement == LibSemver.requirements.LESSER) {
-            revert("Not implemented");
+            uint64 resolvedMajor = required.version.major < majorReleases ? required.version.major : majorReleases;
+           uint64 resolvedMinor = required.version.major == resolvedMajor && required.version.minor < minorReleases[resolvedMajor] ? required.version.minor : minorReleases[resolvedMajor];
+            uint128 resolvedPatch = required.version.major == majorReleases && required.version.minor == minorReleases[resolvedMajor] && required.version.patch < patchReleases[(uint128(resolvedMajor) << 64) | uint128(resolvedMinor)] ? required.version.patch : patchReleases[(uint128(resolvedMajor) << 64) | uint128(resolvedMinor)];
+            resolvedVersion = (uint256(resolvedMajor) << 192) | (uint256(resolvedMinor) << 128) | uint256(resolvedPatch);
         } else if (required.requirement == LibSemver.requirements.ANY) {
             resolvedVersion = latestVersion;
         } else {

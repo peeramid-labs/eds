@@ -12,16 +12,15 @@ abstract contract UpgradableDistribution is IDistribution {
     function sources() internal view virtual returns (address[] memory, bytes32 name, uint256 version);
 
     // @inheritdoc IDistribution
-    function _instantiate(address installer, bytes memory data)
-        internal
-        virtual
-        returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion)
-    {
+    function _instantiate(
+        address installer,
+        bytes memory data
+    ) internal virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
         (address[] memory _sources, bytes32 _distributionName, uint256 _distributionVersion) = sources();
         uint256 srcsLength = _sources.length;
         instances = new address[](srcsLength);
         for (uint256 i; i < srcsLength; ++i) {
-            address proxy = address(new WrappedTransparentUpgradeableProxy(_sources[i], installer, data, ""));
+            address proxy = address(new WrappedTransparentUpgradeableProxy(_sources[i], installer, msg.sender, data, ""));
             instances[i] = proxy;
         }
         emit Distributed(msg.sender, instances);
@@ -33,4 +32,8 @@ abstract contract UpgradableDistribution is IDistribution {
     }
     // @inheritdoc IDistribution
     function contractURI() external view virtual returns (string memory);
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return interfaceId == type(IDistribution).interfaceId || interfaceId == type(IERC165).interfaceId;
+    }
 }

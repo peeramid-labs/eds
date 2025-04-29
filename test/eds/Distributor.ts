@@ -7,7 +7,10 @@ import {
   OwnableDistributor__factory,
   TestFacet__factory,
   VersionDistribution__factory,
-  MockMigration__factory
+  MockMigration__factory,
+  MockRepository__factory,
+  SelfInstaller__factory,
+  MockERC20__factory
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -20,6 +23,9 @@ describe("Distributor", function () {
   let owner: SignerWithAddress;
   let distributorsId: any;
   let cloneDistributionId: any;
+  let mockMigrationAddress: string;
+  let mockMigrationCodeHash: string;
+  let repositoryAddress: string;
 
   // Helper function to create version requirements
   function createVersionRequirement(
@@ -66,6 +72,69 @@ describe("Distributor", function () {
       )
     );
     await codeIndex.register(cloneDistribution.address);
+
+    // Deploy mock migration contract just to get an address to use
+    const MockMigration = (await ethers.getContractFactory(
+      "MockMigration"
+    )) as MockMigration__factory;
+    const mockMigration = await MockMigration.deploy();
+    await mockMigration.deployed();
+    mockMigrationAddress = mockMigration.address;
+
+    // Register the mock migration with codeIndex
+    await codeIndex.register(mockMigration.address);
+
+    // Get the code hash for the mock migration
+    const mockMigrationCode = await mockMigration.provider.getCode(mockMigration.address);
+    mockMigrationCodeHash = ethers.utils.keccak256(mockMigrationCode);
+
+    // Deploy a mock repository for versioned distributions
+    const MockRepository = (await ethers.getContractFactory(
+      "MockRepository"
+    )) as MockRepository__factory;
+    const mockRepository = await MockRepository.deploy();
+    await mockRepository.deployed();
+    repositoryAddress = mockRepository.address;
+
+    // Register the repository address with codeIndex
+    const repositoryCode = await mockRepository.provider.getCode(mockRepository.address);
+    const repositoryCodeHash = ethers.utils.keccak256(repositoryCode);
+    await codeIndex.register(mockRepository.address);
+
+    // Deploy a mock distribution implementation to use with the repository
+    const VersionedCloneDistribution = (await ethers.getContractFactory(
+      "MockCloneDistribution"
+    )) as MockCloneDistribution__factory;
+    const mockDist = await VersionedCloneDistribution.deploy("MockVersionedDistribution");
+    await mockDist.deployed();
+    const distCode = await mockDist.provider.getCode(mockDist.address);
+    const distCodeHash = ethers.utils.keccak256(distCode);
+    await codeIndex.register(mockDist.address);
+
+    // Add source code to the repository for version 1.0.0 and 2.0.0
+    await mockRepository.newRelease(
+      distCodeHash,
+      ethers.utils.toUtf8Bytes("v1 metadata"),
+      { major: 1, minor: 0, patch: 0 },
+      mockMigrationCodeHash
+    );
+
+    await mockRepository.newRelease(
+      distCodeHash,
+      ethers.utils.toUtf8Bytes("v2 metadata"),
+      { major: 2, minor: 0, patch: 0 },
+      mockMigrationCodeHash
+    );
+
+    const MockMigration2 = (await ethers.getContractFactory(
+      "MockMigration"
+    )) as MockMigration__factory;
+    const mockMigration2 = await MockMigration2.deploy();
+    await mockMigration2.deployed();
+
+    // Add migration scripts
+    await mockRepository.changeMigrationScript(1, mockMigrationCodeHash);
+    await mockRepository.changeMigrationScript(2, mockMigrationCodeHash);
   });
 
   it("Only Owner can add distribution instantiate a contract", async function () {
@@ -82,7 +151,7 @@ describe("Distributor", function () {
         .connect(deployer)
         [
           "addDistribution(bytes32,address,string)"
-        ](ethers.utils.keccak256(cloneDistributionId), ethers.constants.AddressZero, "TestDistribution")
+        ](cloneDistributionId, ethers.constants.AddressZero, "TestDistribution")
     ).to.be.revertedWithCustomError(distributor, "OwnableUnauthorizedAccount");
   });
 
@@ -386,20 +455,40 @@ describe("Distributor", function () {
         .instantiate(distributorId, ethers.constants.AddressZero);
       const receipt = await tx.wait();
 
-      // Get the appComponent address from the instantiated event
-      const instantiatedEvent = receipt.events?.find((e) => e.event === "Instantiated");
-      const appComponents = instantiatedEvent?.args?.appComponents;
-      expect(appComponents.length).to.be.greaterThan(0);
+      // Print all events to debug
+      console.log(
+        "Events:",
+        receipt.events?.map((e) => ({ event: e.event, args: e.args }))
+      );
 
-      const appComponent = appComponents[0];
+      // Extract appId and components from event
+      const instantiatedEvent = receipt.events?.find((e) => e.event === "Instantiated");
+      console.log("Instantiated event:", instantiatedEvent);
+
+      expect(instantiatedEvent, "Instantiated event should exist").to.not.be.undefined;
+
+      // Access args array directly since the property names might not match what we expect
+      console.log("Event args:", instantiatedEvent?.args);
+
+      // The appId is the second element in the args array
+      const appId = instantiatedEvent?.args?.[1];
+      console.log("appId:", appId);
+
+      // The appComponents are the 4th element (index 3) in the args array
+      const appComponents = instantiatedEvent?.args?.[3];
+      console.log("appComponents:", appComponents);
+
+      expect(appId, "appId should not be undefined").to.not.be.undefined;
+      expect(appComponents, "appComponents should not be undefined").to.not.be.undefined;
+      expect(appComponents.length, "appComponents should not be empty").to.be.greaterThan(0);
 
       // Get distribution ID from app component and verify
-      const retrievedDistributionId = await distributor.getDistributionId(appComponent);
+      const retrievedDistributionId = await distributor.getDistributionId(appComponents[0]);
       expect(retrievedDistributionId).to.equal(distributorId);
 
       // Verify app ID as well
-      const appId = await distributor.getAppId(appComponent);
-      expect(appId.toNumber()).to.be.greaterThan(0);
+      const appIdAfter = await distributor.getAppId(appComponents[0]);
+      expect(appIdAfter.toNumber()).to.be.greaterThan(0);
     });
 
     it("should not allow adding the same alias twice", async function () {
@@ -435,19 +524,19 @@ describe("Distributor", function () {
     });
 
     it("should get distribution URI", async function () {
-      // Deploy a unique distribution for this test
+      // Deploy a distribution contract that implements contractURI
       const CloneDistribution = (await ethers.getContractFactory(
         "MockCloneDistribution"
       )) as MockCloneDistribution__factory;
-      const cloneDistribution = await CloneDistribution.deploy("TestDistribution");
-      await cloneDistribution.deployed();
-      const code = await cloneDistribution.provider.getCode(cloneDistribution.address);
+      const mockDistribution = await CloneDistribution.deploy("TestWithURI");
+      await mockDistribution.deployed();
+      const code = await mockDistribution.provider.getCode(mockDistribution.address);
       const distributionId = ethers.utils.keccak256(code);
 
       // Register with codeIndex
-      await codeIndex.register(cloneDistribution.address);
+      await codeIndex.register(mockDistribution.address);
 
-      // Add a distribution
+      // Add the distribution
       await distributor
         .connect(owner)
         [
@@ -456,9 +545,9 @@ describe("Distributor", function () {
 
       const distributorId = await distributor.getIdFromAlias("TestWithURI_GetURI");
 
-      // Get the URI
+      // Get the URI - should use the contractURI function of the distribution
       const uri = await distributor.getDistributionURI(distributorId);
-      expect(uri).to.be.a("string"); // Basic check that we get a string back
+      expect(uri).to.not.be.empty; // Only check that it returns something, not the exact value
     });
   });
 
@@ -466,6 +555,7 @@ describe("Distributor", function () {
   describe("Version management and migrations", function () {
     // Define the variables we need
     let mockMigrationAddress: string;
+    let mockMigrationCodeHash: string;
     let repositoryAddress: string;
 
     beforeEach(async function () {
@@ -477,46 +567,50 @@ describe("Distributor", function () {
       await mockMigration.deployed();
       mockMigrationAddress = mockMigration.address;
 
-      // Register the mock migration with codeIndex
-      await codeIndex.register(mockMigration.address);
+      // Get the code hash for the mock migration
+      const mockMigrationCode = await mockMigration.provider.getCode(mockMigration.address);
+      mockMigrationCodeHash = ethers.utils.keccak256(mockMigrationCode);
 
       // Deploy a mock repository for versioned distributions
-      const MockRepository = await ethers.getContractFactory("MockRepository");
+      const MockRepository = (await ethers.getContractFactory(
+        "MockRepository"
+      )) as MockRepository__factory;
       const mockRepository = await MockRepository.deploy();
       await mockRepository.deployed();
       repositoryAddress = mockRepository.address;
 
       // Register the repository address with codeIndex
-      const code = await mockRepository.provider.getCode(mockRepository.address);
-      const repositoryCodeHash = ethers.utils.keccak256(code);
-      await codeIndex.register(mockRepository.address);
+      await mockRepository.provider.getCode(mockRepository.address);
 
       // Deploy a mock distribution implementation to use with the repository
-      const CloneDistribution = (await ethers.getContractFactory(
+      const VersionedCloneDistribution = (await ethers.getContractFactory(
         "MockCloneDistribution"
       )) as MockCloneDistribution__factory;
-      const mockDist = await CloneDistribution.deploy("MockVersionedDistribution");
+      const mockDist = await VersionedCloneDistribution.deploy("MockVersionedDistribution");
       await mockDist.deployed();
       const distCode = await mockDist.provider.getCode(mockDist.address);
       const distCodeHash = ethers.utils.keccak256(distCode);
-      await codeIndex.register(mockDist.address);
+
+      const mockDist2 = await VersionedCloneDistribution.deploy("MockVersionedDistribution2");
+      await mockDist2.deployed();
+      const distCode2 = await mockDist2.provider.getCode(mockDist2.address);
+      const distCodeHash2 = ethers.utils.keccak256(distCode2);
+      await codeIndex.register(mockDist2.address);
 
       // Add source code to the repository for version 1.0.0 and 2.0.0
-      await mockRepository.addSource(
+      await mockRepository.newRelease(
+        distCodeHash,
+        ethers.utils.toUtf8Bytes("v1 metadata"),
         { major: 1, minor: 0, patch: 0 },
-        distCodeHash,
-        ethers.utils.toUtf8Bytes("v1 metadata")
+        mockMigrationCodeHash
       );
 
-      await mockRepository.addSource(
+      await mockRepository.newRelease(
+        distCodeHash2,
+        ethers.utils.toUtf8Bytes("v2 metadata"),
         { major: 2, minor: 0, patch: 0 },
-        distCodeHash,
-        ethers.utils.toUtf8Bytes("v2 metadata")
+        mockMigrationCodeHash
       );
-
-      // Add migration scripts
-      await mockRepository.addMigrationScript(1, ethers.utils.hexZeroPad(mockMigrationAddress, 32));
-      await mockRepository.addMigrationScript(2, ethers.utils.hexZeroPad(mockMigrationAddress, 32));
     });
 
     // These test cases check basic requirements but don't execute versioned code paths that might have syntax errors
@@ -545,6 +639,82 @@ describe("Distributor", function () {
           "0x" // distributor calldata
         )
       ).to.be.revertedWithCustomError(distributor, "UnversionedDistribution");
+    });
+    // These test cases check basic requirements but don't execute versioned code paths that might have syntax errors
+    it("should handle cases when migration script with CALL strategy reverts", async function () {
+      // Get the mockRepository instance
+      const MockRepository = (await ethers.getContractFactory(
+        "MockRepository"
+      )) as MockRepository__factory;
+      const mockRepository = MockRepository.attach(repositoryAddress);
+
+      // Add a versioned distribution
+      await distributor
+        .connect(owner)
+        [
+          "addDistribution(address,address,((uint64,uint64,uint128),uint8),string)"
+        ](repositoryAddress, ethers.constants.AddressZero, createVersionRequirement(1, 0, 0, 1), "DelegateCallMigrationTest");
+
+      const versionedId = await distributor.getIdFromAlias("DelegateCallMigrationTest");
+
+      // Instantiate the contract
+      const tx = await distributor.connect(owner).instantiate(versionedId, "0x");
+      const receipt = await tx.wait();
+
+      // Get the appId
+      let appId: number | undefined;
+      for (const event of receipt.events || []) {
+        if (event.event === "Instantiated" && event.args) {
+          appId = event.args.newAppId;
+          break;
+        }
+      }
+
+      expect(appId).to.not.be.undefined;
+
+      // Use the already registered mockMigration
+      // First get the codeHash
+      const migrationCode = await ethers.provider.getCode(mockMigrationAddress);
+      const migrationCodeHash = ethers.utils.keccak256(migrationCode);
+
+      // Set up a CALL migration - using codeHash instead of address
+      await distributor.connect(owner).addVersionMigration(
+        versionedId,
+        createVersionRequirement(1, 0, 0, 1), // from
+        createVersionRequirement(2, 0, 0, 1), // to
+        migrationCodeHash, // Use the codeHash directly, not the address converted to bytes32
+        0, // MigrationStrategy.CALL
+        "0x" // distributor calldata
+      );
+
+      // Calculate the migrationId for CALL strategy
+      const migrationId = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+          ["bytes32", "bytes32", "uint8"],
+          [versionedId, migrationCodeHash, 0] // Using strategy 1 (CALL)
+        )
+      );
+
+      await expect(
+        distributor.connect(owner).upgradeUserInstance(appId!, migrationId, "0xFF")
+      ).to.be.revertedWithCustomError(distributor, "upgradeFailedWithRevert");
+      await expect(
+        distributor.connect(owner).upgradeUserInstance(appId!, migrationId, "0xFE")
+      ).to.be.revertedWithCustomError(distributor, "upgradeFailedWithPanic");
+      await expect(
+        distributor.connect(owner).upgradeUserInstance(appId!, migrationId, "0xFD")
+      ).to.be.revertedWithCustomError(distributor, "upgradeFailedWithError");
+
+      // Try upgrading - This should succeed and cover the DELEGATECALL path
+      await expect(
+        distributor.connect(owner).upgradeUserInstance(appId!, migrationId, "0x")
+      ).to.emit(distributor, "UserUpgraded");
+
+      // Verify the version was updated
+      const appVersion = await distributor["appVersions(uint256)"](appId!);
+      expect(appVersion.major).to.equal(2);
+      expect(appVersion.minor).to.equal(0);
+      expect(appVersion.patch).to.equal(0);
     });
 
     it("should revert when changing version of unversioned distribution", async function () {
@@ -623,6 +793,90 @@ describe("Distributor", function () {
       // Verify app is no longer associated with this distributor
       const appIdAfter = await distributor.getAppId(appComponent!);
       expect(appIdAfter).to.equal(0);
+    });
+
+    it("should transfer proxy admin ownership when onDistributorChanged is called", async function () {
+      // Deploy implementation contract
+      const TestFacet = await ethers.getContractFactory("TestFacet");
+      const implementation = await TestFacet.deploy();
+      await implementation.deployed();
+
+      // Deploy WrappedTransparentUpgradeableProxy with the distributor as admin
+      const WrappedProxy = (await ethers.getContractFactory(
+        "VersionDistribution"
+      )) as VersionDistribution__factory;
+
+      const mockErc20 = await (
+        await ((await ethers.getContractFactory("MockERC20")) as MockERC20__factory).deploy(
+          "MockERC20",
+          "ME",
+          1000
+        )
+      ).deployed();
+      const appCodeHash = ethers.utils.keccak256(await ethers.provider.getCode(mockErc20.address));
+      await codeIndex.register(mockErc20.address);
+
+      const proxy = await WrappedProxy.deploy(
+        appCodeHash,
+        ethers.constants.HashZero,
+        "TestApp",
+        1,
+        true
+      );
+      await proxy.deployed();
+      const proxyCode = await ethers.provider.getCode(proxy.address);
+      const proxyCodeHash = ethers.utils.keccak256(proxyCode);
+      await codeIndex.register(proxy.address);
+
+      const tx = await distributor
+        .connect(owner)
+        [
+          "addDistribution(bytes32,address,string)"
+        ](proxyCodeHash, ethers.constants.AddressZero, "TestApp");
+      const receipt = await tx.wait();
+
+      // Extract the appId and appComponents from event logs properly
+      let distributorsId = await distributor.getIdFromAlias("TestApp");
+      if (!distributorsId) {
+        throw new Error("Distributor ID not found");
+      }
+
+      const Installer = (await ethers.getContractFactory(
+        "SelfInstaller"
+      )) as SelfInstaller__factory;
+      const installer = await Installer.deploy(owner.address);
+      await installer.deployed();
+
+      const callData = ethers.utils.defaultAbiCoder.encode(
+        ["tuple(address,bytes)"],
+        [[installer.address, "0x"]]
+      );
+      await installer.connect(owner).install(distributor.address, distributorsId, callData);
+      const appId = await installer.getAppsNum();
+      const appComponents = await installer.getApp(appId);
+      const NewDistributor = (await ethers.getContractFactory(
+        "OwnableDistributor"
+      )) as OwnableDistributor__factory;
+      const newDistributor = await NewDistributor.deploy(owner.address);
+      await newDistributor.deployed();
+      const ADMIN_SLOT = "0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103";
+      // Read the admin address from the proxy's storage
+      const adminAddressBytes = await ethers.provider.getStorageAt(
+        appComponents.contracts[0],
+        ADMIN_SLOT
+      );
+      const adminAddress = ethers.utils.getAddress("0x" + adminAddressBytes.slice(26));
+
+      // Now check the owner of the admin contract
+      const adminContract = await ethers.getContractAt("ProxyAdmin", adminAddress);
+      await expect(
+        installer.connect(owner).changeDistributor(appId, newDistributor.address, [])
+      ).to.emit(installer, "DistributorChanged");
+
+      const ownerAfter = await adminContract.owner();
+
+      // Ownership should have been transferred to the new distributor
+      expect(ownerAfter).to.equal(newDistributor.address);
     });
 
     it("should successfully change version for a versioned distribution", async function () {
@@ -927,8 +1181,50 @@ describe("Distributor", function () {
 
     // Test for the version outdated check in beforeCall
     it("should revert in beforeCall when version is outdated", async function () {
-      // Skip this test for now as it's difficult to correctly catch the custom error
-      this.skip();
+      // Add a versioned distribution
+      await distributor
+        .connect(owner)
+        [
+          "addDistribution(address,address,((uint64,uint64,uint128),uint8),string)"
+        ](repositoryAddress, ethers.constants.AddressZero, createVersionRequirement(1, 0, 0, 1), "VersionOutdatedTest");
+
+      const versionedId = await distributor.getIdFromAlias("VersionOutdatedTest");
+
+      // Instantiate the contract
+      const tx = await distributor.connect(owner).instantiate(versionedId, "0x");
+      const receipt = await tx.wait();
+
+      // Get the app component
+      let appComponent: string | undefined;
+      let appId: number | undefined;
+      for (const event of receipt.events || []) {
+        if (event.event === "Instantiated" && event.args) {
+          appComponent = event.args.appComponents[0];
+          appId = event.args.newAppId;
+          break;
+        }
+      }
+
+      expect(appComponent).to.not.be.undefined;
+      expect(appId).to.not.be.undefined;
+
+      // Change the required version to be higher than the current app version
+      await distributor
+        .connect(owner)
+        .changeVersion(versionedId, createVersionRequirement(2, 0, 0, 1));
+
+      // Try to call beforeCall - should fail due to outdated version
+      await expect(
+        distributor
+          .connect(owner)
+          .beforeCall(
+            ethers.utils.defaultAbiCoder.encode(["address"], [appComponent!]),
+            "0x00000000",
+            appComponent!,
+            0,
+            "0x"
+          )
+      ).to.be.revertedWithCustomError(distributor, "VersionOutdated");
     });
 
     it("should revert when a non-installer tries to upgrade an instance", async function () {
@@ -989,7 +1285,6 @@ describe("Distributor", function () {
         distributor.connect(owner).upgradeUserInstance(nonExistentAppId, fakeMigrationId, "0x")
       ).to.be.revertedWith("Distribution not found");
     });
-
     it("should revert when trying to upgrade with non-existent migration", async function () {
       // Add a versioned distribution
       await distributor
@@ -1021,7 +1316,6 @@ describe("Distributor", function () {
         distributor.connect(owner).upgradeUserInstance(appId!, fakeMigrationId, "0x")
       ).to.be.revertedWithCustomError(distributor, "MigrationContractNotFound");
     });
-
     it("should revert when app version is not in the migration's 'from' range", async function () {
       // Add a versioned distribution
       await distributor
@@ -1070,7 +1364,6 @@ describe("Distributor", function () {
       await expect(distributor.connect(owner).upgradeUserInstance(appId!, migrationId, "0x")).to.be
         .reverted;
     });
-
     it("should test onDistributorChanged with appData", async function () {
       // Create an instance first
       await distributor
@@ -1161,6 +1454,220 @@ describe("Distributor", function () {
       await expect(
         distributor.connect(owner).onDistributorChanged(appId!, newDistributor, appData)
       ).to.be.revertedWith("App data length mismatch");
+    });
+    it("should successfully upgrade using REPOSITORY_MANAGED migration strategy", async function () {
+      // Get the mockRepository instance first
+      const MockRepository = (await ethers.getContractFactory(
+        "MockRepository"
+      )) as MockRepository__factory;
+      const mockRepository = MockRepository.attach(repositoryAddress);
+
+      // Add a versioned distribution
+      await distributor
+        .connect(owner)
+        [
+          "addDistribution(address,address,((uint64,uint64,uint128),uint8),string)"
+        ](repositoryAddress, ethers.constants.AddressZero, createVersionRequirement(1, 0, 0, 1), "RepoManagedMigrationTest");
+
+      const versionedId = await distributor.getIdFromAlias("RepoManagedMigrationTest");
+
+      // Instantiate the contract as owner (becomes installer)
+      const tx = await distributor.connect(owner).instantiate(versionedId, "0x");
+      const receipt = await tx.wait();
+
+      // Get the appId
+      let appId: number | undefined;
+      for (const event of receipt.events || []) {
+        if (event.event === "Instantiated" && event.args) {
+          appId = event.args.newAppId;
+          break;
+        }
+      }
+
+      expect(appId).to.not.be.undefined;
+      // Deploy a mock distribution implementation to use with the repository
+      const VersionedCloneDistribution = (await ethers.getContractFactory(
+        "MockCloneDistribution"
+      )) as MockCloneDistribution__factory;
+      const mockDist = await VersionedCloneDistribution.deploy("MockVersionedDistribution3");
+      await mockDist.deployed();
+      const distCode = await mockDist.provider.getCode(mockDist.address);
+      const distCodeHash = ethers.utils.keccak256(distCode);
+
+      // Add source code to the repository for version 1.0.0 and 2.0.0
+      await mockRepository.newRelease(
+        distCodeHash,
+        ethers.utils.toUtf8Bytes("v3 metadata"),
+        { major: 3, minor: 0, patch: 0 },
+        mockMigrationCodeHash
+      );
+
+      // Set up a repository-managed migration between major versions
+
+      await distributor.connect(owner).addVersionMigration(
+        versionedId,
+        createVersionRequirement(1, 0, 0, 1), // from
+        createVersionRequirement(3, 0, 0, 1), // to
+        mockMigrationCodeHash,
+        2, // MigrationStrategy.REPOSITORY_MANAGED
+        "0x" // distributor calldata
+      );
+
+      // Calculate the migrationId
+      const migrationId = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+          ["bytes32", "bytes32", "uint8"],
+          [versionedId, mockMigrationCodeHash, 2] // Using strategy 2 (REPOSITORY_MANAGED)
+        )
+      );
+
+      // Use the real code hash from the contract, not the address converted to bytes32
+      await mockRepository.changeMigrationScript(2, mockMigrationCodeHash);
+      await mockRepository.changeMigrationScript(3, mockMigrationCodeHash);
+
+      // revert when migration fails
+
+      await expect(
+        distributor.connect(owner).upgradeUserInstance(appId!, migrationId, "0xFF")
+      ).to.be.revertedWithCustomError(distributor, "upgradeFailedWithError");
+      // Malicious user tries to upgrade
+      await expect(
+        distributor.connect(deployer).upgradeUserInstance(appId!, migrationId, "0x")
+      ).to.be.revertedWithCustomError(distributor, "NotAnInstaller");
+
+      // Execute the upgrade
+      await expect(
+        distributor.connect(owner).upgradeUserInstance(appId!, migrationId, "0x")
+      ).to.emit(distributor, "UserUpgraded");
+
+      const appVersion = await distributor["appVersions(uint256)"](appId!);
+      expect(appVersion.major).to.equal(3);
+      expect(appVersion.minor).to.equal(0);
+      expect(appVersion.patch).to.equal(0);
+    });
+
+    it("should test DELEGATECALL migration strategy", async function () {
+      // Get the mockRepository instance
+      const MockRepository = (await ethers.getContractFactory(
+        "MockRepository"
+      )) as MockRepository__factory;
+      const mockRepository = MockRepository.attach(repositoryAddress);
+
+      // Add a versioned distribution
+      await distributor
+        .connect(owner)
+        [
+          "addDistribution(address,address,((uint64,uint64,uint128),uint8),string)"
+        ](repositoryAddress, ethers.constants.AddressZero, createVersionRequirement(1, 0, 0, 1), "DelegateCallMigrationTest");
+
+      const versionedId = await distributor.getIdFromAlias("DelegateCallMigrationTest");
+
+      // Instantiate the contract
+      const tx = await distributor.connect(owner).instantiate(versionedId, "0x");
+      const receipt = await tx.wait();
+
+      // Get the appId
+      let appId: number | undefined;
+      for (const event of receipt.events || []) {
+        if (event.event === "Instantiated" && event.args) {
+          appId = event.args.newAppId;
+          break;
+        }
+      }
+
+      expect(appId).to.not.be.undefined;
+
+      // Use the already registered mockMigration
+      // First get the codeHash
+      const migrationCode = await ethers.provider.getCode(mockMigrationAddress);
+      const migrationCodeHash = ethers.utils.keccak256(migrationCode);
+
+      // Set up a DELEGATECALL migration - using codeHash instead of address
+      await distributor.connect(owner).addVersionMigration(
+        versionedId,
+        createVersionRequirement(1, 0, 0, 1), // from
+        createVersionRequirement(2, 0, 0, 1), // to
+        migrationCodeHash, // Use the codeHash directly, not the address converted to bytes32
+        1, // MigrationStrategy.DELEGATECALL
+        "0x" // distributor calldata
+      );
+
+      // Calculate the migrationId for DELEGATECALL strategy
+      const migrationId = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+          ["bytes32", "bytes32", "uint8"],
+          [versionedId, migrationCodeHash, 1] // Using strategy 1 (DELEGATECALL)
+        )
+      );
+
+      // Try upgrading - This should succeed and cover the DELEGATECALL path
+      await expect(
+        distributor.connect(owner).upgradeUserInstance(appId!, migrationId, "0x")
+      ).to.emit(distributor, "UserUpgraded");
+
+      // Verify the version was updated
+      const appVersion = await distributor["appVersions(uint256)"](appId!);
+      expect(appVersion.major).to.equal(2);
+      expect(appVersion.minor).to.equal(0);
+      expect(appVersion.patch).to.equal(0);
+    });
+    it("should handle errors in DELEGATECALL migration", async function () {
+      // Get the mockRepository instance
+      const MockRepository = (await ethers.getContractFactory(
+        "MockRepository"
+      )) as MockRepository__factory;
+      const mockRepository = MockRepository.attach(repositoryAddress);
+
+      // Add a versioned distribution
+      await distributor
+        .connect(owner)
+        [
+          "addDistribution(address,address,((uint64,uint64,uint128),uint8),string)"
+        ](repositoryAddress, ethers.constants.AddressZero, createVersionRequirement(1, 0, 0, 1), "FailingDelegateCallTest");
+
+      const versionedId = await distributor.getIdFromAlias("FailingDelegateCallTest");
+
+      // Instantiate the contract
+      const tx = await distributor.connect(owner).instantiate(versionedId, "0x");
+      const receipt = await tx.wait();
+
+      // Get the appId
+      let appId: number | undefined;
+      for (const event of receipt.events || []) {
+        if (event.event === "Instantiated" && event.args) {
+          appId = event.args.newAppId;
+          break;
+        }
+      }
+
+      expect(appId).to.not.be.undefined;
+
+      // Get the codeHash of the mockMigration contract
+      const migrationCode = await ethers.provider.getCode(mockMigrationAddress);
+      const migrationCodeHash = ethers.utils.keccak256(migrationCode);
+
+      // Set up the DELEGATECALL migration with the codeHash
+      await distributor.connect(owner).addVersionMigration(
+        versionedId,
+        createVersionRequirement(1, 0, 0, 1), // from
+        createVersionRequirement(2, 0, 0, 1), // to
+        migrationCodeHash, // Using the codeHash directly, not the address
+        1, // MigrationStrategy.DELEGATECALL
+        "0x" // distributor calldata
+      );
+
+      // Calculate the migrationId
+      const migrationId = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+          ["bytes32", "bytes32", "uint8"],
+          [versionedId, migrationCodeHash, 1] // Using strategy 1 (DELEGATECALL)
+        )
+      );
+
+      // Try upgrading with malformed userCalldata that will cause the migration to fail
+      await expect(
+        distributor.connect(owner).upgradeUserInstance(appId!, migrationId, "0xFF") // Invalid calldata
+      ).to.be.revertedWithCustomError(distributor, "upgradeFailedWithError");
     });
   });
 });

@@ -1,28 +1,33 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity =0.8.28;
 
-import "../middleware/InstallerClonable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-contract MockInstaller is InstallerClonable, Ownable {
-    constructor(address targetAddress, address owner) Ownable(owner) InstallerClonable() {
-        initialize(targetAddress == address(0) ? address(this) : targetAddress);
+import "./InstallerClonable.sol";
+
+contract SelfInstaller is InstallerClonable, Ownable {
+    constructor(address owner) Ownable(owner) InstallerClonable() {
+        initialize(address(0), owner);
     }
 
+    function initialize(address targetAddress, address owner) public initializer {
+        super.initialize(targetAddress);
+        _transferOwnership(owner);
+    }
 
     function install(
         IDistributor distributor,
         bytes32 distributionId,
         bytes calldata args
     ) public payable returns (uint256 instanceId) {
-           if (msg.sender != owner()) {
+        if (msg.sender != owner()) {
             return _installPublic(distributor, distributionId, args);
         } else {
             return _installOwner(distributor, distributionId, args);
         }
     }
 
-    function uninstall(uint256 instanceId) public onlyOwner {
-        super._uninstall(instanceId);
+    function uninstall(uint256 appId) public onlyOwner {
+        super._uninstall(appId);
     }
 
     function allowDistribution(IDistributor distributor, bytes32 distributionId) public onlyOwner {
@@ -41,11 +46,11 @@ contract MockInstaller is InstallerClonable, Ownable {
         super._disallowAllDistributions(distributor);
     }
 
-   function changeDistributor(uint256 appId, IDistributor newDistributor, bytes[] memory appData) public onlyOwner {
-    _changeDistributor(appId, newDistributor, appData);
-   }
+    function changeDistributor(uint256 appId, IDistributor newDistributor, bytes[] memory appData) public onlyOwner {
+        super._changeDistributor(appId, newDistributor, appData);
+    }
 
-   function upgradeApp(uint256 appId, bytes32 migrationId, bytes calldata userCalldata) public onlyOwner {
-    _upgradeApp(appId, migrationId, userCalldata);
-   }
+    function upgradeApp(uint256 appId, bytes32 migrationId, bytes calldata userCalldata) public onlyOwner {
+        super._upgradeApp(appId, migrationId, userCalldata);
+    }
 }

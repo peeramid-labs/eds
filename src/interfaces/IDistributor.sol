@@ -31,7 +31,7 @@ interface IDistributor is IERC7746, IERC165 {
     error InvalidRepository(address repository);
     error RepositoryAlreadyExists(address repository);
     error VersionOutdated(bytes32 distributionId, string version);
-    error InvalidApp(address app);
+    error InvalidApp(address app, bytes32 distributionId, uint256 appId);
     error UnversionedDistribution(bytes32 distributionId);
 
     /**
@@ -136,12 +136,12 @@ interface IDistributor is IERC7746, IERC165 {
 
     /**
      * @notice Adds a new distribution with the specified distributor ID and initializer address.
-     * @param distributorId The unique identifier for the distributor.
+     * @param codeHash The code hash of the distribution.
      * @param initializer The address of the initializer for the distribution.
      * @param readableName The readable name of the distribution.
      * @dev WARNING: If initializer is provided, it will DELEGATECALL to the initializer. Otherwise, instantiation arguments will be passed to the distribution for self-initialization. Initializer contract MUST be trusted by the distributor.
      */
-    function addDistribution(bytes32 distributorId, address initializer, string memory readableName) external;
+    function addDistribution(bytes32 codeHash, address initializer, string memory readableName) external;
 
     /**
      * @notice Removes a distribution identified by the given distributorId.

@@ -19,9 +19,10 @@ contract WrappedTransparentUpgradeableProxy is TransparentUpgradeableProxy, ERC7
     constructor(
         address _logic,
         address _admin,
+        address _owner,
         bytes memory _data,
         bytes memory _middlewareData
-    ) TransparentUpgradeableProxy(_logic, msg.sender, _data) {
+    ) TransparentUpgradeableProxy(_logic, _owner, _data) {
         LibMiddleware.LayerStruct[] memory layers = new LibMiddleware.LayerStruct[](1);
         layers[0] = LibMiddleware.LayerStruct({layerAddress: _admin, layerConfigData: _middlewareData});
         LibMiddleware.setLayers(layers);
@@ -33,7 +34,6 @@ contract WrappedTransparentUpgradeableProxy is TransparentUpgradeableProxy, ERC7
             address proxyAdminAddress = _proxyAdmin();
             assembly {
                 mstore(0x00, proxyAdminAddress)
-                calldatacopy(0, 0, calldatasize())
                 return(0x00, 0x20)
             }
         } else {

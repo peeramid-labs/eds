@@ -11,7 +11,8 @@ import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import {IContractURI} from "../interfaces/IContractURI.sol";
 import "../interfaces/IMigration.sol";
 import {MigrationPlan} from "../interfaces/IDistributor.sol";
-
+import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import {IAdminGetter} from "../interfaces/IAdminGetter.sol";
 /**
  * @title Distributor
  * @notice Abstract contract that implements the IDistributor interface, CodeIndexer, and ERC165.
@@ -45,6 +46,7 @@ abstract contract Distributor is IDistributor, ERC165 {
     mapping(bytes32 migrationId => MigrationPlan migrationPlan) public migrations;
     mapping(bytes32 aliasHash => bytes32 distributorsId) public aliasToDistributorId;
     mapping(uint256 appId => address undergoingMigration) public appsUndergoingMigration;
+    mapping(uint256 appId => bool renouncing) public appsRenounced;
 
     uint256 public numAppInstances;
     // @inheritdoc IDistributor
@@ -121,6 +123,10 @@ abstract contract Distributor is IDistributor, ERC165 {
     ) internal virtual returns (bytes32 distributorId) {
         address distributionLocation = codeHash.getContainerOrThrow();
         if (distributionLocation == address(0)) revert DistributionNotFound(codeHash);
+        require(
+            ERC165Checker.supportsInterface(distributionLocation, type(IDistribution).interfaceId),
+            "Distribution does not support IDistribution interface"
+        );
         distributorId = calculateDistributorId(codeHash, initializerAddress);
         _newDistributionRecord(distributorId, distributionLocation, initializerAddress, readableName);
     }
@@ -232,8 +238,13 @@ abstract contract Distributor is IDistributor, ERC165 {
         address target = config.length > 0 ? abi.decode(config, (address)) : sender;
         bytes32 distributorsId = distributionOf[getAppId(sender)];
         uint256 appId = getAppId(sender);
+        if (appsRenounced[appId]) {
+            return abi.encode(bytes32(0), "");
+        }
         if (
-            distributorsId != bytes32(0) && appsUndergoingMigration[appId] != address(0) && sender == appsUndergoingMigration[appId]
+            distributorsId != bytes32(0) &&
+            appsUndergoingMigration[appId] != address(0) &&
+            sender == appsUndergoingMigration[appId]
         ) {
             return abi.encode(distributorsId, ""); // Approve migration call
         }
@@ -245,7 +256,7 @@ abstract contract Distributor is IDistributor, ERC165 {
             }
             return abi.encode(distributorsId, "");
         }
-        revert InvalidApp(sender);
+        revert InvalidApp(sender, distributorsId, appId);
     }
     /**
      * @inheritdoc IERC7746
@@ -263,13 +274,18 @@ abstract contract Distributor is IDistributor, ERC165 {
         address target = config.length > 0 ? abi.decode(config, (address)) : msg.sender;
         bytes32 distributorsId = distributionOf[getAppId(sender)];
         uint256 appId = getAppId(sender);
+        if (appsRenounced[appId]) {
+            return;
+        }
         if (
-            distributorsId != bytes32(0) && appsUndergoingMigration[appId] != address(0) && sender == appsUndergoingMigration[appId]
+            distributorsId != bytes32(0) &&
+            appsUndergoingMigration[appId] != address(0) &&
+            sender == appsUndergoingMigration[appId]
         ) {
             return; // Approve migration call
         }
         if ((getAppId(target) != getAppId(sender)) && distributionsSet.contains(distributorsId)) {
-            revert InvalidApp(sender);
+            revert InvalidApp(sender, distributorsId, appId);
         }
         if (!LibSemver.compare(appVersions[appId], versionRequirements[distributorsId])) {
             revert VersionOutdated(distributorsId, LibSemver.toString(appVersions[appId]));
@@ -307,9 +323,14 @@ abstract contract Distributor is IDistributor, ERC165 {
         if (LibSemver.toUint256(versionRequirements[distributionId].version) == 0) {
             revert UnversionedDistribution(distributionId);
         }
-        if(from.version.major == to.version.major) {
-            require(strategy != MigrationStrategy.REPOSITORY_MANGED, "Repository managed migration is not allowed for minor version migrations");
+        if (from.version.major == to.version.major) {
+            require(
+                strategy != MigrationStrategy.REPOSITORY_MANGED,
+                "Repository managed migration is not allowed for minor version migrations"
+            );
         }
+        if (strategy == MigrationStrategy.REPOSITORY_MANGED)
+            require(migrationHash != bytes32(0), "Migration hash is required for repository managed migration");
         bytes32 migrationId;
         migrationId = keccak256(abi.encode(distributionId, migrationHash, strategy));
         require(migrations[migrationId].distributionId == bytes32(0), MigrationAlreadyExists(migrationId));
@@ -356,54 +377,52 @@ abstract contract Distributor is IDistributor, ERC165 {
         MigrationPlan memory migrationPlan = migrations[migrationId];
         require(LibSemver.compare(appVersions[appId], migrationPlan.from), "Version is not in range");
 
-        require(migrationPlan.distributionId != bytes32(0), MigrationContractNotFound(migrationId));
         address[] memory _appComponents = appComponents[appId];
         LibSemver.Version memory oldVersion = appVersions[appId];
         DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
         IRepository repository = IRepository(distributionComponent.distributionLocation);
+        require(migrationPlan.distributionId != bytes32(0), MigrationContractNotFound(migrationId));
         newVersion = LibSemver.parse(repository.resolveVersion(migrationPlan.to));
-        address distributorMigrationContract = migrationPlan.migrationHash.getContainerOrThrow();
-        appsUndergoingMigration[appId] = distributorMigrationContract;
-        if (distributorMigrationContract != address(0)) {
-            if (migrationPlan.strategy == MigrationStrategy.CALL) {
-                try
-                    IMigration(distributorMigrationContract).migrate(
-                        _appComponents,
-                        oldVersion,
-                        newVersion,
-                        repository,
-                        migrationPlan.distributorCalldata,
-                        userCalldata
-                    )
-                {} catch Error(string memory reason) {
-                    revert upgradeFailedWithRevert(reason);
-                } catch Panic(uint errorCode) {
-                    revert upgradeFailedWithPanic(errorCode);
-                } catch (bytes memory lowLevelData) {
-                    revert upgradeFailedWithError(lowLevelData);
-                }
-            } else if (migrationPlan.strategy == MigrationStrategy.DELEGATECALL) {
-                require(
-                    ERC165Checker.supportsInterface(
-                        distributorMigrationContract,
-                        type(IMigration).interfaceId
-                    ),
-                    "Migration contract does not support IMigration interface"
-                );
-                (bool success, bytes memory result) = address(distributorMigrationContract).delegatecall(
-                    abi.encodeWithSelector(
-                        IMigration.migrate.selector,
-                        _appComponents,
-                        oldVersion,
-                        newVersion,
-                        repository,
-                        migrationPlan.distributorCalldata,
-                        userCalldata
-                    )
-                );
-                if (!success) {
-                    revert upgradeFailedWithError(result);
-                }
+
+        if (migrationPlan.strategy == MigrationStrategy.CALL) {
+            address distributorMigrationContract = migrationPlan.migrationHash.getContainerOrThrow();
+            appsUndergoingMigration[appId] = distributorMigrationContract;
+            try
+                IMigration(distributorMigrationContract).migrate(
+                    _appComponents,
+                    oldVersion,
+                    newVersion,
+                    repository,
+                    migrationPlan.distributorCalldata,
+                    userCalldata
+                )
+            {} catch Error(string memory reason) {
+                revert upgradeFailedWithRevert(reason);
+            } catch Panic(uint errorCode) {
+                revert upgradeFailedWithPanic(errorCode);
+            } catch (bytes memory lowLevelData) {
+                revert upgradeFailedWithError(lowLevelData);
+            }
+        } else if (migrationPlan.strategy == MigrationStrategy.DELEGATECALL) {
+            address distributorMigrationContract = migrationPlan.migrationHash.getContainerOrThrow();
+            appsUndergoingMigration[appId] = distributorMigrationContract;
+            require(
+                ERC165Checker.supportsInterface(distributorMigrationContract, type(IMigration).interfaceId),
+                "Migration contract does not support IMigration interface"
+            );
+            (bool success, bytes memory result) = address(distributorMigrationContract).delegatecall(
+                abi.encodeWithSelector(
+                    IMigration.migrate.selector,
+                    _appComponents,
+                    oldVersion,
+                    newVersion,
+                    repository,
+                    migrationPlan.distributorCalldata,
+                    userCalldata
+                )
+            );
+            if (!success) {
+                revert upgradeFailedWithError(result);
             }
         } else if (migrationPlan.strategy == MigrationStrategy.REPOSITORY_MANGED) {
             // Repository managed migration, expect migration script to be provided by repository
@@ -411,9 +430,10 @@ abstract contract Distributor is IDistributor, ERC165 {
             // This strategy assumes distributor trusts repository owner sufficiently to not change migration script maliciously.
             // This however is safe if repository implements timelocks and distributor hence can react to unexpected changes.
             // Rationale for not using CodeIndex here is that migration scripts may happen to have state (e.g. incentive counter for users to migrate)
-            for (uint256 i = 0; i < migrationPlan.from.version.major - migrationPlan.to.version.major; i++) {
+            for (uint256 i = 0; i < migrationPlan.to.version.major - migrationPlan.from.version.major; i++) {
                 bytes32 migrationHash = repository.getMigrationScript(uint64(migrationPlan.from.version.major + 1 + i));
                 IMigration migration = IMigration(migrationHash.getContainerOrThrow());
+                appsUndergoingMigration[appId] = address(migration);
                 (bool success, bytes memory result) = address(migration).delegatecall(
                     abi.encodeWithSelector(
                         IMigration.migrate.selector,
@@ -446,15 +466,24 @@ abstract contract Distributor is IDistributor, ERC165 {
         address newDistributor,
         bytes[] memory appData
     ) public returns (bool[] memory statuses, bytes[] memory results) {
+        require(installers[appId] == msg.sender, "Not an installer");
         address[] memory _appComponents = appComponents[appId];
-        delete distributionOf[appId];
         require(appData.length == _appComponents.length || appData.length == 0, "App data length mismatch");
-        delete installers[appId];
-        delete appComponents[appId];
-        delete appVersions[appId];
+        require(!appsRenounced[appId], "App renounced");
+        appsRenounced[appId] = true;
         statuses = new bool[](_appComponents.length);
         results = new bytes[](_appComponents.length);
         for (uint256 i; i < _appComponents.length; i++) {
+            try IAdminGetter(address(_appComponents[i])).getWrappedProxyAdmin() returns (address proxyAdminAddress) {
+                ProxyAdmin proxyAdmin = ProxyAdmin(proxyAdminAddress);
+                if (proxyAdmin.owner() == address(this)) {
+                    address newOwner = newDistributor != address(0) ? newDistributor : msg.sender;
+                    proxyAdmin.transferOwnership(newOwner);
+                }
+            } catch {
+                // Does not have a proxy admin, ignore
+            }
+
             // At this point Distributor does not care about app safety, app already is in full control by installer
             // We just allow installer to call from Distributor to finalize any ownership transfers (e.g. if using UpgradableProxy)
             if (appData.length > i) {
@@ -462,11 +491,14 @@ abstract contract Distributor is IDistributor, ERC165 {
                 statuses[i] = success;
                 results[i] = result;
             } else {
-                statuses[i] = true;
                 results[i] = "";
             }
             delete appIds[_appComponents[i]];
         }
+        delete distributionOf[appId];
+        delete installers[appId];
+        delete appComponents[appId];
+        delete appVersions[appId];
         emit DistributorChanged(appId, newDistributor);
         return (statuses, results);
     }

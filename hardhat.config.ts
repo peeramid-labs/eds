@@ -1,6 +1,6 @@
 import { subtask, task } from "hardhat/config";
 import { TASK_COMPILE_SOLIDITY_EMIT_ARTIFACTS } from "hardhat/builtin-tasks/task-names";
-import { join } from "path";
+import path, { join } from "path";
 import { writeFile, mkdir } from "fs/promises";
 import { inspect } from "util";
 import "@nomicfoundation/hardhat-chai-matchers";
@@ -12,6 +12,9 @@ import "hardhat-deploy";
 import "solidity-docgen";
 import "solidity-coverage";
 import "hardhat-tracer";
+import { ethers } from "ethers";
+import { FormatTypes, JsonFragment } from "@ethersproject/abi";
+import fs from "fs";
 // import "@nomicfoundation/hardhat-verify";
 
 type ContractMap = Record<string, { abi: object }>;
@@ -41,6 +44,57 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
     console.log(account.address);
   }
 });
+
+const getSuperInterface = (outputPath?: string) => {
+  let mergedArray: JsonFragment[] = [];
+  function readDirectory(directory: string) {
+    const files = fs.readdirSync(directory);
+
+    files.forEach((file) => {
+      const fullPath = path.join(directory, file);
+      if (fs.statSync(fullPath).isDirectory()) {
+        readDirectory(fullPath); // Recurse into subdirectories
+      } else if (path.extname(file) === ".json") {
+        const fileContents = require("./" + fullPath); // Load the JSON file
+        if (Array.isArray(fileContents)) {
+          mergedArray = mergedArray.concat(fileContents); // Merge the array from the JSON file
+        }
+      }
+    });
+  }
+  const originalConsoleLog = console.log;
+  readDirectory("./abi");
+  console.log = () => {}; // avoid noisy output
+  const result = new ethers.utils.Interface(mergedArray);
+  if (outputPath) {
+    fs.writeFileSync(outputPath, JSON.stringify(result.format(FormatTypes.full), null, 2));
+  }
+  console.log = originalConsoleLog;
+  return result;
+};
+
+task("getSuperInterface", "Prints the super interface of a contract")
+  .setAction(async (taskArgs: { outputPath: string }, hre) => {
+    const originalConsoleLog = console.log;
+    console.log = () => {};
+    const su = getSuperInterface(taskArgs.outputPath + "/super-interface.json");
+    let return_value: Record<string, string> = {};
+    Object.values(su.functions).forEach((x) => {
+      return_value[su.getSighash(x.format())] = x.format(FormatTypes.full);
+    });
+    Object.values(su.events).forEach((x) => {
+      return_value[su.getEventTopic(x)] = x.format(FormatTypes.full);
+    });
+    Object.values(su.errors).forEach((x) => {
+      return_value[su.getSighash(x)] = x.format(FormatTypes.full);
+    });
+    fs.writeFileSync(
+      taskArgs.outputPath + "/signatures.json",
+      JSON.stringify(return_value, null, 2)
+    );
+    console.log = originalConsoleLog;
+  })
+  .addParam("outputPath", "The path to the abi file");
 
 export default {
   docgen: {

@@ -7,6 +7,7 @@ import "../versioning/LibSemver.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 contract MockMigration is IMigration, ERC165 {
+
     event MigrationExecuted(
         address[] instances,
         uint256 oldVersion,
@@ -19,11 +20,17 @@ contract MockMigration is IMigration, ERC165 {
         address[] memory instances,
         LibSemver.Version memory oldVersion,
         LibSemver.Version memory newVersion,
-        IRepository repository,
+        IRepository ,
         bytes calldata distributorCalldata,
         bytes calldata userCalldata
     ) external override {
+        uint256[] memory arrayToPanicOn = new uint256[](1);
+
         // Emit an event with migration details
+        if(userCalldata.length > 0 && userCalldata[0] == 0xFF) revert("test revert");
+        if(userCalldata.length > 0 && userCalldata[0] == 0xFE) arrayToPanicOn[20] = 111;
+        if(userCalldata.length > 0 && userCalldata[0] == 0xFD) revert();
+
         emit MigrationExecuted(
             instances,
             LibSemver.toUint256(oldVersion),

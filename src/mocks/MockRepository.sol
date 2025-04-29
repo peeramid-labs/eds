@@ -4,83 +4,25 @@ pragma solidity >=0.8.0 <0.9.0;
 import "../interfaces/IRepository.sol";
 import "../versioning/LibSemver.sol";
 import "../erc7744/LibERC7744.sol";
+import "../repositories/Repository.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+contract MockRepository is Repository, ERC165 {
 
-contract MockRepository is IRepository {
-    using LibERC7744 for bytes32;
-    using LibSemver for LibSemver.Version;
-    using LibSemver for LibSemver.VersionRequirement;
+ constructor() Repository("name", "cURI") {}
 
-    mapping(uint256 => bytes32) private sources;
-    mapping(uint256 => bytes) private sourceMetadata;
-    mapping(uint64 => bytes32) private migrationScripts;
-    bytes32 private _repositoryName = bytes32("MockRepository");
-
-    function addSource(LibSemver.Version memory version, bytes32 sourceId, bytes memory metadata) external {
-        sources[version.toUint256()] = sourceId;
-        sourceMetadata[version.toUint256()] = metadata;
+    function updateReleaseMetadata(LibSemver.Version memory version, bytes calldata releaseMetadata) public  {
+        super._updateReleaseMetadata(version, releaseMetadata);
+    }
+    function newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version, bytes32 migrationHash) public {
+        _newRelease(sourceId, metadata, version, migrationHash);
     }
 
-    function addMigrationScript(uint64 majorVersion, bytes32 migrationHash) external {
-        migrationScripts[majorVersion] = migrationHash;
+    function changeMigrationScript(uint64 major, bytes32 migrationHash) public {
+        super._changeMigrationScript(major, migrationHash);
     }
 
-    function resolveVersion(LibSemver.VersionRequirement calldata requirement) external view override returns (uint256) {
-        // For simplicity, just return the exact version number from the requirement
-        return requirement.version.toUint256();
-    }
 
-    function get(LibSemver.VersionRequirement calldata requirement) external view override returns (Source memory) {
-        uint256 version = requirement.version.toUint256();
-        bytes32 sourceId = sources[version];
-        bytes memory metadata = sourceMetadata[version];
-        if (sourceId == bytes32(0)) {
-            // If no specific source is set, return a default
-            sourceId = bytes32(uint256(uint160(address(this))));
-        }
-        return Source(requirement.version, sourceId, metadata);
-    }
-
-    function getLatest() external view override returns (Source memory) {
-        // Just return a placeholder value
-        LibSemver.Version memory latestVersion = LibSemver.parse(1);
-        bytes32 sourceId = bytes32(uint256(uint160(address(this))));
-        return Source(latestVersion, sourceId, "");
-    }
-
-    function getMigrationScript(uint64 majorVersion) external view override returns (bytes32) {
-        return migrationScripts[majorVersion];
-    }
-
-    function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
-        return
-            interfaceId == type(IRepository).interfaceId ||
-            interfaceId == 0x01ffc9a7; // ERC165
-    }
-
-    function repositoryName() external view override returns (bytes32) {
-        return _repositoryName;
-    }
-
-    function contractURI() external pure override returns (string memory) {
-        return "ipfs://mockContract";
-    }
-
-    function updateReleaseMetadata(LibSemver.Version memory version, bytes calldata releaseMetadata) external override {
-        sourceMetadata[version.toUint256()] = releaseMetadata;
-        emit ReleaseMetadataUpdated(version.toUint256(), releaseMetadata);
-    }
-
-    function newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version, bytes32 migrationHash) external override {
-        uint256 versionUint = version.toUint256();
-        sources[versionUint] = sourceId;
-        sourceMetadata[versionUint] = metadata;
-        migrationScripts[version.major] = migrationHash;
-        emit VersionAdded(versionUint, sourceId, metadata);
-        emit MigrationScriptAdded(version.major, migrationHash);
-    }
-
-    function changeMigrationScript(uint64 majorVersion, bytes32 migrationHash) external override {
-        migrationScripts[majorVersion] = migrationHash;
-        emit MigrationScriptAdded(majorVersion, migrationHash);
+    function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
+        return interfaceId == type(IRepository).interfaceId || super.supportsInterface(interfaceId);
     }
 }

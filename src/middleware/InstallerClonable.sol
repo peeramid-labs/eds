@@ -25,6 +25,8 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         mapping(uint256 appId => App app) apps;
         LibSemver.Version currentVersion;
         mapping(uint256 appId => bool isInUpgradeMode) isAppInUpgradeMode;
+        mapping(uint256 appId => bool isOwnerInstalledApp) isOwnerInstalledApps;
+        mapping(uint256 appId => bool changingDistributor) isChangingDistributor;
     }
 
     bytes32 private constant EDS_INSTALLER_STORAGE_POSITION = keccak256("EDS.INSTALLER.STORAGE.POSITION");
@@ -40,11 +42,6 @@ abstract contract InstallerClonable is IInstaller, Initializable {
     using LibSemver for LibSemver.Version;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    constructor(bool isTest) {
-        if (!isTest) {
-            _disableInitializers();
-        }
-    }
     // @inheritdoc IInstaller
     function initialize(address targetAddress) public virtual initializer {
         getStorage()._target = targetAddress;
@@ -88,28 +85,49 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         getStorage()._permittedDistributions[address(distributor)].remove(distributionId);
     }
 
-    function enforceActiveDistribution(IDistributor distributor, bytes32 distributionId) internal view {
+    function enforceActiveApp(IDistributor distributor, bytes32 distributionId, uint256 appId) internal view {
         InstallerStruct storage strg = getStorage();
         if (
             !strg.whitelistedDistributors.contains(address(distributor)) &&
-            !strg._permittedDistributions[address(distributor)].contains(distributionId)
+            !strg._permittedDistributions[address(distributor)].contains(distributionId) &&
+            !strg.isOwnerInstalledApps[appId]
         ) {
             revert DistributionIsNotPermitted(distributor, distributionId);
         }
     }
 
-    function _install(
+    function _installOwner(
         IDistributor distributor,
         bytes32 distributionId,
         bytes calldata args
-    ) internal virtual returns (uint256 appId) {
+    ) internal returns (uint256 appId) {
+        InstallerStruct storage strg = getStorage();
+        strg.isOwnerInstalledApps[appId] = true;
+        return _install(distributor, distributionId, args);
+    }
+
+    function _installPublic(
+        IDistributor distributor,
+        bytes32 distributionId,
+        bytes calldata args
+    ) internal returns (uint256 appId) {
         InstallerStruct storage strg = getStorage();
         if (
             !isDistributor(distributor) && !strg._permittedDistributions[address(distributor)].contains(distributionId)
         ) {
             revert InvalidDistributor(distributor);
         }
-        enforceActiveDistribution(distributor, distributionId);
+        return _install(distributor, distributionId, args);
+    }
+
+    function _install(
+        IDistributor distributor,
+        bytes32 distributionId,
+        bytes calldata args
+    ) private returns (uint256 appId) {
+        InstallerStruct storage strg = getStorage();
+
+        enforceActiveApp(distributor, distributionId, appId);
         (address[] memory installation, , ) = distributor.instantiate(distributionId, args);
         strg.appNum++;
         strg.apps[strg.appNum] = App(installation, address(distributor), args);
@@ -124,6 +142,9 @@ abstract contract InstallerClonable is IInstaller, Initializable {
     function _uninstall(uint256 appId) internal virtual {
         InstallerStruct storage strg = getStorage();
         App memory app = strg.apps[appId];
+        if (strg.isOwnerInstalledApps[appId]) {
+            strg.isOwnerInstalledApps[appId] = false;
+        }
         uint256 length = app.contracts.length;
         for (uint256 i; i < length; ++i) {
             strg.appIds[app.contracts[i]] = 0;
@@ -174,7 +195,8 @@ abstract contract InstallerClonable is IInstaller, Initializable {
             // if the sender is not the target and is not an installed app, revert
             revert InvalidTarget(msg.sender);
         }
-        if (distributor != address(0)) {
+        if (distributor != address(0) && !strg.isChangingDistributor[appId]) {
+            if (selector == IAdminGetter.getWrappedProxyAdmin.selector) return abi.encode("", distributor);
             // If this is upgrade call, it must be sanctioned by Installer
             if (selector == IAdminGetter.getWrappedProxyAdmin.selector && origin == distributor)
                 require(strg.isAppInUpgradeMode[appId], "Upgrade call not sanctioned by Installer");
@@ -186,7 +208,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
                 data
             );
             (bytes32 id, ) = abi.decode(beforeCallValue, (bytes32, bytes));
-            enforceActiveDistribution(IDistributor(distributor), id);
+            enforceActiveApp(IDistributor(distributor), id, appId);
             return abi.encode(id, distributor);
         } else {
             // If the sender is target, allow only calls originating from installed apps
@@ -215,6 +237,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
             revert InvalidTarget(msg.sender);
         }
         if (distributor != address(0)) {
+            if (selector == IAdminGetter.getWrappedProxyAdmin.selector) return;
             IDistributor(distributor).afterCall(layerConfig, selector, origin, value, data, beforeCallResult);
         }
     }
@@ -239,7 +262,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         uint256 appId,
         IDistributor newDistributor,
         bytes[] memory appData
-    ) internal virtual returns (bool[] memory statuses, bytes[] memory results) {
+    ) internal virtual returns (bool[] memory, bytes[] memory) {
         InstallerStruct storage strg = getStorage();
         IDistributor oldDistributor = IDistributor(strg.apps[appId].middleware);
         uint256 oldDistributorAppId = oldDistributor.getAppId(strg.apps[appId].contracts[0]);
@@ -247,9 +270,17 @@ abstract contract InstallerClonable is IInstaller, Initializable {
             ERC165Checker.supportsInterface(address(newDistributor), type(IDistributor).interfaceId),
             "New distributor does not support IDistributor"
         );
-        strg.apps[appId].middleware = address(newDistributor);
-        emit DistributorChanged(appId, newDistributor);
         require(appData.length == strg.apps[appId].contracts.length || appData.length == 0, "App data length mismatch");
-        return oldDistributor.onDistributorChanged(oldDistributorAppId, address(newDistributor), appData);
+        strg.apps[appId].middleware = address(newDistributor);
+        try oldDistributor.onDistributorChanged(oldDistributorAppId, address(newDistributor), appData) returns (
+            bool[] memory statuses,
+            bytes[] memory results
+        ) {
+            emit DistributorChanged(appId, newDistributor);
+            return (statuses, results);
+        } catch {
+            emit DistributorChanged(appId, oldDistributor);
+            return (new bool[](0), new bytes[](0));
+        }
     }
 }

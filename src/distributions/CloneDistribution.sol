@@ -3,6 +3,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "../interfaces/IDistribution.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 abstract contract CloneDistribution is IDistribution {
     error CodeNotFoundInIndex(bytes32 codeId);
@@ -31,4 +32,8 @@ abstract contract CloneDistribution is IDistribution {
     }
     // @inheritdoc IDistribution
     function contractURI() external view virtual returns (string memory);
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return interfaceId == type(IDistribution).interfaceId || interfaceId == type(IERC165).interfaceId;
+    }
 }

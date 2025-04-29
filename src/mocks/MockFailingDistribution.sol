@@ -2,6 +2,7 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import "../interfaces/IDistribution.sol";
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 contract MockFailingDistribution is IDistribution {
     function instantiate(bytes calldata args) external override returns (address[] memory, bytes32, uint256) {
@@ -25,5 +26,9 @@ contract MockFailingDistribution is IDistribution {
         address[] memory sources = new address[](1);
         sources[0] = address(this);
         return (sources, bytes32("MockFailingDistribution"), 1);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return interfaceId == type(IDistribution).interfaceId || interfaceId == type(IERC165).interfaceId;
     }
 }

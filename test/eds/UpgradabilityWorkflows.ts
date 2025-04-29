@@ -254,7 +254,7 @@ describe("Upgradability Workflows", function () {
 
       // Install should now fail
       await expect(
-        installer.connect(user).install(distributor.address, distributionId, installData)
+        installer.connect(deployer).install(distributor.address, distributionId, installData)
       ).to.be.reverted;
     });
 
