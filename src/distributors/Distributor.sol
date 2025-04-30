@@ -13,6 +13,7 @@ import "../interfaces/IMigration.sol";
 import {MigrationPlan} from "../interfaces/IDistributor.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {IAdminGetter} from "../interfaces/IAdminGetter.sol";
+import {DistributorLayerConfig} from "../interfaces/IDistributor.sol";
 /**
  * @title Distributor
  * @notice Abstract contract that implements the IDistributor interface, CodeIndexer, and ERC165.
@@ -159,7 +160,7 @@ abstract contract Distributor is IDistributor, ERC165 {
 
         // External initializer is provided, delegatecall to it
         // Contrary, if no initializer is provided, the distribution is expected to be self-initializing
-        bool externallyInitialized = distributionComponent.initializer == address(0);
+        bool externallyInitialized = distributionComponent.initializer != address(0);
         bytes4 selector = IInitializer.initialize.selector;
         address distributionLocation;
         numAppInstances++;
@@ -231,32 +232,27 @@ abstract contract Distributor is IDistributor, ERC165 {
     function beforeCall(
         bytes memory config,
         bytes4,
-        address sender,
+        address sender, // Sender is either the app accessing target or someone calling the app
         uint256,
         bytes memory
     ) external view virtual returns (bytes memory) {
-        address target = config.length > 0 ? abi.decode(config, (address)) : sender;
-        bytes32 distributorsId = distributionOf[getAppId(sender)];
-        uint256 appId = getAppId(sender);
+        DistributorLayerConfig memory distConfig = abi.decode(config, (DistributorLayerConfig));
+        uint256 appId = getAppId(distConfig.app);
+        bytes32 distributorsId = distributionOf[appId];
+        address installer = installers[appId];
         if (appsRenounced[appId]) {
             return abi.encode(bytes32(0), "");
         }
-        if (
-            distributorsId != bytes32(0) &&
-            appsUndergoingMigration[appId] != address(0) &&
-            sender == appsUndergoingMigration[appId]
-        ) {
-            return abi.encode(distributorsId, ""); // Approve migration call
+        if (installer != msg.sender) {
+            revert NotAnInstaller(msg.sender);
         }
-        if (distributorsId != bytes32(0) && getAppId(target) == appId && distributionsSet.contains(distributorsId)) {
-            // ToDo: This check could be based on DistributionOf, hence allowing cross-appComponent calls
-            // Use layerConfig to allow client to configure requirement for the call
-            if (!LibSemver.compare(appVersions[appId], versionRequirements[distributorsId])) {
-                revert VersionOutdated(distributorsId, LibSemver.toString(appVersions[appId]));
-            }
-            return abi.encode(distributorsId, "");
+        if (appId == 0 || !distributionsSet.contains(distributorsId)) {
+            revert InvalidApp(sender, distributorsId, appId);
         }
-        revert InvalidApp(sender, distributorsId, appId);
+        if (!LibSemver.compare(appVersions[appId], versionRequirements[distributorsId])) {
+            revert VersionOutdated(distributorsId, LibSemver.toString(appVersions[appId]));
+        }
+        return abi.encode(distributorsId, "");
     }
     /**
      * @inheritdoc IERC7746
@@ -271,20 +267,17 @@ abstract contract Distributor is IDistributor, ERC165 {
         bytes memory,
         bytes memory
     ) external virtual {
-        address target = config.length > 0 ? abi.decode(config, (address)) : msg.sender;
-        bytes32 distributorsId = distributionOf[getAppId(sender)];
-        uint256 appId = getAppId(sender);
+        DistributorLayerConfig memory distConfig = abi.decode(config, (DistributorLayerConfig));
+        uint256 appId = getAppId(distConfig.app);
+        bytes32 distributorsId = distributionOf[appId];
+        address installer = installers[appId];
         if (appsRenounced[appId]) {
             return;
         }
-        if (
-            distributorsId != bytes32(0) &&
-            appsUndergoingMigration[appId] != address(0) &&
-            sender == appsUndergoingMigration[appId]
-        ) {
-            return; // Approve migration call
+        if (installer != msg.sender) {
+            revert NotAnInstaller(msg.sender);
         }
-        if ((getAppId(target) != getAppId(sender)) && distributionsSet.contains(distributorsId)) {
+        if (appId == 0 || !distributionsSet.contains(distributorsId)) {
             revert InvalidApp(sender, distributorsId, appId);
         }
         if (!LibSemver.compare(appVersions[appId], versionRequirements[distributorsId])) {

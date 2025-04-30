@@ -7,6 +7,7 @@ import "../interfaces/IInstaller.sol";
 import "../versioning/LibSemver.sol";
 import "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import "../interfaces/IAdminGetter.sol";
+import {DistributorLayerConfig} from "../interfaces/IDistributor.sol";
 /**
  * @title Installer
  * @notice Abstract contract that implements the IInstaller interface and is Initializable.
@@ -201,9 +202,9 @@ abstract contract InstallerClonable is IInstaller, Initializable {
             if (selector == IAdminGetter.getWrappedProxyAdmin.selector && origin == distributor)
                 require(strg.isAppInUpgradeMode[appId], "Upgrade call not sanctioned by Installer");
             bytes memory beforeCallValue = IDistributor(distributor).beforeCall(
-                layerConfig,
+                abi.encode(DistributorLayerConfig(app, isTarget ? msg.sender : origin, layerConfig)),
                 selector,
-                app,
+                origin,
                 value,
                 data
             );
@@ -230,7 +231,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
     ) external virtual {
         InstallerStruct storage strg = getStorage();
         bool isTarget = msg.sender == strg._target;
-        address app = isTarget ? origin : msg.sender;
+        address app = isTarget ? origin : msg.sender; // If the sender is not the installation target, it is a _possible_ app
         uint256 appId = strg.appIds[app];
         address distributor = strg.apps[appId].middleware;
         if (!isTarget && appId == 0) {
@@ -238,7 +239,14 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         }
         if (distributor != address(0)) {
             if (selector == IAdminGetter.getWrappedProxyAdmin.selector) return;
-            IDistributor(distributor).afterCall(layerConfig, selector, origin, value, data, beforeCallResult);
+            IDistributor(distributor).afterCall(
+                abi.encode(DistributorLayerConfig(app, isTarget ? msg.sender : origin, layerConfig)),
+                selector,
+                origin,
+                value,
+                data,
+                beforeCallResult
+            );
         }
     }
 

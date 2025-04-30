@@ -190,7 +190,10 @@ describe("Version Distributor", function () {
         distributor
           .connect(owner)
           .beforeCall(
-            ethers.utils.defaultAbiCoder.encode(["address"], [instanceAddress]),
+            ethers.utils.defaultAbiCoder.encode(
+              ["tuple(address,address,bytes)"],
+              [[instanceAddress!, owner.address!, "0x"]]
+            ),
             "0x00000000",
             instanceAddress,
             "0",
@@ -237,7 +240,18 @@ describe("Version Distributor", function () {
       });
       it("Instance is invalid upon check", async () => {
         await expect(
-          distributor.connect(owner).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
+          distributor
+            .connect(owner)
+            .beforeCall(
+              ethers.utils.defaultAbiCoder.encode(
+                ["tuple(address,address,bytes)"],
+                [[instanceAddress!, owner.address!, "0x"]]
+              ),
+              "0x00000000",
+              instanceAddress,
+              "0",
+              "0x"
+            )
         ).to.be.revertedWithCustomError(distributor, "InvalidApp");
       });
     });

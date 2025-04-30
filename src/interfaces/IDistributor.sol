@@ -26,6 +26,13 @@ struct MigrationPlan {
  * @dev If you want to use {IRepository} for versioned distributions, use {IVersionDistributor} interface.
  * @author Peeramid Labs, 2024
  */
+
+struct DistributorLayerConfig {
+    address app;
+    address accessor;
+    bytes data;
+}
+
 interface IDistributor is IERC7746, IERC165 {
     error InvalidVersionRequested(bytes32 distributionId, string version);
     error InvalidRepository(address repository);
