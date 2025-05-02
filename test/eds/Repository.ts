@@ -3,12 +3,12 @@ import { expect } from "chai";
 import {
   ERC7744,
   MockCloneDistribution__factory,
-  MockInstaller,
-  MockInstaller__factory,
   MockMigration,
   MockMigration__factory,
   OwnableDistributor,
   OwnableDistributor__factory,
+  OwnableInstaller,
+  OwnableInstaller__factory,
   OwnableRepository__factory,
   Repository
 } from "../../types";
@@ -26,7 +26,7 @@ describe("Repository", function () {
   let secondId: any;
   let thirdId: any;
   let fourthId: any;
-  let installer: MockInstaller;
+  let installer: OwnableInstaller;
   let repository: Repository;
   let dummyMigrationAddress: MockMigration;
   let dummyMigrationCodeHash: string;
@@ -71,7 +71,9 @@ describe("Repository", function () {
       [
         "addDistribution(bytes32,address,string)"
       ](firstId, ethers.utils.formatBytes32String(""), "testDistribution");
-    const Installer = (await ethers.getContractFactory("MockInstaller")) as MockInstaller__factory;
+    const Installer = (await ethers.getContractFactory(
+      "OwnableInstaller"
+    )) as OwnableInstaller__factory;
     installer = await Installer.deploy(target.address, owner.address);
 
     const installerCode = await installer.provider.getCode(installer.address);

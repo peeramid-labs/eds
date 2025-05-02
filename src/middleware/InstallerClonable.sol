@@ -86,6 +86,16 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         getStorage()._permittedDistributions[address(distributor)].remove(distributionId);
     }
 
+    function enforceActiveDistribution(IDistributor distributor, bytes32 distributionId) internal view {
+        InstallerStruct storage strg = getStorage();
+        if (
+            !strg.whitelistedDistributors.contains(address(distributor)) &&
+            !strg._permittedDistributions[address(distributor)].contains(distributionId)
+        ) {
+            revert DistributionIsNotPermitted(distributor, distributionId);
+        }
+    }
+
     function enforceActiveApp(IDistributor distributor, bytes32 distributionId, uint256 appId) internal view {
         InstallerStruct storage strg = getStorage();
         if (
@@ -97,14 +107,14 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         }
     }
 
-    function _installOwner(
+    function _installByOwner(
         IDistributor distributor,
         bytes32 distributionId,
         bytes calldata args
     ) internal returns (uint256 appId) {
         InstallerStruct storage strg = getStorage();
+        appId = _install(distributor, distributionId, args);
         strg.isOwnerInstalledApps[appId] = true;
-        return _install(distributor, distributionId, args);
     }
 
     function _installPublic(
@@ -118,6 +128,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         ) {
             revert InvalidDistributor(distributor);
         }
+        enforceActiveDistribution(distributor, distributionId);
         return _install(distributor, distributionId, args);
     }
 
@@ -128,7 +139,6 @@ abstract contract InstallerClonable is IInstaller, Initializable {
     ) private returns (uint256 appId) {
         InstallerStruct storage strg = getStorage();
 
-        enforceActiveApp(distributor, distributionId, appId);
         (address[] memory installation, , ) = distributor.instantiate(distributionId, args);
         strg.appNum++;
         strg.apps[strg.appNum] = App(installation, address(distributor), args);
@@ -275,7 +285,8 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         IDistributor oldDistributor = IDistributor(strg.apps[appId].middleware);
         uint256 oldDistributorAppId = oldDistributor.getAppId(strg.apps[appId].contracts[0]);
         require(
-            address(newDistributor) == address(0) || ERC165Checker.supportsInterface(address(newDistributor), type(IDistributor).interfaceId),
+            address(newDistributor) == address(0) ||
+                ERC165Checker.supportsInterface(address(newDistributor), type(IDistributor).interfaceId),
             "New distributor does not support IDistributor"
         );
         require(appData.length == strg.apps[appId].contracts.length || appData.length == 0, "App data length mismatch");

@@ -4,20 +4,18 @@ import {
   ERC7744,
   OwnableDistributor,
   OwnableDistributor__factory,
-  MockInstaller__factory,
   UpgradableDistribution__factory,
   MockMigration__factory,
   MockERC20__factory,
   OwnableRepository__factory,
   OwnableRepository,
-  MockInstaller,
-  MockInitializer,
   WrappedProxyInitializer,
-  WrappedProxyInitializer__factory
+  WrappedProxyInitializer__factory,
+  OwnableInstaller__factory,
+  OwnableInstaller
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import utils from "../utils";
 
 describe("Upgradability Workflows", function () {
   let codeIndex: ERC7744;
@@ -31,7 +29,7 @@ describe("Upgradability Workflows", function () {
   let UpgradableDistribution: any;
   let UpgradableDistributionId: string;
   let distributionId: string;
-  let installer: MockInstaller;
+  let installer: OwnableInstaller;
   let mockERC20Instance: any;
   let initializer: WrappedProxyInitializer;
   let migrationHash: string;
@@ -100,8 +98,8 @@ describe("Upgradability Workflows", function () {
 
     // Deploy mock installer (user infrastructure)
     const MockInstallerFactory = (await ethers.getContractFactory(
-      "MockInstaller"
-    )) as MockInstaller__factory;
+      "OwnableInstaller"
+    )) as OwnableInstaller__factory;
     installer = await MockInstallerFactory.deploy(user.address, user.address);
     await installer.deployed();
 
@@ -177,7 +175,7 @@ describe("Upgradability Workflows", function () {
 
       // Check if we can get the installed app
       const appComponents = await installer.getApp(1);
-      expect(appComponents.length).to.be.gt(0);
+      expect(appComponents.contracts.length).to.be.gt(0);
     });
 
     it("should uninstall an app through the installer", async function () {

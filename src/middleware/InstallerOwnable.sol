@@ -3,10 +3,12 @@ pragma solidity =0.8.28;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./InstallerClonable.sol";
-
-contract SelfInstaller is InstallerClonable, Ownable {
-    constructor(address owner) Ownable(owner) InstallerClonable() {
-        initialize(address(0), owner);
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+contract OwnableInstaller is InstallerClonable, Ownable {
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+    constructor(address target, address owner) Ownable(owner) InstallerClonable() {
+        initialize(target, owner);
     }
 
     function initialize(address targetAddress, address owner) public initializer {
@@ -19,11 +21,14 @@ contract SelfInstaller is InstallerClonable, Ownable {
         bytes32 distributionId,
         bytes calldata args
     ) public payable returns (uint256 instanceId) {
-        if (msg.sender != owner()) {
+        InstallerStruct storage strg = getStorage();
+        // We do this check first as implementation specific, making installs by owner removable by default once distributor/n is removed
+        if (isDistributor(distributor) || strg._permittedDistributions[address(distributor)].contains(distributionId)) {
             return _installPublic(distributor, distributionId, args);
-        } else {
-            return _installOwner(distributor, distributionId, args);
+        } else if (msg.sender == owner()) {
+            return _installByOwner(distributor, distributionId, args);
         }
+        return _installPublic(distributor, distributionId, args); // This should revert since check above has failed
     }
 
     function uninstall(uint256 appId) public onlyOwner {

@@ -9,10 +9,10 @@ import {
   Repository,
   TestFacet__factory,
   OwnableDistributor,
-  MockInstaller,
-  MockInstaller__factory,
   MockMigration__factory,
-  MockMigration
+  MockMigration,
+  OwnableInstaller__factory,
+  OwnableInstaller
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -25,7 +25,7 @@ describe("Version Distributor", function () {
   let owner: SignerWithAddress;
   let mockDistr: MockCloneDistribution;
   let repository: Repository;
-  let mockInstaller: MockInstaller;
+  let mockInstaller: OwnableInstaller;
   let dummyMigration: MockMigration;
   let dummyMigrationCodeHash: string;
 
@@ -35,8 +35,8 @@ describe("Version Distributor", function () {
     [deployer, owner] = await ethers.getSigners();
     const codeIndexDeployment = await deployments.get("ERC7744");
     const MockInstaller = (await ethers.getContractFactory(
-      "MockInstaller"
-    )) as MockInstaller__factory;
+      "OwnableInstaller"
+    )) as OwnableInstaller__factory;
     mockInstaller = await MockInstaller.deploy(deployer.address, owner.address);
 
     codeIndex = new ethers.Contract(codeIndexDeployment.address, ERC7744.interface).connect(

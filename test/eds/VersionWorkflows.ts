@@ -4,13 +4,13 @@ import {
   ERC7744,
   OwnableDistributor,
   OwnableDistributor__factory,
-  MockInstaller__factory,
   MockMigration__factory,
   MockERC20__factory,
   OwnableRepository__factory,
   OwnableRepository,
-  MockInstaller,
-  MockMigration
+  MockMigration,
+  OwnableInstaller,
+  OwnableInstaller__factory
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -25,7 +25,7 @@ describe("Version Workflows", function () {
   let erc20CodeHash: string;
   let repository: OwnableRepository;
   let mockMigration: MockMigration;
-  let installer: MockInstaller;
+  let installer: OwnableInstaller;
   let migrationHash: string;
   let distributionId: string;
   let appId: number | null = null;
@@ -77,8 +77,8 @@ describe("Version Workflows", function () {
 
     // Deploy mock installer (user infrastructure)
     const MockInstallerFactory = (await ethers.getContractFactory(
-      "MockInstaller"
-    )) as MockInstaller__factory;
+      "OwnableInstaller"
+    )) as OwnableInstaller__factory;
     installer = await MockInstallerFactory.deploy(user.address, user.address);
     await installer.deployed();
 

@@ -391,37 +391,3 @@ describe("Repository Extended Tests", function () {
     });
   });
 });
-
-// Helper function to add a new version for testing
-async function addTestVersion(
-  repository: Repository,
-  version: { major: number; minor: number; patch: number }
-) {
-  const distributionFactory = await ethers.getContractFactory("MockCloneDistribution");
-  const distribution = await distributionFactory.deploy("TestDistribution");
-  await distribution.deployed();
-
-  const distributionCode = await distribution.provider.getCode(distribution.address);
-  const distributionId = ethers.utils.keccak256(distributionCode);
-
-  try {
-    await codeIndex.register(distribution.address);
-  } catch (e) {
-    // If already registered, that's fine for our test purposes
-  }
-
-  try {
-    await repository.connect(owner).newRelease(
-      distributionId,
-      ethers.utils.formatBytes32String("test"),
-      {
-        major: version.major,
-        minor: version.minor,
-        patch: version.patch
-      },
-      ethers.constants.HashZero // Use zero hash for simplicity
-    );
-  } catch (e) {
-    // If version already exists, that's fine for our test purposes
-  }
-}

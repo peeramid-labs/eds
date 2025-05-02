@@ -4,10 +4,10 @@ import {
   ERC7744,
   MockCloneDistribution,
   MockCloneDistribution__factory,
-  MockInstaller,
-  MockInstaller__factory,
   OwnableDistributor,
-  OwnableDistributor__factory
+  OwnableDistributor__factory,
+  OwnableInstaller,
+  OwnableInstaller__factory
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -20,7 +20,7 @@ describe("Installer", function () {
   let target: SignerWithAddress;
   let cloneDistributionId: any;
   let distributorsId: any;
-  let installer: MockInstaller;
+  let installer: OwnableInstaller;
 
   beforeEach(async function () {
     await deployments.fixture("ERC7744"); // This is the key addition
@@ -55,7 +55,9 @@ describe("Installer", function () {
         [cloneDistributionId, ethers.constants.AddressZero]
       )
     );
-    const Installer = (await ethers.getContractFactory("MockInstaller")) as MockInstaller__factory;
+    const Installer = (await ethers.getContractFactory(
+      "OwnableInstaller"
+    )) as OwnableInstaller__factory;
     installer = await Installer.deploy(target.address, owner.address);
   });
 
@@ -147,7 +149,7 @@ describe("Installer", function () {
     ).to.be.revertedWithCustomError(distributor, "InvalidApp");
   });
 
-  it("Reverts when valid distributions added by distributor and distribution id were removed", async () => {
+  it("Reverts when valid distributions added by owner and the distribution id were removed", async () => {
     await installer.connect(owner).allowDistribution(distributor.address, distributorsId);
     await installer.connect(owner).install(distributor.address, distributorsId, "0x");
     const instanceNum = await installer.connect(owner).getAppsNum();

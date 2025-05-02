@@ -9,7 +9,7 @@ import {
   UpgradableDistribution__factory,
   MockMigration__factory,
   MockRepository__factory,
-  SelfInstaller__factory,
+  OwnableInstaller__factory,
   MockERC20__factory,
   MockOwnableDistributor__factory,
   MockOwnableDistributor,
@@ -894,9 +894,9 @@ describe("Distributor", function () {
       }
 
       const Installer = (await ethers.getContractFactory(
-        "SelfInstaller"
-      )) as SelfInstaller__factory;
-      const installer = await Installer.deploy(owner.address);
+        "OwnableInstaller"
+      )) as OwnableInstaller__factory;
+      const installer = await Installer.deploy(owner.address, owner.address);
       await installer.deployed();
 
       await installer.connect(owner).install(distributor.address, distributorsId, "0x");

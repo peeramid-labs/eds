@@ -4,12 +4,12 @@ import {
   ERC7744,
   MockERC20,
   MockERC20__factory,
-  MockInstaller,
-  MockInstaller__factory,
   MockMigration,
   MockMigration__factory,
   MockOwnableDistributor,
   MockOwnableDistributor__factory,
+  OwnableInstaller,
+  OwnableInstaller__factory,
   OwnableRepository,
   OwnableRepository__factory,
   UpgradableDistribution__factory,
@@ -19,7 +19,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { constants } from "ethers";
 
 describe("InstallerClonable", function () {
-  let installer: MockInstaller;
+  let installer: OwnableInstaller;
   let distributor: MockOwnableDistributor;
   let migration: MockMigration;
   let owner: SignerWithAddress;
@@ -27,7 +27,6 @@ describe("InstallerClonable", function () {
   let distributionId: string;
   let migrationId: string;
   let repository: OwnableRepository;
-  let codeIndex: ERC7744;
   let mockErc20: MockERC20;
 
   beforeEach(async function () {
@@ -43,8 +42,8 @@ describe("InstallerClonable", function () {
 
     // Deploy the mock installer
     const MockInstaller = (await ethers.getContractFactory(
-      "MockInstaller"
-    )) as MockInstaller__factory;
+      "OwnableInstaller"
+    )) as OwnableInstaller__factory;
     installer = await MockInstaller.deploy(owner.address, owner.address);
     await installer.deployed();
     // await installer.initialize(distributor.address);

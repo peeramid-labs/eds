@@ -1,22 +1,22 @@
 import { expect } from "chai";
 import { deployments, ethers } from "hardhat";
-import { constants, Contract } from "ethers";
+import { Contract } from "ethers";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   ERC7744,
-  MockDistributorForTest,
   MockERC20__factory,
-  MockInstaller__factory,
   MockMigration__factory,
   MockOwnableDistributor,
   MockOwnableDistributor__factory,
+  OwnableInstaller,
+  OwnableInstaller__factory,
   OwnableRepository__factory,
   UpgradableDistribution__factory,
   WrappedProxyInitializer__factory
 } from "../../types";
 
 describe("InstallerClonable Upgradeability", function () {
-  let mockInstaller: Contract;
+  let mockInstaller: OwnableInstaller;
   let mockDistributor: MockOwnableDistributor;
   let mockMigration: Contract;
   let owner: SignerWithAddress;
@@ -54,8 +54,8 @@ describe("InstallerClonable Upgradeability", function () {
 
     // Deploy installer
     const MockInstaller = (await ethers.getContractFactory(
-      "MockInstaller"
-    )) as MockInstaller__factory;
+      "OwnableInstaller"
+    )) as OwnableInstaller__factory;
     mockInstaller = await MockInstaller.deploy(owner.address, owner.address);
     await mockInstaller.deployed();
 
