@@ -108,8 +108,5 @@ contract OwnableTokenizedDistributor is TokenizedDistributor, OwnableUpgradeable
 
     function setBeneficiary(address beneficiary) public onlyOwner {
         super._setBeneficiary(beneficiary);
-
     }
-
-
 }

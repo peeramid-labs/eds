@@ -34,8 +34,6 @@ abstract contract TokenizedDistributor is Distributor, Initializable {
         return getTokenizedDistributorStore().beneficiary;
     }
 
-
-
     function getTokenizedDistributorStore()
         internal
         pure

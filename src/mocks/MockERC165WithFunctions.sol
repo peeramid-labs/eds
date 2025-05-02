@@ -100,13 +100,7 @@ contract MockERC165WithFunctions is ERC165 {
 
     // Explicitly declare function signatures for the middleware functions
 
-    function beforeCall(
-        bytes memory,
-        bytes4,
-        address,
-        uint256,
-        bytes memory
-    ) external returns (bytes memory) {
+    function beforeCall(bytes memory, bytes4, address, uint256, bytes memory) external returns (bytes memory) {
         string memory funcSig = "beforeCall(bytes,bytes4,address,uint256,bytes)";
         if (_hasResult(funcSig)) {
             return _functionResults[funcSig];
@@ -114,14 +108,7 @@ contract MockERC165WithFunctions is ERC165 {
         return new bytes(0);
     }
 
-    function afterCall(
-        bytes memory,
-        bytes4,
-        address,
-        uint256,
-        bytes memory,
-        bytes memory
-    ) external {
+    function afterCall(bytes memory, bytes4, address, uint256, bytes memory, bytes memory) external {
         // No return value needed
     }
 }

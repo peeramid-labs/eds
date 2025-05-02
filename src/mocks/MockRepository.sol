@@ -37,19 +37,21 @@ contract MockRepository is IRepository, ERC165 {
     }
 
     function get(LibSemver.VersionRequirement calldata) external view returns (IRepository.Source memory) {
-        return IRepository.Source(
-            LibSemver.Version(1, 0, 0), // version
-            sourceId,                   // sourceId
-            metadata                    // metadata
-        );
+        return
+            IRepository.Source(
+                LibSemver.Version(1, 0, 0), // version
+                sourceId, // sourceId
+                metadata // metadata
+            );
     }
 
     function getLatest() external view returns (IRepository.Source memory) {
-        return IRepository.Source(
-            LibSemver.Version(1, 0, 0), // version
-            sourceId,                   // sourceId
-            metadata                    // metadata
-        );
+        return
+            IRepository.Source(
+                LibSemver.Version(1, 0, 0), // version
+                sourceId, // sourceId
+                metadata // metadata
+            );
     }
 
     function getMigrationScript(uint64) external view returns (bytes32) {

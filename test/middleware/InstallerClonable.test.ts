@@ -48,6 +48,7 @@ describe("InstallerClonable & InstallerOwnable", function () {
     let distIds: string[] = [];
     try {
       distIds = await distributor.getDistributions();
+      // eslint-disable-next-line
     } catch (e) {
       // If getDistributions fails, use our test IDs
       distIds = [DISTRIBUTION_ID_1];

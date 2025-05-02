@@ -7,14 +7,13 @@ describe("MiddlewareProxy", function () {
   let mockMiddleware: Contract;
   let mockERC20: Contract;
   let owner: Signer;
-  let user: Signer;
   let ownerAddress: string;
 
   // Constants
   const INITIAL_SUPPLY = ethers.utils.parseEther("1000");
 
   before(async function () {
-    [owner, user] = await ethers.getSigners();
+    [owner] = await ethers.getSigners();
     ownerAddress = await owner.getAddress();
   });
 

@@ -11,7 +11,6 @@ import "../interfaces/IERC7746.sol";
 contract LibMiddlewareExtendedTest {
     // Direct call to accessLayersStorage
     function testAccessLayersStorage() external {
-
         // Just to access it, we don't need to do anything with it
     }
 
