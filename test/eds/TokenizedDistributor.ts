@@ -3,11 +3,8 @@ import { ethers, deployments } from "hardhat";
 import {
   MockERC20,
   MockERC20__factory,
-  TokenizedDistributor__factory,
   ERC7744,
   MockCloneDistribution__factory,
-  TokenizedDistributor,
-  MockTokenizedDistributor__factory,
   OwnableTokenizedDistributor,
   OwnableTokenizedDistributor__factory
 } from "../../types";
