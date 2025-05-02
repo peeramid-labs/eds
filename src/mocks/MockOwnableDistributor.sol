@@ -7,6 +7,10 @@ import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStri
 
 contract MockOwnableDistributor is OwnableDistributor {
 
+    uint256 public lastCallAppId;
+    bytes32 public lastCallMigrationId;
+    bytes public lastCallUserCalldata;
+    bool public upgradeUserInstanceRevertState;
     constructor(
       address owner_
     ) OwnableDistributor(owner_) {}
@@ -17,5 +21,21 @@ contract MockOwnableDistributor is OwnableDistributor {
 
    function setMigration(uint256 appId, address migration) public {
     appsUndergoingMigration[appId] = migration;
+   }
+
+   function getLastUpgradeUserInstanceCall() public view returns (uint256 appId, bytes32 migrationId, bytes memory userCalldata) {
+    return (lastCallAppId, lastCallMigrationId, lastCallUserCalldata);
+   }
+
+
+   function upgradeUserInstance(uint256 appId, bytes32 migrationId, bytes calldata userCalldata) public override returns (LibSemver.Version memory newVersion) {
+    newVersion = super.upgradeUserInstance(appId, migrationId, userCalldata);
+    lastCallAppId = appId;
+    lastCallMigrationId = migrationId;
+    lastCallUserCalldata = userCalldata;
+   }
+
+   function setUpgradeUserInstanceRevertState(bool revertState) public {
+    upgradeUserInstanceRevertState = revertState;
    }
 }

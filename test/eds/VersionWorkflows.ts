@@ -5,7 +5,6 @@ import {
   OwnableDistributor,
   OwnableDistributor__factory,
   MockInstaller__factory,
-  VersionDistribution__factory,
   MockMigration__factory,
   MockERC20__factory,
   OwnableRepository__factory,

@@ -9,6 +9,7 @@ import {
   MockCloneDistribution__factory
 } from "../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { constants } from "ethers";
 
 describe("TokenizedDistributor", function () {
   let mockToken: MockERC20;
@@ -53,7 +54,7 @@ describe("TokenizedDistributor", function () {
     ).then((d) => d.connect(owner));
     distributorsId = await distributor["calculateDistributorId(bytes32,address)"](
       distributedCodeHash,
-      addr1.address
+      constants.AddressZero
     );
   });
 
@@ -69,7 +70,7 @@ describe("TokenizedDistributor", function () {
     await expect(
       distributor["addDistribution(bytes32,address,string)"](
         distributedCodeHash,
-        addr1.address,
+        constants.AddressZero,
         "testDistribution"
       )
     ).to.emit(distributor, "InstantiationCostChanged");
@@ -85,7 +86,7 @@ describe("TokenizedDistributor", function () {
   it("should fail to instantiate without sufficient payment", async function () {
     await distributor["addDistribution(bytes32,address,string)"](
       distributedCodeHash,
-      addr1.address,
+      constants.AddressZero,
       "testDistribution"
     );
     await mockToken.connect(addr1).approve(distributor.address, defaultCost);
@@ -96,7 +97,7 @@ describe("TokenizedDistributor", function () {
   it("should instantiate with sufficient payment", async function () {
     await distributor["addDistribution(bytes32,address,string)"](
       distributedCodeHash,
-      addr1.address,
+      constants.AddressZero,
       "testDistribution"
     );
     await mockToken.connect(owner).transfer(addr1.address, defaultCost);

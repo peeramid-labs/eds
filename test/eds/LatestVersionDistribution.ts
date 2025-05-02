@@ -1,7 +1,6 @@
 import { deployments, ethers } from "hardhat";
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { Contract } from "ethers";
 import {
   ERC7744,
   ERC7744__factory,
@@ -11,19 +10,17 @@ import {
   MockERC20__factory,
   MockLatestVersionDistribution__factory,
   MockRepository,
-  MockRepository__factory,
-  Repository
+  MockRepository__factory
 } from "../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { LibSemver } from "../../types";
 
-describe("LatestVersionDistribution", function () {
+describe("LatestUpgradableDistribution", function () {
   let deployer: SignerWithAddress;
   let user: SignerWithAddress;
   let repository: MockRepository;
   let latestVersionDist: LatestVersionDistribution; // Use any to allow sources() method
   let mockDistribution: MockCloneDistribution;
-  // Use bytes32 for metadata as expected by the LatestVersionDistribution constructor
+  // Use bytes32 for metadata as expected by the LatestUpgradableDistribution constructor
   const metadata = "testMetadata";
 
   // Repository name should be bytes32 as per IRepository interface

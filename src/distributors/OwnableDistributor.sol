@@ -63,7 +63,7 @@ contract OwnableDistributor is Distributor, Ownable {
         uint256 appId,
         bytes32 migrationId,
         bytes calldata userCalldata
-    ) public override returns (LibSemver.Version memory) {
+    ) public virtual override returns (LibSemver.Version memory) {
         return super.upgradeUserInstance(appId, migrationId, userCalldata);
     }
 }

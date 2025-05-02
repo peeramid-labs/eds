@@ -149,9 +149,9 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         uint256 length = app.contracts.length;
         for (uint256 i; i < length; ++i) {
             strg.appIds[app.contracts[i]] = 0;
+            strg.apps[appId].contracts.pop();
             emit Uninstalled(app.contracts[i]);
         }
-        strg.appNum--;
     }
     // @inheritdoc IInstaller
     function getApp(uint256 appId) public view returns (App memory app) {
@@ -275,7 +275,7 @@ abstract contract InstallerClonable is IInstaller, Initializable {
         IDistributor oldDistributor = IDistributor(strg.apps[appId].middleware);
         uint256 oldDistributorAppId = oldDistributor.getAppId(strg.apps[appId].contracts[0]);
         require(
-            ERC165Checker.supportsInterface(address(newDistributor), type(IDistributor).interfaceId),
+            address(newDistributor) == address(0) || ERC165Checker.supportsInterface(address(newDistributor), type(IDistributor).interfaceId),
             "New distributor does not support IDistributor"
         );
         require(appData.length == strg.apps[appId].contracts.length || appData.length == 0, "App data length mismatch");

@@ -5,22 +5,56 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 import "../interfaces/IDistribution.sol";
 import "../erc7744/LibERC7744.sol";
 import {WrappedTransparentUpgradeableProxy} from "../proxies/WrappedTransparentUpgradeableProxy.sol";
-// import "./LibMiddleware.sol";
-abstract contract UpgradableDistribution is IDistribution {
-    error CodeNotFoundInIndex(bytes32 codeId);
+import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import {IAdminGetter} from "../interfaces/IAdminGetter.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+contract UpgradableDistribution is IDistribution {
 
-    function sources() internal view virtual returns (address[] memory, bytes32 name, uint256 version);
+        bytes32 private immutable metadata;
+    address private immutable _reference;
+    ShortString public immutable distributionName;
+    uint256 public immutable distributionVersion;
+    using LibERC7744 for bytes32;
+    /**
+     * @notice Constructor for the CodeHashDistribution contract.
+     * @param codeHash The hash of the code to be distributed.
+     * @param _metadata Metadata associated with the code.
+     * @param name The name of the distribution.
+     * @param version The version number of the distribution.
+     */
+    constructor(bytes32 codeHash, bytes32 _metadata, string memory name, uint256 version) {
+        distributionName = ShortStrings.toShortString(name);
+        distributionVersion = version;
+        metadata = _metadata;
+        _reference = codeHash.getContainerOrThrow();
+    }
+
 
     // @inheritdoc IDistribution
-    function _instantiate(
-        address installer,
+    function sources() internal view virtual  returns (address[] memory, bytes32 name, uint256 version) {
+        address[] memory _sources = new address[](1);
+        _sources[0] = _reference;
+        return (_sources, ShortString.unwrap(distributionName), distributionVersion);
+    }
+    // @inheritdoc IDistribution
+    function contractURI() external view virtual override returns (string memory) {
+        return string(abi.encodePacked(metadata)); //ToDo: Add IPFS link with readme!
+    }
+
+    error CodeNotFoundInIndex(bytes32 codeId);
+
+
+
+    // @inheritdoc IDistribution
+    function instantiate(
         bytes memory data
-    ) internal virtual returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion) {
+    ) public virtual returns (address[] memory instances, bytes32 , uint256 ) {
+        (address installer, bytes memory args) = abi.decode(data, (address, bytes));
         (address[] memory _sources, bytes32 _distributionName, uint256 _distributionVersion) = sources();
         uint256 srcsLength = _sources.length;
         instances = new address[](srcsLength);
         for (uint256 i; i < srcsLength; ++i) {
-            address proxy = address(new WrappedTransparentUpgradeableProxy(_sources[i], installer, msg.sender, data, ""));
+            address proxy = address(new WrappedTransparentUpgradeableProxy(_sources[i], installer, msg.sender, args, ""));
             instances[i] = proxy;
         }
         emit Distributed(msg.sender, instances);
@@ -30,8 +64,7 @@ abstract contract UpgradableDistribution is IDistribution {
     function get() external view virtual returns (address[] memory src, bytes32 name, uint256 version) {
         return sources();
     }
-    // @inheritdoc IDistribution
-    function contractURI() external view virtual returns (string memory);
+
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IDistribution).interfaceId || interfaceId == type(IERC165).interfaceId;

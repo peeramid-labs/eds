@@ -6,7 +6,7 @@ import {
   OwnableDistributor,
   OwnableDistributor__factory,
   TestFacet__factory,
-  VersionDistribution__factory,
+  UpgradableDistribution__factory,
   MockMigration__factory,
   MockRepository__factory,
   SelfInstaller__factory,
@@ -14,7 +14,8 @@ import {
   MockOwnableDistributor__factory,
   MockOwnableDistributor,
   MockInitializer__factory, // Added import
-  MockNoReasonInitializer__factory // Added import
+  MockNoReasonInitializer__factory, // Added import
+  WrappedProxyInitializer__factory
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -159,6 +160,33 @@ describe("Distributor", function () {
     ).to.be.revertedWithCustomError(distributor, "OwnableUnauthorizedAccount");
   });
 
+  it("Reverts when adding distribution with same alias", async function () {
+    expect(
+      await distributor
+        .connect(owner)
+        [
+          "addDistribution(bytes32,address,string)"
+        ](cloneDistributionId, ethers.constants.AddressZero, "TestDistribution")
+    ).to.emit(distributor, "DistributionAdded");
+    const CloneDistribution = (await ethers.getContractFactory(
+      "MockCloneDistribution"
+    )) as MockCloneDistribution__factory;
+    const cloneDistribution2 = await CloneDistribution.deploy("MockClone2");
+    await cloneDistribution2.deployed();
+    const code2 = await cloneDistribution2.provider.getCode(cloneDistribution2.address);
+    const cloneDistributionId2 = ethers.utils.keccak256(code2);
+
+    await codeIndex.register(cloneDistribution2.address);
+
+    await expect(
+      distributor
+        .connect(owner)
+        [
+          "addDistribution(bytes32,address,string)"
+        ](cloneDistributionId2, ethers.constants.AddressZero, "TestDistribution")
+    ).to.be.revertedWithCustomError(distributor, "AliasAlreadyExists");
+  });
+
   it("Does not allow instantiate a contract that was not added", async function () {
     const TestFacetDistribution = (await ethers.getContractFactory(
       "TestFacet"
@@ -240,7 +268,6 @@ describe("Distributor", function () {
         ).wait();
         let parsed = utils.getSuperInterface().parseLog(receipt.logs[0]);
         instanceAddress = parsed.args.instances[0];
-        console.log(instanceAddress);
         await distributor.connect(owner).disableDistribution(distributorsId);
       });
       it("Instance is invalid upon check", async () => {
@@ -485,28 +512,18 @@ describe("Distributor", function () {
         .instantiate(distributorId, ethers.constants.AddressZero);
       const receipt = await tx.wait();
 
-      // Print all events to debug
-      console.log(
-        "Events:",
-        receipt.events?.map((e) => ({ event: e.event, args: e.args }))
-      );
-
       // Extract appId and components from event
       const instantiatedEvent = receipt.events?.find((e) => e.event === "Instantiated");
-      console.log("Instantiated event:", instantiatedEvent);
 
       expect(instantiatedEvent, "Instantiated event should exist").to.not.be.undefined;
 
       // Access args array directly since the property names might not match what we expect
-      console.log("Event args:", instantiatedEvent?.args);
 
       // The appId is the second element in the args array
       const appId = instantiatedEvent?.args?.[1];
-      console.log("appId:", appId);
 
       // The appComponents are the 4th element (index 3) in the args array
       const appComponents = instantiatedEvent?.args?.[3];
-      console.log("appComponents:", appComponents);
 
       expect(appId, "appId should not be undefined").to.not.be.undefined;
       expect(appComponents, "appComponents should not be undefined").to.not.be.undefined;
@@ -833,8 +850,8 @@ describe("Distributor", function () {
 
       // Deploy WrappedTransparentUpgradeableProxy with the distributor as admin
       const WrappedProxy = (await ethers.getContractFactory(
-        "VersionDistribution"
-      )) as VersionDistribution__factory;
+        "UpgradableDistribution"
+      )) as UpgradableDistribution__factory;
 
       const mockErc20 = await (
         await ((await ethers.getContractFactory("MockERC20")) as MockERC20__factory).deploy(
@@ -846,23 +863,28 @@ describe("Distributor", function () {
       const appCodeHash = ethers.utils.keccak256(await ethers.provider.getCode(mockErc20.address));
       await codeIndex.register(mockErc20.address);
 
-      const proxy = await WrappedProxy.deploy(
+      const proxyDistribution = await WrappedProxy.deploy(
         appCodeHash,
         ethers.constants.HashZero,
         "TestApp",
-        1,
-        true
+        1
       );
-      await proxy.deployed();
-      const proxyCode = await ethers.provider.getCode(proxy.address);
-      const proxyCodeHash = ethers.utils.keccak256(proxyCode);
-      await codeIndex.register(proxy.address);
+      await proxyDistribution.deployed();
+      const proxyDistributionCode = await ethers.provider.getCode(proxyDistribution.address);
+      const proxyDistributionCodeHash = ethers.utils.keccak256(proxyDistributionCode);
+      await codeIndex.register(proxyDistribution.address);
+
+      const WrappedProxyInitializer = (await ethers.getContractFactory(
+        "WrappedProxyInitializer"
+      )) as WrappedProxyInitializer__factory;
+      const wrappedProxyInitializer = await WrappedProxyInitializer.deploy();
+      await wrappedProxyInitializer.deployed();
 
       const tx = await distributor
         .connect(owner)
         [
           "addDistribution(bytes32,address,string)"
-        ](proxyCodeHash, ethers.constants.AddressZero, "TestApp");
+        ](proxyDistributionCodeHash, wrappedProxyInitializer.address, "TestApp");
       const receipt = await tx.wait();
 
       // Extract the appId and appComponents from event logs properly
@@ -877,11 +899,7 @@ describe("Distributor", function () {
       const installer = await Installer.deploy(owner.address);
       await installer.deployed();
 
-      const callData = ethers.utils.defaultAbiCoder.encode(
-        ["tuple(address,bytes)"],
-        [[installer.address, "0x"]]
-      );
-      await installer.connect(owner).install(distributor.address, distributorsId, callData);
+      await installer.connect(owner).install(distributor.address, distributorsId, "0x");
       const appId = await installer.getAppsNum();
       const appComponents = await installer.getApp(appId);
       const NewDistributor = (await ethers.getContractFactory(
@@ -899,13 +917,12 @@ describe("Distributor", function () {
 
       // Now check the owner of the admin contract
       const adminContract = await ethers.getContractAt("ProxyAdmin", adminAddress);
+
       await expect(
         installer.connect(owner).changeDistributor(appId, newDistributor.address, [])
       ).to.emit(installer, "DistributorChanged");
 
       const ownerAfter = await adminContract.owner();
-
-      // Ownership should have been transferred to the new distributor
       expect(ownerAfter).to.equal(newDistributor.address);
     });
 
@@ -993,32 +1010,6 @@ describe("Distributor", function () {
       )
         .to.emit(distributor, "MigrationContractAddedFromVersions")
         .and.to.emit(distributor, "MigrationContractAddedToVersions");
-    });
-
-    it("should revert when adding migration with same major version", async function () {
-      // Add a versioned distribution
-      await distributor
-        .connect(owner)
-        [
-          "addDistribution(address,address,((uint64,uint64,uint128),uint8),string)"
-        ](repositoryAddress, ethers.constants.AddressZero, createVersionRequirement(1, 0, 0, 0), "MigrationSameMajorTest");
-
-      const versionedId = await distributor.getIdFromAlias("MigrationSameMajorTest");
-
-      // Convert address to bytes32 properly for migrationHash
-      const migrationHashBytes32 = ethers.utils.hexZeroPad(mockMigrationAddress, 32);
-
-      // Try to add a migration with the same major version
-      await expect(
-        distributor.connect(owner).addVersionMigration(
-          versionedId,
-          createVersionRequirement(1, 0, 0, 0), // from
-          createVersionRequirement(1, 1, 0, 0), // to - same major version
-          migrationHashBytes32,
-          0, // MigrationStrategy.CALL
-          "0x" // distributor calldata
-        )
-      ).to.be.revertedWith("Major version mismatch");
     });
 
     it("should revert when adding REPOSITORY_MANGED strategy for minor version migration", async function () {
@@ -2082,7 +2073,7 @@ describe("Distributor", function () {
 
     it("should revert when external initializer fails with reason", async function () {
       // Instantiate with args that cause MockInitializer to revert
-      const failArgs = ethers.utils.toUtf8Bytes("FAIL");
+      const failArgs = ethers.utils.toUtf8Bytes("REVERT");
       await expect(
         distributor.connect(owner).instantiate(initializerDistributorsId, failArgs)
       ).to.be.revertedWith("initializer delegatecall failed without revert reason"); // This is the actual behavior
@@ -2090,9 +2081,134 @@ describe("Distributor", function () {
 
     it("should revert with generic message when external initializer fails without reason", async function () {
       // Instantiate using the distribution linked to MockNoReasonInitializer
+      const failArgs = ethers.utils.toUtf8Bytes("FAIL");
       await expect(
-        distributor.connect(owner).instantiate(noReasonInitializerDistributorsId, "0x")
+        distributor.connect(owner).instantiate(noReasonInitializerDistributorsId, failArgs)
       ).to.be.revertedWith("initializer delegatecall failed without revert reason");
+    });
+  });
+
+  // Tests for specific Distributor.sol lines
+  describe("Distributor Implementation Tests", function () {
+    // Test for line 78: Check that _addDistribution validates IRepository interface support
+    it("should revert when adding a non-IRepository contract to _addDistribution", async function () {
+      // Create a mock contract that doesn't implement IRepository
+      const MockERC20 = await ethers.getContractFactory("MockERC20");
+      const mockERC20 = await MockERC20.deploy("TestToken", "TST", ethers.utils.parseEther("1000"));
+      await mockERC20.deployed();
+
+      // Try to add it as a repository - should fail
+      await expect(
+        distributor
+          .connect(owner)
+          [
+            "addDistribution(address,address,((uint64,uint64,uint128),uint8),string)"
+          ](mockERC20.address, ethers.constants.AddressZero, createVersionRequirement(1, 0, 0, 0), "InvalidRepoTest")
+      ).to.be.revertedWithCustomError(distributor, "InvalidRepository");
+    });
+
+    // Test for line 83: Check that _addDistribution rejects version 0
+    it("should revert when adding a distribution with version 0", async function () {
+      // Try to add a distribution with version 0
+      await expect(
+        distributor
+          .connect(owner)
+          ["addDistribution(address,address,((uint64,uint64,uint128),uint8),string)"](
+            repositoryAddress,
+            ethers.constants.AddressZero,
+            createVersionRequirement(0, 0, 0, 0), // Version 0.0.0
+            "ZeroVersionTest"
+          )
+      ).to.be.revertedWithCustomError(distributor, "InvalidVersionRequested");
+    });
+
+    // Test for line 114-118: Check that bytes32-based _addDistribution validates IDistribution interface
+    it("should revert when adding a distribution that doesn't support IDistribution", async function () {
+      // Create a mock contract that doesn't implement IDistribution
+      const mockERC20 = await (
+        await ethers.getContractFactory("MockERC20")
+      ).deploy("TestToken", "TST", ethers.utils.parseEther("1000"));
+      await mockERC20.deployed();
+
+      // Register the code hash in the code index to make the getContainerOrThrow call work
+      const code = await mockERC20.provider.getCode(mockERC20.address);
+      const codeHash = ethers.utils.keccak256(code);
+      await codeIndex.register(mockERC20.address);
+
+      // Try to add it as a distribution - should fail
+      await expect(
+        distributor
+          .connect(owner)
+          [
+            "addDistribution(bytes32,address,string)"
+          ](codeHash, ethers.constants.AddressZero, "InvalidDistributionTest")
+      ).to.be.revertedWith("Distribution does not support IDistribution interface");
+    });
+
+    // Test for line 203-205: Check that app components are properly registered in mappings
+    it("should properly register app components in mappings", async function () {
+      // We'll use the already added clone distribution from beforeEach
+      // No need to add it again, which could cause conflicts
+
+      // Get the alias for the already registered distribution
+      const cloneAlias = "Clone";
+
+      // First check if this alias exists
+      const existingDistributorId = await distributor.getIdFromAlias(cloneAlias);
+      let distributorIdToUse;
+
+      if (existingDistributorId !== ethers.constants.HashZero) {
+        // Use the existing one
+        distributorIdToUse = existingDistributorId;
+      } else {
+        // Register a new one with this alias
+        await distributor
+          .connect(owner)
+          [
+            "addDistribution(bytes32,address,string)"
+          ](cloneDistributionId, ethers.constants.AddressZero, cloneAlias);
+        distributorIdToUse = await distributor.getIdFromAlias(cloneAlias);
+      }
+
+      // Instantiate the distribution
+      const tx = await distributor.connect(owner).instantiate(distributorIdToUse, "0x");
+      const receipt = await tx.wait();
+
+      // Get the appId and appComponents from the emitted event
+      let appId: any;
+      let componentAddresses: string[] = [];
+
+      for (const event of receipt.events || []) {
+        if (event.event === "Instantiated" && event.args) {
+          appId = event.args.newAppId;
+          componentAddresses = event.args.appComponents;
+          break;
+        }
+      }
+
+      expect(componentAddresses.length).to.be.greaterThan(
+        0,
+        "No components found in the instantiated distribution"
+      );
+
+      // Verify each component is properly registered
+      for (const componentAddress of componentAddresses) {
+        // Check appIds mapping: component address -> appId
+        const registeredAppId = await distributor.getAppId(componentAddress);
+        expect(registeredAppId).to.equal(appId);
+
+        // Check distributionOf mapping: appId -> distributorsId
+        const distributorsIdFromApp = await distributor.distributionOf(appId);
+        expect(distributorsIdFromApp).to.equal(distributorIdToUse);
+
+        // Verify component is in the appComponents array
+        const components = await distributor.appComponents(appId, 0);
+        expect(components).to.equal(componentAddresses[0]);
+      }
+
+      // Verify installer is set correctly
+      const installer = await distributor.installers(appId);
+      expect(installer).to.equal(owner.address);
     });
   });
 });

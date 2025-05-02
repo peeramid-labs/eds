@@ -14,6 +14,7 @@ import {MigrationPlan} from "../interfaces/IDistributor.sol";
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {IAdminGetter} from "../interfaces/IAdminGetter.sol";
 import {DistributorLayerConfig} from "../interfaces/IDistributor.sol";
+
 /**
  * @title Distributor
  * @notice Abstract contract that implements the IDistributor interface, CodeIndexer, and ERC165.
@@ -176,38 +177,39 @@ abstract contract Distributor is IDistributor, ERC165 {
             IRepository repository = IRepository(distributionComponent.distributionLocation);
             IRepository.Source memory repoSource = repository.get(versionRequirement);
             distributionLocation = repoSource.sourceId.getContainerOrThrow();
+            distributionName = repository.repositoryName();
+            distributionVersion = repoSource.version.toUint256();
             appVersions[numAppInstances] = repoSource.version;
         }
-        try IDistribution(distributionLocation).instantiate(args) returns (
-            address[] memory _newAppComponents,
-            bytes32 _distributionName,
-            uint256 _distributionVersion
-        ) {
-            newAppComponents = _newAppComponents;
-            distributionName = _distributionName;
-            distributionVersion = _distributionVersion;
-        } catch Error(string memory reason) {
-            revert(reason);
-        } catch Panic(uint errorCode) {
-            revert DistributionInstantiationPanic(errorCode);
-        } catch (bytes memory lowLevelData) {
-            revert DistributionInstantiationFailed(lowLevelData);
-        }
-
-        if (externallyInitialized) {
+        if (!externallyInitialized) {
+            try IDistribution(distributionLocation).instantiate(args) returns (
+                address[] memory _newAppComponents,
+                bytes32 _distributionName,
+                uint256 _distributionVersion
+            ) {
+                newAppComponents = _newAppComponents;
+                distributionName = _distributionName;
+                distributionVersion = _distributionVersion;
+            } catch Error(string memory reason) {
+                revert(reason);
+            } catch Panic(uint errorCode) {
+                revert DistributionInstantiationPanic(errorCode);
+            } catch (bytes memory lowLevelData) {
+                revert DistributionInstantiationFailed(lowLevelData);
+            }
+        } else {
             (bool success, bytes memory result) = address(distributionComponent.initializer).delegatecall(
-                abi.encodeWithSelector(selector, newAppComponents, args)
+                abi.encodeWithSelector(selector, distributionLocation, distributionName, distributionVersion, args)
             );
             if (!success) {
                 if (result.length > 0) {
-                    assembly {
-                        let returndata_size := mload(result)
-                        revert(add(32, result), returndata_size)
-                    }
+                    revert(string(result));
                 } else {
                     revert("initializer delegatecall failed without revert reason");
                 }
             }
+
+            newAppComponents = abi.decode(result, (address[]));
         }
 
         {
@@ -328,7 +330,6 @@ abstract contract Distributor is IDistributor, ERC165 {
         migrationId = keccak256(abi.encode(distributionId, migrationHash, strategy));
         require(migrations[migrationId].distributionId == bytes32(0), MigrationAlreadyExists(migrationId));
         require(distributionComponents[distributionId].distributionLocation != address(0), "Distribution not found");
-        require(from.version.major < to.version.major, "Major version mismatch");
         migrations[migrationId] = MigrationPlan(from, to, migrationHash, strategy, distributorCalldata, distributionId);
 
         emit MigrationContractAddedFromVersions(

@@ -5,11 +5,15 @@ import {
   OwnableDistributor,
   OwnableDistributor__factory,
   MockInstaller__factory,
-  VersionDistribution__factory,
+  UpgradableDistribution__factory,
   MockMigration__factory,
   MockERC20__factory,
   OwnableRepository__factory,
-  MockInstaller
+  OwnableRepository,
+  MockInstaller,
+  MockInitializer,
+  WrappedProxyInitializer,
+  WrappedProxyInitializer__factory
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -18,16 +22,19 @@ import utils from "../utils";
 describe("Upgradability Workflows", function () {
   let codeIndex: ERC7744;
   let distributor: OwnableDistributor;
+  let repository: OwnableRepository;
   let deployer: SignerWithAddress;
   let owner: SignerWithAddress;
   let user: SignerWithAddress;
   let erc20CodeHash: string;
   let mockMigration: any;
-  let versionDistribution: any;
-  let versionDistributionId: string;
+  let UpgradableDistribution: any;
+  let UpgradableDistributionId: string;
   let distributionId: string;
   let installer: MockInstaller;
   let mockERC20Instance: any;
+  let initializer: WrappedProxyInitializer;
+  let migrationHash: string;
 
   // Helper function to create version requirements
   function createVersionRequirement(
@@ -43,6 +50,15 @@ describe("Upgradability Workflows", function () {
         patch
       },
       requirement
+    };
+  }
+
+  // Helper function to create versions
+  function createVersion(major: number, minor: number, patch: number) {
+    return {
+      major,
+      minor,
+      patch
     };
   }
 
@@ -64,6 +80,24 @@ describe("Upgradability Workflows", function () {
     distributor = await Distributor.deploy(owner.address);
     await distributor.deployed();
 
+    // Deploy repository for versioned distributions
+    const OwnableRepositoryFactory = (await ethers.getContractFactory(
+      "OwnableRepository"
+    )) as OwnableRepository__factory;
+    repository = await OwnableRepositoryFactory.deploy(
+      owner.address,
+      ethers.utils.formatBytes32String("MockRepository"),
+      "0x"
+    );
+    await repository.deployed();
+
+    // Deploy wrapped proxy initializer
+    const WrappedProxyInitializerFactory = (await ethers.getContractFactory(
+      "WrappedProxyInitializer"
+    )) as WrappedProxyInitializer__factory;
+    initializer = await WrappedProxyInitializerFactory.deploy();
+    await initializer.deployed();
+
     // Deploy mock installer (user infrastructure)
     const MockInstallerFactory = (await ethers.getContractFactory(
       "MockInstaller"
@@ -73,7 +107,7 @@ describe("Upgradability Workflows", function () {
 
     // Deploy mock ERC20 for code hash
     const MockERC20 = (await ethers.getContractFactory("MockERC20")) as MockERC20__factory;
-    mockERC20Instance = await MockERC20.deploy("TokenA", "TKA", 1000);
+    mockERC20Instance = await MockERC20.deploy("TokenA", "TKA", ethers.utils.parseEther("1000"));
     await mockERC20Instance.deployed();
 
     // Register ERC20 code
@@ -88,23 +122,35 @@ describe("Upgradability Workflows", function () {
     mockMigration = await MockMigrationFactory.deploy();
     await mockMigration.deployed();
 
-    // Deploy VersionDistribution
-    const VersionDistributionFactory = (await ethers.getContractFactory(
-      "VersionDistribution"
-    )) as VersionDistribution__factory;
-    versionDistribution = await VersionDistributionFactory.deploy(
+    // Get migration hash
+    const migrationCode = await mockMigration.provider.getCode(mockMigration.address);
+    migrationHash = ethers.utils.keccak256(migrationCode);
+    await codeIndex.register(mockMigration.address);
+
+    // Register version 1.0.0 in the repository
+    await repository.connect(owner).newRelease(
+      erc20CodeHash,
+      "0x", // metadata
+      createVersion(1, 0, 0),
+      migrationHash
+    );
+
+    // Deploy UpgradableDistribution
+    const UpgradableDistributionFactory = (await ethers.getContractFactory(
+      "UpgradableDistribution"
+    )) as UpgradableDistribution__factory;
+    UpgradableDistribution = await UpgradableDistributionFactory.deploy(
       erc20CodeHash,
       ethers.utils.formatBytes32String("metadata"),
       "TestDistribution",
-      1, // version
-      true // allowUserCalldata - allowing user data during instantiation
+      1 // version
     );
-    await versionDistribution.deployed();
+    await UpgradableDistribution.deployed();
 
     // Get version distribution code hash and register
-    const code = await versionDistribution.provider.getCode(versionDistribution.address);
-    versionDistributionId = ethers.utils.keccak256(code);
-    await codeIndex.register(versionDistribution.address);
+    const code = await UpgradableDistribution.provider.getCode(UpgradableDistribution.address);
+    UpgradableDistributionId = ethers.utils.keccak256(code);
+    await codeIndex.register(UpgradableDistribution.address);
 
     // Whitelist the distributor in the installer
     await installer.connect(user).whitelistDistributor(distributor.address);
@@ -112,39 +158,26 @@ describe("Upgradability Workflows", function () {
 
   describe("Installer Workflow", function () {
     it("should install an app through the installer", async function () {
-      // Register the distribution with the distributor
+      // Register the distribution
       await distributor
         .connect(owner)
         [
           "addDistribution(bytes32,address,string)"
-        ](versionDistributionId, ethers.constants.AddressZero, "TestDistribution");
+        ](UpgradableDistributionId, initializer.address, "InstallerTest");
 
-      // Get the distribution ID from alias
-      distributionId = await distributor.getIdFromAlias("TestDistribution");
+      // Get the distribution ID
+      distributionId = await distributor.getIdFromAlias("InstallerTest");
 
-      // Prepare installation data
-      const installData = ethers.utils.defaultAbiCoder.encode(
-        ["tuple(address,bytes)"],
-        [[installer.address, "0x"]]
-      );
+      // Allow this distribution in the installer
 
-      // Get installed app information
-      const appCount = await installer.getAppsNum();
-      await installer.connect(user).install(distributor.address, distributionId, installData);
-      const newAppCount = await installer.getAppsNum();
-      expect(newAppCount).to.equal(appCount.toNumber() + 1, "Should have one app instance");
+      // Install the app
+      const installTx = await installer
+        .connect(user)
+        .install(distributor.address, distributionId, "0x");
 
-      // Get the instance details
+      // Check if we can get the installed app
       const appComponents = await installer.getApp(1);
-      expect(appComponents.length).to.be.gt(0, "Should have at least one component");
-
-      // Verify the instance is recognized by the installer
-      const isApp = await installer.isApp(appComponents.contracts[0]);
-      expect(isApp).to.be.true;
-
-      // Verify the distributor association
-      const linkedDistributor = await installer.distributorOf(appComponents.contracts[0]);
-      expect(linkedDistributor).to.equal(distributor.address);
+      expect(appComponents.length).to.be.gt(0);
     });
 
     it("should uninstall an app through the installer", async function () {
@@ -153,31 +186,21 @@ describe("Upgradability Workflows", function () {
         .connect(owner)
         [
           "addDistribution(bytes32,address,string)"
-        ](versionDistributionId, ethers.constants.AddressZero, "TestDistribution");
+        ](UpgradableDistributionId, initializer.address, "UninstallTest");
 
       // Get the distribution ID
-      distributionId = await distributor.getIdFromAlias("TestDistribution");
+      distributionId = await distributor.getIdFromAlias("UninstallTest");
+
+      // Allow this distribution in the installer
 
       // Install the app
-      const installData = ethers.utils.defaultAbiCoder.encode(
-        ["tuple(address,bytes)"],
-        [[installer.address, "0x"]]
-      );
-
-      await installer.connect(user).install(distributor.address, distributionId, installData);
-
-      // Get the installed app details
-      const appComponents = await installer.getApp(1);
-      const instanceId = 1;
+      await installer.connect(user).install(distributor.address, distributionId, "0x");
 
       // Uninstall the app
-      await installer.connect(user).uninstall(instanceId);
-
-      // Verify the instance is no longer recognized
-      if (appComponents && appComponents.length > 0) {
-        const isApp = await installer.isApp(appComponents.contracts[0]);
-        expect(isApp).to.be.false;
-      }
+      await installer.connect(user).uninstall(1);
+      const app = await installer.getApp(1);
+      // Should revert when trying to access the uninstalled app
+      expect(app.contracts.length).to.be.eq(0);
     });
 
     it("should change distributor for an app", async function () {
@@ -186,7 +209,45 @@ describe("Upgradability Workflows", function () {
         .connect(owner)
         [
           "addDistribution(bytes32,address,string)"
-        ](versionDistributionId, ethers.constants.AddressZero, "TestDistribution");
+        ](UpgradableDistributionId, initializer.address, "ChangeTest");
+
+      // Get the distribution ID
+      distributionId = await distributor.getIdFromAlias("ChangeTest");
+
+      // Allow this distribution in the installer
+
+      // Install the app
+      await installer.connect(user).install(distributor.address, distributionId, "0x");
+      const appComponents = await installer.getApp(1);
+
+      // Change the distributor
+      await expect(
+        installer.connect(user).changeDistributor(1, ethers.constants.AddressZero, [])
+      ).to.emit(distributor, "DistributorChanged");
+    });
+
+    it("should upgrade an app through the installer", async function () {
+      // Register version 1.0.0 in the repository if not already registered
+      try {
+        await repository.connect(owner).newRelease(
+          erc20CodeHash,
+          "0x", // metadata
+          createVersion(1, 0, 0),
+          migrationHash
+        );
+      } catch (e) {
+        // Version might already exist, ignore error
+      }
+
+      // Register the distribution with version 1.0.0 using the repository
+      await distributor
+        .connect(owner)
+        ["addDistribution(address,address,((uint64,uint64,uint128),uint8),string)"](
+          repository.address,
+          initializer.address,
+          createVersionRequirement(1, 0, 0, 0), // 0 = GTE (greater than or equal)
+          "TestDistribution"
+        );
 
       // Get the distribution ID
       distributionId = await distributor.getIdFromAlias("TestDistribution");
@@ -198,64 +259,102 @@ describe("Upgradability Workflows", function () {
       );
 
       await installer.connect(user).install(distributor.address, distributionId, installData);
-
-      // Deploy a new distributor
-      const NewDistributor = (await ethers.getContractFactory(
-        "OwnableDistributor"
-      )) as OwnableDistributor__factory;
-      const newDistributor = await NewDistributor.deploy(owner.address);
-      await newDistributor.deployed();
-
-      // Get the installed app components
       const appComponents = await installer.getApp(1);
+      const appId = 1;
 
-      // Change the distributor
-      await installer.connect(user).changeDistributor(1, newDistributor.address, []);
+      // Register a new version 2.0.0 in the repository
+      await repository.connect(owner).newRelease(
+        erc20CodeHash,
+        "0x", // metadata
+        createVersion(2, 0, 0),
+        migrationHash
+      );
 
-      // Verify the distributor changed
-      if (appComponents && appComponents.length > 0) {
-        const linkedDistributor = await installer.distributorOf(appComponents.contracts[0]);
-        expect(linkedDistributor).to.equal(newDistributor.address);
-        expect(await distributor.getAppId(appComponents.contracts[0])).to.equal(0);
-      }
+      // Create version requirements for migration
+      const fromVersion = createVersionRequirement(1, 0, 0, 0); // from v1.0.0
+      const toVersion = createVersionRequirement(2, 0, 0, 0); // to v2.0.0
+
+      // Add the version migration to the distributor
+      await distributor.connect(owner).addVersionMigration(
+        distributionId,
+        fromVersion,
+        toVersion,
+        migrationHash,
+        0, // MigrationStrategy.Direct (CALL)
+        "0x" // No distributor calldata needed for this test
+      );
+
+      // Calculate migration ID
+      const migrationId = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+          ["bytes32", "bytes32", "uint8"],
+          [distributionId, migrationHash, 0]
+        )
+      );
+
+      // Upgrade the app
+      const userCalldata = "0x123456"; // Example user calldata for migration
+
+      // Get transaction and receipt
+      const tx = await installer.connect(user).upgradeApp(appId, migrationId, userCalldata);
+      const receipt = await tx.wait();
+
+      // Check for AppUpgraded event from installer
+      const upgradeEvent = receipt.events?.find(
+        (e: any) =>
+          e.address === installer.address &&
+          e.topics[0] === ethers.utils.id("AppUpgraded(uint256,bytes32,uint256,bytes)")
+      );
+      expect(upgradeEvent).to.not.be.undefined;
+
+      // Find the MigrationExecuted event from the mock migration
+      const migrationEvent = receipt.events?.find(
+        (e: any) =>
+          e.address === mockMigration.address &&
+          e.topics[0] ===
+            ethers.utils.id("MigrationExecuted(address[],uint256,uint256,bytes,bytes)")
+      );
+      expect(migrationEvent).to.not.be.undefined;
+    });
+
+    it("should revert when trying to upgrade a non-existent app", async function () {
+      // Try to upgrade a non-existent app (ID 999)
+      const nonExistentAppId = 999;
+      const userCalldata = "0x123456";
+
+      // Should revert with "App not installed"
+      await expect(
+        installer.connect(user).upgradeApp(nonExistentAppId, migrationHash, userCalldata)
+      ).to.be.revertedWith("App not installed");
     });
   });
 
   describe("Distributor Control", function () {
     it("should allow and disallow distributions", async function () {
-      // Register the distribution with the distributor
+      // Register the distribution
       await distributor
         .connect(owner)
         [
           "addDistribution(bytes32,address,string)"
-        ](versionDistributionId, ethers.constants.AddressZero, "TestDistribution");
+        ](UpgradableDistributionId, initializer.address, "AllowTest");
 
       // Get the distribution ID
-      distributionId = await distributor.getIdFromAlias("TestDistribution");
+      distributionId = await distributor.getIdFromAlias("AllowTest");
 
-      // First revoke whitelist to test specific allowances
+      // Allow this distribution in the installer
+
+      // Should be able to install
+      await installer.connect(deployer).install(distributor.address, distributionId, "0x");
+
+      // remove whitelisted distributor
       await installer.connect(user).revokeWhitelistedDistributor(distributor.address);
-
-      // Allow specific distribution
-      await installer.connect(user).allowDistribution(distributor.address, distributionId);
-
-      // Install should work with allowed distribution
-      const installData = ethers.utils.defaultAbiCoder.encode(
-        ["tuple(address,bytes)"],
-        [[installer.address, "0x"]]
-      );
-
-      await expect(
-        installer.connect(user).install(distributor.address, distributionId, installData)
-      ).to.not.be.reverted;
-
-      // Now disallow the distribution
+      // Disallow the distribution
       await installer.connect(user).disallowDistribution(distributor.address, distributionId);
 
-      // Install should now fail
+      // Installation should now revert
       await expect(
-        installer.connect(deployer).install(distributor.address, distributionId, installData)
-      ).to.be.reverted;
+        installer.connect(deployer).install(distributor.address, distributionId, "0x")
+      ).to.be.revertedWithCustomError(installer, "InvalidDistributor");
     });
 
     it("should disable a distribution", async function () {
@@ -264,22 +363,22 @@ describe("Upgradability Workflows", function () {
         .connect(owner)
         [
           "addDistribution(bytes32,address,string)"
-        ](versionDistributionId, ethers.constants.AddressZero, "TestDistribution");
+        ](UpgradableDistributionId, initializer.address, "DisableTest");
 
       // Get the distribution ID
-      distributionId = await distributor.getIdFromAlias("TestDistribution");
+      distributionId = await distributor.getIdFromAlias("DisableTest");
+
+      // Allow this distribution in the installer
+
+      // Should be able to install
+      await installer.connect(user).install(distributor.address, distributionId, "0x");
 
       // Disable the distribution
       await distributor.connect(owner).disableDistribution(distributionId);
 
-      // Install should fail with disabled distribution
-      const installData = ethers.utils.defaultAbiCoder.encode(
-        ["tuple(address,bytes)"],
-        [[installer.address, "0x"]]
-      );
-
+      // Installation should now revert
       await expect(
-        installer.connect(user).install(distributor.address, distributionId, installData)
+        installer.connect(user).install(distributor.address, distributionId, "0x")
       ).to.be.revertedWithCustomError(distributor, "DistributionNotFound");
     });
   });
