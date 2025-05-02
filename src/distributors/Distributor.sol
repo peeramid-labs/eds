@@ -292,9 +292,9 @@ abstract contract Distributor is IDistributor, ERC165 {
 
         {
             uint256 instancesLength = newAppComponents.length;
+            distributorStore.distributionOf[appId] = distributorsId;
             for (uint256 i; i < instancesLength; ++i) {
                 distributorStore.appIds[newAppComponents[i]] = appId;
-                distributorStore.distributionOf[appId] = distributorsId;
             }
         }
         emit Instantiated(distributorsId, appId, distributionVersion, newAppComponents, args);
@@ -330,7 +330,12 @@ abstract contract Distributor is IDistributor, ERC165 {
         if (appId == 0 || !distributorStore.distributionsSet.contains(distributorsId)) {
             revert InvalidApp(sender, distributorsId, appId);
         }
-        if (!LibSemver.compare(distributorStore.appVersions[appId], distributorStore.versionRequirements[distributorsId])) {
+        if (
+            !LibSemver.compare(
+                distributorStore.appVersions[appId],
+                distributorStore.versionRequirements[distributorsId]
+            )
+        ) {
             revert VersionOutdated(distributorsId, LibSemver.toString(distributorStore.appVersions[appId]));
         }
         return abi.encode(distributorsId, "");
@@ -362,7 +367,12 @@ abstract contract Distributor is IDistributor, ERC165 {
         if (appId == 0 || !distributorStore.distributionsSet.contains(distributorsId)) {
             revert InvalidApp(sender, distributorsId, appId);
         }
-        if (!LibSemver.compare(distributorStore.appVersions[appId], distributorStore.versionRequirements[distributorsId])) {
+        if (
+            !LibSemver.compare(
+                distributorStore.appVersions[appId],
+                distributorStore.versionRequirements[distributorsId]
+            )
+        ) {
             revert VersionOutdated(distributorsId, LibSemver.toString(distributorStore.appVersions[appId]));
         }
     }
@@ -410,9 +420,22 @@ abstract contract Distributor is IDistributor, ERC165 {
             require(migrationHash != bytes32(0), "Migration hash is required for repository managed migration");
         bytes32 migrationId;
         migrationId = keccak256(abi.encode(distributionId, migrationHash, strategy));
-        require(distributorStore.migrations[migrationId].distributionId == bytes32(0), MigrationAlreadyExists(migrationId));
-        require(distributorStore.distributionComponents[distributionId].distributionLocation != address(0), "Distribution not found");
-        distributorStore.migrations[migrationId] = MigrationPlan(from, to, migrationHash, strategy, distributorCalldata, distributionId);
+        require(
+            distributorStore.migrations[migrationId].distributionId == bytes32(0),
+            MigrationAlreadyExists(migrationId)
+        );
+        require(
+            distributorStore.distributionComponents[distributionId].distributionLocation != address(0),
+            "Distribution not found"
+        );
+        distributorStore.migrations[migrationId] = MigrationPlan(
+            from,
+            to,
+            migrationHash,
+            strategy,
+            distributorCalldata,
+            distributionId
+        );
 
         emit MigrationContractAddedFromVersions(
             distributionId,
