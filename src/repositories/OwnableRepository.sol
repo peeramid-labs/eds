@@ -9,9 +9,15 @@ import "@openzeppelin/contracts/utils/ShortStrings.sol";
 contract OwnableRepository is Repository, Ownable, ERC165 {
     constructor(address owner, bytes32 name, string memory cURI) Ownable(owner) Repository(name, cURI) {}
 
+    /**
+     * @inheritdoc IRepository
+     */
     function updateReleaseMetadata(LibSemver.Version memory version, bytes calldata releaseMetadata) public onlyOwner {
         super._updateReleaseMetadata(version, releaseMetadata);
     }
+    /**
+     * @inheritdoc IRepository
+     */
     function newRelease(
         bytes32 sourceId,
         bytes memory metadata,
@@ -21,10 +27,16 @@ contract OwnableRepository is Repository, Ownable, ERC165 {
         super._newRelease(sourceId, metadata, version, migrationHash);
     }
 
+    /**
+     * @inheritdoc IRepository
+     */
     function changeMigrationScript(uint64 major, bytes32 migrationHash) public onlyOwner {
         super._changeMigrationScript(major, migrationHash);
     }
 
+    /**
+     * @inheritdoc IERC165
+     */
     function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
         return interfaceId == type(IRepository).interfaceId || super.supportsInterface(interfaceId);
     }

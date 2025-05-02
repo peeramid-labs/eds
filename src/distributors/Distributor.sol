@@ -90,10 +90,16 @@ abstract contract Distributor is IDistributor, ERC165 {
         emit VersionChanged(distributorId, requirement, requirement);
     }
 
+    /**
+     * @inheritdoc IDistributor
+     */
     function calculateDistributorId(address repository, address initializer) public pure returns (bytes32) {
         return keccak256(abi.encode(repository, initializer));
     }
 
+    /**
+     * @inheritdoc IDistributor
+     */
     function calculateDistributorId(bytes32 codeHash, address initializer) public pure returns (bytes32) {
         return keccak256(abi.encode(codeHash, initializer));
     }
@@ -133,6 +139,9 @@ abstract contract Distributor is IDistributor, ERC165 {
         _newDistributionRecord(distributorId, distributionLocation, initializerAddress, readableName);
     }
 
+    /**
+     * @inheritdoc IDistributor
+     */
     function getIdFromAlias(string memory readableName) public view returns (bytes32) {
         return aliasToDistributorId[keccak256(abi.encode(readableName))];
     }
@@ -345,6 +354,9 @@ abstract contract Distributor is IDistributor, ERC165 {
             migrationId
         );
     }
+    /**
+     * @inheritdoc IDistributor
+     */
     function getVersionMigration(bytes32 migrationId) public view virtual returns (MigrationPlan memory migrationPlan) {
         return migrations[migrationId];
     }

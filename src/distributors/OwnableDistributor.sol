@@ -9,6 +9,9 @@ import "../interfaces/IMigration.sol";
 contract OwnableDistributor is Distributor, Ownable {
     constructor(address _owner) Ownable(_owner) {}
 
+    /**
+     * @inheritdoc IDistributor
+     */
     function instantiate(
         bytes32 id,
         bytes calldata args
@@ -16,9 +19,15 @@ contract OwnableDistributor is Distributor, Ownable {
         return super._instantiate(id, args);
     }
 
+    /**
+     * @inheritdoc IDistributor
+     */
     function addDistribution(bytes32 id, address initializer, string memory readableName) external onlyOwner {
         super._addDistribution(id, initializer, readableName);
     }
+    /**
+     * @inheritdoc IDistributor
+     */
     function addDistribution(
         IRepository repository,
         address initializer,
@@ -28,6 +37,9 @@ contract OwnableDistributor is Distributor, Ownable {
         _addDistribution(address(repository), initializer, requirement, readableName);
     }
 
+    /**
+     * @inheritdoc IDistributor
+     */
     function changeVersion(
         bytes32 distributionId,
         LibSemver.VersionRequirement memory newRequirement
@@ -35,10 +47,16 @@ contract OwnableDistributor is Distributor, Ownable {
         super._changeVersion(distributionId, newRequirement);
     }
 
+    /**
+     * @inheritdoc IDistributor
+     */
     function disableDistribution(bytes32 id) public onlyOwner {
         super._disableDistribution(id);
     }
 
+    /**
+     * @inheritdoc IDistributor
+     */
     function addVersionMigration(
         bytes32 distributionId,
         LibSemver.VersionRequirement memory from,
@@ -50,6 +68,9 @@ contract OwnableDistributor is Distributor, Ownable {
         _addVersionMigration(distributionId, from, to, migrationHash, strategy, distributorCalldata);
     }
 
+    /**
+     * @inheritdoc IDistributor
+     */
     function removeVersionMigration(bytes32 migrationId) public onlyOwner {
         _removeVersionMigration(migrationId);
     }
@@ -58,6 +79,9 @@ contract OwnableDistributor is Distributor, Ownable {
         return distributionComponents[distributionId];
     }
 
+    /**
+     * @inheritdoc IDistributor
+     */
     function upgradeUserInstance(
         uint256 appId,
         bytes32 migrationId,

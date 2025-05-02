@@ -6,6 +6,9 @@ import {IInitializer} from "../interfaces/IInitializer.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {IDistributor} from "../interfaces/IDistributor.sol";
 contract WrappedProxyInitializer is IInitializer {
+    /**
+     * @inheritdoc IInitializer
+     */
     function initialize(
         address distribution,
         bytes32,

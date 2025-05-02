@@ -33,6 +33,9 @@ abstract contract CloneDistribution is IDistribution {
     // @inheritdoc IDistribution
     function contractURI() external view virtual returns (string memory);
 
+    /**
+     * @inheritdoc IERC165
+     */
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IDistribution).interfaceId || interfaceId == type(IERC165).interfaceId;
     }

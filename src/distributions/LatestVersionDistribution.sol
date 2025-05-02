@@ -27,6 +27,9 @@ contract LatestVersionDistribution is CloneDistribution {
         repository = _repository;
     }
 
+    /**
+     * @inheritdoc IDistribution
+     */
     function instantiate(bytes memory) external virtual returns (address[] memory instances, bytes32, uint256) {
         return super._instantiate();
     }
@@ -38,6 +41,9 @@ contract LatestVersionDistribution is CloneDistribution {
         return (_sources, repository.repositoryName(), LibSemver.toUint256(latest.version));
     }
 
+    /**
+     * @inheritdoc IContractURI
+     */
     function contractURI() external view virtual override returns (string memory) {
         return ShortStrings.toString(metadata);
     }

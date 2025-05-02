@@ -30,6 +30,9 @@ contract CodeHashDistribution is CloneDistribution {
         _reference = codeHash.getContainerOrThrow();
     }
 
+    /**
+     * @inheritdoc IDistribution
+     */
     function instantiate(bytes memory) external returns (address[] memory instances, bytes32, uint256) {
         return super._instantiate();
     }

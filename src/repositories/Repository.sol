@@ -94,6 +94,9 @@ abstract contract Repository is IRepository {
         return src;
     }
 
+    /**
+     * @inheritdoc IRepository
+     */
     function resolveVersion(LibSemver.VersionRequirement calldata required) public view returns (uint256) {
         uint256 versionFlat = required.version.toUint256();
         uint256 resolvedVersion;
@@ -222,6 +225,9 @@ abstract contract Repository is IRepository {
         return patchReleases[(uint128(major) << 64) | uint128(minor)];
     }
 
+    /**
+     * @inheritdoc IContractURI
+     */
     function contractURI() public view returns (string memory) {
         return _cURI;
     }
@@ -233,7 +239,17 @@ abstract contract Repository is IRepository {
         emit MigrationScriptAdded(major, migrationHash);
     }
 
+    /**
+     * @inheritdoc IRepository
+     */
     function getMigrationScript(uint64 major) public view returns (bytes32) {
         return releaseMigrationHash[major];
+    }
+
+    /**
+     * @inheritdoc IRepository
+     */
+    function repositoryName() public view returns (bytes32) {
+        return repositoryName; // Note: Shadowing public immutable variable
     }
 }

@@ -8,6 +8,8 @@ import {WrappedTransparentUpgradeableProxy} from "../proxies/WrappedTransparentU
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import {IAdminGetter} from "../interfaces/IAdminGetter.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
+
 contract UpgradableDistribution is IDistribution {
     bytes32 private immutable metadata;
     address private immutable _reference;
@@ -61,6 +63,9 @@ contract UpgradableDistribution is IDistribution {
         return sources();
     }
 
+    /**
+     * @inheritdoc IERC165
+     */
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IDistribution).interfaceId || interfaceId == type(IERC165).interfaceId;
     }
