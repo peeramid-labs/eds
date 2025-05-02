@@ -1,8 +1,23 @@
 # Repositories
 
-Repositories are used to list and manage distributions.
+Repositories are smart contracts designed to list and manage distributions, providing a versioning system for scenarios where continuous improvements are expected. They act as an abstraction layer over individual Distribution sources, leveraging the [Versioning](./Versioning.md) system.
 
-Repositories are made for developer convenience in case when continous improvements are expected. They are thought as abstraction layer above single Distributions and allow versioning code using [Versioning](./Versioning.md) system.
+## Core Concepts
+
+The repository system is built around the abstract `Repository` contract (`src/repositories/Repository.sol`), which implements the `IRepository` interface. Key functionalities include:
+
+*   **Versioning:** Manages releases using semantic versioning (Major.Minor.Patch). It tracks the latest version and enforces sequential increments for new releases (`_newRelease`).
+*   **Source Management:** Maps each specific version (Major.Minor.Patch) to a `sourceId` (typically a hash or identifier pointing to the distribution source) using the `versionedSources` mapping. The `LibERC7744` library is utilized, often for source identification.
+*   **Metadata:** Stores metadata associated with releases at different levels:
+    *   Major version metadata (`releaseMetadata`).
+    *   Minor version metadata (`minorReleaseMetadata`).
+    *   Patch version metadata (`patchReleaseMetadata`).
+    *   Metadata can be updated using `_updateReleaseMetadata`. The `get` function automatically combines metadata from all relevant levels for a resolved version.
+*   **Migration Scripts:** Allows associating an immutable migration script (identified by its hash/`sourceId`) with each major version (`releaseMigrationHash`). This script can be retrieved using `getMigrationScript` and updated via `_changeMigrationScript`. Migration scripts are only allowed when introducing a new major version.
+*   **Version Resolution:** Provides functions like `get` and `resolveVersion` to find the appropriate version based on version requirements (e.g., exact version, latest major, latest minor, greater/less than).
+*   **Contract URI:** Supports EIP-721's `contractURI` method to link to off-chain metadata about the repository itself.
+
+A common concrete implementation is `OwnableRepository` (`src/repositories/OwnableRepository.sol`), which inherits from `Repository` and adds `Ownable` access control. This means functions like `newRelease`, `updateReleaseMetadata`, and `changeMigrationScript` can only be called by the contract owner.
 
 ## CLI
 

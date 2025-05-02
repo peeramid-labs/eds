@@ -1,70 +1,116 @@
-# Upgrading contracts with EDS
+# Upgradeability in EDS
 
 ## Introduction
 
-EDS implements next level abstraction pattern over traditional smart contract upgradeability. It allows to upgrade contracts in a safe and easy way, which is fully owned by the end users, without sacrificing any distributor trust to app nor installer.
+EDS implements a multi-party trust model for contract upgradeability. This model ensures both distributors and end-users have control over the upgrade process, creating a balance of power that prevents either party from unilaterally forcing upgrades.
 
-## Trust assumptions
-Upgradability that is both trusted by end-user and distributor requires careful design. Hence this section describes the trust assumptions that are made by EDS.
+## Trust Model & Security Architecture
 
-In EDS it is assumed that downstream contracts are trusted by upstream contracts by explicitly referring to them. Upstream dependencies are unaware of downstream contracts and do not trust them, however may expose public interfaces that are used by downstream contracts.
+Upgradeability in EDS is built on a carefully designed trust model with clear boundaries between different domains:
 
-**1. Ethereum (blockchain consensus, permission-less) domain:**
-- [ERC7744 Indexer](./Indexer.md) is the most upstream in dependency chain within the EDS ecosystem and is the only contract that functionality may be trusted by ALL parties.
-- In order for [Distributions](./Distributions.md) may be part of same trust domain they **MUST** use [ERC7744 Indexer](./Indexer.md) to refer code.
-**2. Developer domain**:
-- [Repositories](./Repositories.md) managed by developers may list any developer owned distributions.
-- Distributions that rely on any state or external calls are also developers domain.
-- Developers trust [ERC7744 Indexer](./Indexer.md) to refer code and they trust any code they deploy or list on their Repositories.
-**3. Distributor domain**:
-- Distributor trusts [Distributions](./Distributions.md) or [Repositories](./Repositories.md) he lists.
-- Distributor **explicitly** lists [versions](./Versions.md) he supports in case listed source is a [repository](./Repositories.md).
-- Distributors allow verification checks and upgrade calls for [versions](./Versions.md) he supports by users and may impose specific business or protocol logic on such downstream contracts.
-- Distributors trust [ERC7744 Indexer](./Indexer.md) to refer code.
-- Distributors may allow cross-instance calls between apps that they consider to be trusted and enforce these rules via runtime validation.
-**4. End user domain**:
-- End users trust [Distributors](./Distributors.md) they use.
-- End users trust [ERC7744 Indexer](./Indexer.md) to refer code.
-- Use [Installer](./Installer.md) to install and upgrade [Distributions](./Distributions.md) and [Repositories](./Repositories.md).
+**1. Ethereum (blockchain consensus) domain:**
+- The [ERC7744 Indexer](./Indexer.md) serves as the foundational layer, trusted by all parties to reference code by its bytecode hash.
+- [Distributions](./Distributions.md) maintain their trust by exclusively using the ERC7744 Indexer to reference code objects.
 
-## Runtime validation with ERC7746
+**2. Developer domain:**
+- Developers manage [Repositories](./Repositories.md) that index their code versions.
+- They define upgrade paths and may implement migration scripts for major version changes.
+- Developers trust the ERC7744 Indexer and can list any of their developed distributions in their repositories.
 
-Whenever an app calls end-user contract, or anyone attempts to call user-owned application, ERC7746 interface is used to implement [runtime middleware hooks](./Hooks.md).
+**3. Distributor domain:**
+- Distributors curate which distributions and versions they support.
+- They define migration plans for supporting upgrades between versions.
+- They act as middlewares for runtime verification and upgrade transactions.
+- Distributors trust the code indexed by ERC7744 and explicitly listed in their registries.
 
-Dependency graph follows from downstream to upstream up until Distributor:
+**4. End-user (Installer) domain:**
+- End-users interact with applications through the [Installer](./Installer.md) contract.
+- They choose which distributor to trust for a given application.
+- They must explicitly consent to any upgrade through the middleware pattern.
+
+## ERC7746 Middleware & Web3 Hooks
+
+The core of the upgrade security model is the ERC7746 middleware pattern, implemented through the `ERC7746Hooked` and `LibMiddleware` components.
+
+### How the Middleware Works:
+
+1. Proxies like `WrappedTransparentUpgradeableProxy` inherit from `ERC7746Hooked` and apply the `ERC7746` modifier to their `fallback()` function.
+
+2. When functions related to proxy administration (particularly `upgradeToAndCall`) are invoked, the modifier:
+   - Calls `LibMiddleware.beforeCall()`, which iterates through registered middleware layers.
+   - Each layer (notably the distributor) can validate the call and enforce rules.
+   - After the function executes, `LibMiddleware.afterCall()` is called in reverse order.
+   - Middleware layers can perform post-execution validations or cleanup.
+
+3. This middleware pattern is used for two key scenarios:
+   - **Upgrades:** To ensure both distributor and end-user consent to upgrades.
+   - **Cross-app Interactions:** To verify that interactions between applications follow distributor-defined rules.
+
+### Call Flow During an Upgrade:
+
 ```
-External call:
- before call: App -> Installer -> Distributor  (beforeCall hooks)
- App Call
- After call: Distributor -> Installer -> App (afterCall hooks)
+When upgradeToAndCall is invoked:
+  - beforeCall: Proxy → Distributor  (validateLayerBeforeCall)
+  - Actual upgradeToAndCall function execution
+  - afterCall: Distributor → Proxy (validateLayerAfterCall)
 ```
 
-## Upgradable distributions
-Since double trust assumptions, regular proxies owned by single party are not allowed. Developers **MUST** deploy upgradeable distributions for their app, example of such is [WrappedTransparentUpgradeableProxy](../src/proxies/WrappedTransparentUpgradeableProxy.sol).
+## Upgradeable Proxy Architecture
 
-Such contracts create upgradable instances of app, which are **owned** by distributor but **access permissions** are managed by Installer. Attempts to call upgradability selectors **MUST** result in ERC7746 hook call to Installer.
+EDS uses a specialized proxy implementation, `WrappedTransparentUpgradeableProxy`, which extends OpenZeppelin's `TransparentUpgradeableProxy` with ERC7746 middleware capabilities.
 
-This mechanic allows to upgrade app without requiring any changes to distributor, while still allowing to enforce business logic on upgrade.
-If user wants to renounce distributor, he can do so, but will not be able to upgrade app anymore, unless distributor transfers ownership to user or new distributor.
+Key features:
 
+1. **Dual Authority Model:**
+   - The proxy has a standard **owner** (typically the end-user/installer) who controls standard admin functions.
+   - The proxy also has an **admin** (typically the distributor) who controls implementation upgrades.
+   - The admin is also registered as the sole middleware layer using `LibMiddleware.setLayers()`.
 
-## Upgrading
+2. **Upgrade Protection:**
+   - Upgrade attempts trigger the ERC7746 middleware hooks.
+   - The distributor can validate that the upgrade follows its version and migration policies.
+   - The installer can validate that it has authorized the upgrade through a separate channel.
 
-Process of normal upgrade routine is as follows:
+3. **Deployment Flow:**
+   - The proxy is deployed by the `UpgradableDistribution` contract.
+   - The end-user is set as the owner.
+   - The distributor (instantiator) is set as the admin and middleware layer.
 
-1. Distributor lists new upgrade version for a Repository with a specific version.
-2. Users calls Installer initialize upgrade via `upgradeApp` function.
-3. Installer sets flag that app is in upgrade mode and will call Distributor with `upgradeUserInstance` hook.
-4. Distributor validates that upgrade is allowed and that version is listed.
-5. Distributor loads migration plan from his storage and executes migration logic.
-6. Migration logic one way or another must call upgrade on the app instance, as example in [WrappedTransparentUpgradeableProxy](../src/proxies/WrappedTransparentUpgradeableProxy.sol) it is done by `upgradeToAndCall` function by wrapping standard OpenZeppelin upgrade function.
-7. App instance contact **MUST** call back to Installer via `beforeCall` hook.
-8. Installer validates that call was allowed by Distributor.
-9.  Installer sets flag that app is no longer in upgrade mode.
+## Upgrade Process
 
-## Migration plan
+The complete upgrade flow combines distributor, installer, and proxy mechanisms:
 
-`MigrationPlan` is a structure that describes how to migrate from one version to another. It contains:
+1. **Preparation:**
+   - A distributor adds a new version to its supported versions list.
+   - The distributor defines a migration plan using `addVersionMigration()`.
+
+2. **Initiation:**
+   - The installer (end-user) signals upgrade intent by calling its `upgradeApp()` function.
+   - The installer sets a flag indicating the app is in upgrade mode.
+
+3. **Execution:**
+   - The installer calls the distributor's `upgradeUserInstance()` function.
+   - The distributor validates the upgrade request against its policies.
+   - The distributor executes the migration plan based on the selected strategy:
+     - **CALL:** Directly calls a migration contract
+     - **DELEGATECALL:** Uses delegatecall to a migration contract
+     - **DELEGATE_REPOSITORY:** Executes migrations defined in the repository
+
+4. **Proxy Upgrade:**
+   - The migration ultimately calls `upgradeToAndCall()` on the proxy.
+   - This triggers the ERC7746 middleware hooks.
+   - The distributor validates the upgrade is the one it initiated.
+   - The installer validates the upgrade was initiated by itself.
+
+5. **Completion:**
+   - The proxy's implementation is updated.
+   - The installer clears the upgrade mode flag.
+   - The distributor updates its record of the app's version.
+
+## Migration Plans
+
+Migration plans define how to transition between versions:
+
 ```solidity
 struct MigrationPlan {
     LibSemver.VersionRequirement from;
@@ -73,41 +119,63 @@ struct MigrationPlan {
     MigrationStrategy strategy;
 }
 ```
-Migration plan is stored in Distributor storage and is used by Distributor to execute migration logic. Migration contract **MUST** implement [IMigration](../src/interfaces/IMigration.sol) interface.
 
-### Migration strategies
+### Strategies:
 
-Migration plan may use different strategies to migrate from one version to another. There are three strategies:
+1. **CALL:**
+   - The distributor calls the migration contract directly.
+   - The migration contract handles all upgrade logic.
 
-**1. Call**
-Distributor will call migration contract with calldata from migration plan. Migration contract will execute the call and return control flow to Distributor.
-Migration contract MAY use repository specified migration scripts, distributor only passes current, new versions and repository address.
+2. **DELEGATECALL:**
+   - The distributor performs a delegatecall to the migration contract.
+   - The migration contract executes with the distributor's storage context.
 
-**2. Delegatecall**
-Distributor will delegate execution from own name to migration contract with calldata from migration plan. Migration contract will execute the call and return control flow to Distributor.
-Migration contract MAY use repository specified migration scripts, distributor only passes current, new versions and repository address.
+3. **DELEGATE_REPOSITORY:**
+   - The distributor delegates to migrations defined in the repository.
+   - For major version changes, it executes sequential migrations (e.g., v1→v2→v3).
+   - The repository's defined migrations handle state transformations.
 
-**3. Repository managed**
+## Renouncing Distributor Control
 
-Migration contract will be deployed by Installer and will be managed by Repository. Distributor will not execute any migration logic, but will only signal Installer to execute migration.
+End-users can permanently or temporarily remove a distributor's upgrade control:
 
-Distributor contract will **DELEGATECALL** to repository specified migration script one by one executing migrations for any major version release between `from` and `to` versions.
-Eg. if migrating from v0.0.1 to v3.0.0 Distributor will execute migrations for v1.0.0, v2.0.0 and v3.0.0.
+- The installer can call `changeDistributor()` to:
+  - Transfer control to a new distributor
+  - Completely renounce distributor control
+  - Transfer control directly to the end-user
 
-#### Minor version migrations
+- This process:
+  - Updates the installer's records
+  - Calls the distributor to inform it of the change
+  - For `WrappedTransparentUpgradeableProxy`, transfers the admin role accordingly
 
-Distributors may specify migration for minor version migrations.
-Repositories may not.
+> [!WARNING]
+> Renouncing distributor control means losing access to guided upgrades and any security or compliance features the distributor provides. This should be done with caution.
 
-In case if minor version migration is specified, Distributor shall not specify strategy as `RepositoryManaged`.
+## CLI Operations
 
+> [!NOTE]
+> The CLI provides utilities to manage upgrades.
 
-## Renouncing distributor
+```bash
+# View available versions for an app
+eds installer app <app-id> versions
 
-Installer may renounce distributor webhooks by calling `function changeDistributor(uint256 appId, IDistributor newDistributor, bytes[] memory appData) external;`
+# Initiate an upgrade
+eds installer app <app-id> upgrade --version <version>
 
-This will allow to transfer ownership to new distributor or to user.
+# Get migration information
+eds distributor <address> migration list --app <app-id>
 
-Proper secure installer should ensure this function call has high level of permissions required, so that it cannot be used to bypass security oracle features Distributors may provide.
+# Add a migration plan
+eds distributor <address> migration add <migration-hash> --name <distribution-name> --from <version> --to <version> --strategy <strategy>
 
-This function will not only remove records of distributor, but also call distributor hook to remove distributor from app to inform it of change. This hook is to be used by distributors to support break up process and release app control from their side, for example in case of `WrappedTransparentUpgradeableProxy` it will transfer ownership to user or to a new distributor.
+# Change distributor
+eds installer app <app-id> change-distributor <new-distributor>
+
+# Renounce distributor
+eds installer app <app-id> renounce-distributor
+
+# Common options available for all commands
+--rpc-url <url>       # RPC endpoint
+--private-key <key>   # Private key for transactions

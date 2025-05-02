@@ -1,96 +1,108 @@
 # **Ethereum Distribution System**
 
-The Ethereum Distribution System (EDS) is an open and decentralized, fully on-chain distribution (factory) system for Ethereum smart contracts. Using EDS enables developers to monitize their sources, publish and reuse each other's code in a trustless manner. Built-in system for [semantic versioning](http://semver.org/), managing versions and combining into higher level distributions allows developers to avoid using upgradability patterns, instead relying on version control.
-System provisions for generic interfaces for distributors, developers and installers, each with their own responsibilities and constraints.
+The Ethereum Distribution System (EDS) is an open and decentralized, fully on-chain distribution (factory) system for Ethereum smart contracts. Using EDS enables developers to publish and reuse each other's code in a trustless manner, potentially monetize their sources, and manage upgrades securely. It features built-in support for [semantic versioning](./docs/guides/Versioning.md) (`SemVer`), sophisticated version management, and a robust upgrade process involving multiple parties.
+System provisions for generic interfaces for developers, distributors and installers, each with their own responsibilities and constraints.
 
 
-> [!WARNING]  
-> This repository is still in development, parts of code, specifically Repository functionality testing is limited to unit tests. Please treat it as unstable with possible API changes. If you want to use it in production environment please reach back to Peeramid Labs so we can prioritize accoridngly. 
+> [!WARNING]
+> This repository is still in development. Please treat it as unstable with possible API changes. If you want to use it in production environment please reach back to Peeramid Labs so we can prioritize accordingly.
 
 ## **Use cases**
 
-* **Factory Framework**: Instead of writing own factory, just write a distribution and register it
-* **Ship faster**: Reduce the number of needed deployment artifacts to ship your project. Re-using other packages instead\!
-* **Security oracles**: Disconnect vulnerable code from your users in O(1)
-* **Semantic versioning with EIP712**: Instead of having to figure out "what to write in EIP712 constructor" just use the built in version control system\!
-* **User owned upgradability**: Get more user trust by allowing them to decide when to upgrade
-* **Improve user UX**: Configure trust within instance or distribution, so that your users do not need to set allowances and issue permits anymore\!
-* **On-chain github**: Refer bytecode instead of location using ([ERC7744](https://eips.ethereum.org/EIPS/eip-7744))
-* **Better Monetize your apps and services**: As your application becomes distributed, and wrapped, you may directly build in payment systems and subscription models on-chain\!
+* **Standardized Factory Framework**: Deploy code instances using standard [`Distribution`](./docs/guides/Distributions.md) contracts instead of writing custom factories.
+* **Code Reusability & Faster Shipping**: Reduce deployment artifacts by reusing indexed code ([`ERC7744`](./docs/guides/Indexer.md)) via [`Repositories`](./docs/guides/Repositories.md) and [`Distributions`](./docs/guides/Distributions.md).
+* **Runtime Security & Compliance**: Implement security oracles or compliance checks via [`Distributor`](./docs/guides/Distributors.md) contracts acting as middleware ([`ERC7746`](./docs/guides/Upgradability.md)).
+* **Semantic Versioning & EIP712**: Utilize the built-in [versioning system](./docs/guides/Versioning.md) in `Repositories` for clarity and consistency.
+* **Multi-Party Upgradability**: Implement secure upgrade flows requiring consent from both the [`Distributor`](./docs/guides/Distributors.md) and the end-user (`Installer`) via the [upgradeability model](./docs/guides/Upgradability.md).
+* **Improved User UX**: Pre-configure trust relationships within Distributions or Distributors.
+* **On-chain Code Indexing**: Reference code immutably by its bytecode hash using [`ERC7744`](./docs/guides/Indexer.md).
+* **Monetization Models**: Build payment systems or subscription models using contracts like `TokenizedDistributor` (detailed in [`Distributors`](./docs/guides/Distributors.md)).
 
 ## **Overview**
 
-This system acts as a generalized and efficient factory which is designed in one-fits-all principle. It achieves this by splitting EDS users in following groups:
+EDS provides a generalized and efficient factory system by defining clear roles and interactions:
 
-* **Developers**: Create a distributable (stateless) software that can be instantiated. It can use already deployed contracts and functionality\!
-* **Distributors**: Security firms and traditional distributor agencies. Ensure that distributions they list are secure (think of this as a runtime checked audit attestation), trusted and act in their user interest\!
-* **Smart accounts**: Use Distributor software to plug it into your smart account\!
+* **Developers**: Create stateless, reusable contract logic ([`Distributions`](./docs/guides/Distributions.md)) and manage their versions, metadata, and migration paths using [`Repositories`](./docs/guides/Repositories.md).
+* **Distributors**: Curate lists of trusted [`Distributions`](./docs/guides/Distributions.md) or [`Repositories`](./docs/guides/Repositories.md), manage version requirements, define migration plans, and act as a security/compliance layer (middleware) for instantiated applications. ([Distributors Guide](./docs/guides/Distributors.md))
+* **Installers (End Users)**: Interact with applications via `Installer` contracts, choosing trusted `Distributors` and participating in the secure upgrade process detailed in the [Upgradability Guide](./docs/guides/Upgradability.md).
 
-IN the background, there is extensive use of proxies to map instances, that are proxies, to a right functionality. Instances are also treated as middlewares that are hooked to the distributor with use of [ERC7746](https://eips.ethereum.org/EIPS/eip-7746), in such a way that the caller cannot reach the functionality without first checking with the distributor. The distributor in turn, by default, checks if the instance is a valid distribution.
-If the developer wants to manage multiple versions of the same resource, they can create a *Repository* contract to add their own index on top of global.
-
-## Project status: Alpha
-
-We are open for discussion, whether this should be managed trough a governing body as a DAO.
-
-If you want to be up to date, express your opinion or not miss a thing, please
-- subscribe to our twitter: https://x.com/peeramid_labs
-- join our discord: https://discord.gg/EddGgGUuWC
-
+The system heavily utilizes proxies for deployed application instances. These proxies are often integrated with the [`ERC7746`](./docs/guides/Upgradability.md) middleware standard. This allows `Distributors` to act as hooks, intercepting calls (especially for upgrades) to enforce security policies and version constraints, requiring consent from both the `Distributor` and the `Installer`.
 
 ### Key Features
 
-- **Verifiable:** Stateless distribution components are easily verifiable by anyone through their bytecode.
-- **Permission-less:** Anyone can deploy distribution components without requiring permissions.
-- **Inclusive:** Can accommodate already deployed on-chain functionality.
-- **Versionable:** [Semver](http://semver.org/) based versioning can be applied to manage resources.
-- **Plug-n-Play:** Installation procedures,easily customizable for any target platform are provisioned.
-- **Secure:** Isolated contract sets and baked-in runtime checks enable trust chain between developers, distributors and users.
-- **Efficient:** Extensive reuse of the same bytecode reduces gas costs, increasing efficiency across the industry.
+- **Verifiable:** Stateless distributions are verifiable via bytecode hashes ([`ERC7744`](./docs/guides/Indexer.md)).
+- **Permission-less:** Anyone can index code ([`ERC7744`](./docs/guides/Indexer.md)) or deploy basic [`Distributions`](./docs/guides/Distributions.md).
+- **Composable:** Integrates existing on-chain contracts and allows building complex applications from smaller parts.
+- **Versionable:** Robust [`SemVer`](./docs/guides/Versioning.md) based versioning via [`Repositories`](./docs/guides/Repositories.md).
+- **Upgradable:** Secure multi-party [upgrade mechanism](./docs/guides/Upgradability.md) via [`Distributors`](./docs/guides/Distributors.md) and [`ERC7746`](./docs/guides/Upgradability.md) middleware.
+- **Secure:** Trust boundaries between domains, with runtime checks enforced by [`Distributors`](./docs/guides/Distributors.md).
+- **Efficient:** Promotes code reuse via [`ERC7744`](./docs/guides/Indexer.md) indexing, potentially reducing deployment costs.
 
 ![image](https://github.com/user-attachments/assets/52fa7028-177c-4de2-9259-3f883491a3d3)
 
 ### Key Components
 
-System components are broken down into four domains: Permission-less, Developer, Distributor and User. Each domain has its own set of contracts and interfaces, which are designed to work together to provide a seamless experience for developers and users.
+System components are broken down into four domains: Permission-less, Developer, Distributor and User. Each domain has its own set of contracts and interfaces. For more details, see the specific guides linked below or in the [`docs/guides/`](./docs/guides/) directory.
 
 #### Permission-less Domain
 
-##### CodeIndex ([ERC-7744](https://eips.ethereum.org/EIPS/eip-7744))
+##### CodeIndex ([`ERC-7744`](./docs/guides/Indexer.md))
 
-A stateful, permission less contract allowing anyone to register associations between bytecode and its on-chain location. Any smart contract may be indexed by `CodeIndex` based on its bytecode.
+A global, permissionless registry mapping contract bytecode hashes to their on-chain deployment addresses. This allows referencing code immutably. ([Indexer Guide](./docs/guides/Indexer.md))
 Proposed `CREATE2` implementation with deterministic address : `0xC0dE1D2F7662c63796E544B2647b2A94EE658E07`
 
-##### `Distribution`
+##### [`Distribution`](./docs/guides/Distributions.md) (Interface & Implementations)
 
-Interface for contracts that allow specific mechanics of instantiation of referred bytecode identifiers in the `CodeIndex`. It may be using different methods for instantiation, yet it is ultimately referred by it's bytecode hash and instantiation methods kept non-parametric, to promote hardcoding of instantiation logic by the distribution creator, ultimately making any distribution a unique part of code ecosystem.
-It also allows distribution creators to associate own metadata with the distribution, such as URIs defined in [ERC-190](https://eips.ethereum.org/EIPS/eip-190) or [ERC-2678](https://eips.ethereum.org/EIPS/eip-2678)
+Contracts responsible for instantiating specific contract logic referenced by a code hash or address. ([Distributions Guide](./docs/guides/Distributions.md)) Base implementations include:
+*   `CloneDistribution`: Creates simple clones of a source contract.
+*   `CodeHashDistribution`: Instantiates code based on an `ERC7744` code hash.
+*   `LatestVersionDistribution`: Instantiates the latest version from a `Repository`.
+*   `UpgradableDistribution`: Deploys `WrappedTransparentUpgradeableProxy` instances integrated with the ERC7746 upgrade flow.
+Distributions aim to be stateless, focusing only on deployment logic.
 
 #### Developer Domain
 
-##### Repositories
+##### [`Repository`](./docs/guides/Repositories.md)
 
-Repositories are interfaces provided for stateful, permissioned contracts allowing developers to manage resources and versions. Such repositories may return any kind of source code reference, including system-internal used ones, like `IDistribution`. It allows developers to increment versions according to [Semver](http://semver.org/) as well as implement version requirements lookup for the clients.
-
-##### Non-Stateless Distributions
-
-Any implementation of Distribution interface mentioned in the Permission-less Domain, that is stateful is considered as a Developer Domain component. It is possible in principle, yet will be used only for specific use-cases, where stateful distribution is required and will require distribution users to use direct location addressing, effectively excluding it from the global index system.
+Stateful, permissioned contracts managed by developers to organize versions of their code. ([Repositories Guide](./docs/guides/Repositories.md)) Key features:
+*   Manages releases using [Semantic Versioning](./docs/guides/Versioning.md) (Major.Minor.Patch).
+*   Maps versions to source IDs (e.g., `ERC7744` code hashes).
+*   Stores version-specific metadata.
+*   Associates migration scripts with major version changes.
+*   Allows resolving version requirements (e.g., `^1.2.0`, `~2.0.0`).
 
 #### Distributor Domain
 
-##### Distributor
+##### [`Distributor`](./docs/guides/Distributors.md)
 
-Stateful, permissioned contract interface for managing distributions. It allows distributors, who may act as trusted source for many, to have their own index of trusted distributions coupled to any, parametric, initialization logic that they might need. This is a first point on instantiation chain that allows to configure distribution after it's been instantiated.
-
-##### Version Distributor
-
-Same as Distributor, but with additional functionality to manage versions of distributions. It allows to manage multiple versions of the same distribution and to provide version requirements lookup for the clients. Distributor may change the version of the repository, effectively disabling, in one go, every outdated version instances from operating in the system.
+Stateful, permissioned contracts that act as trusted intermediaries. ([Distributors Guide](./docs/guides/Distributors.md)) Key roles:
+*   Maintain a registry of trusted `Distributions` or `Repositories`.
+*   Define supported version requirements for repository-backed distributions.
+*   Manage `MigrationPlan`s for handling upgrades between versions.
+*   Instantiate application instances for users (often via `IInitializer` like `WrappedProxyInitializer`).
+*   Act as the **[`ERC7746` middleware](./docs/guides/Upgradability.md)** layer for deployed proxies, enforcing security and upgrade policies.
+*   Implementations like `OwnableDistributor` (access control) and `TokenizedDistributor` (monetization) exist.
 
 #### User Domain
 
-##### Installer
+##### `Installer`
 
-Stateful, permissioned contracts for managing permissions and accessing targets from multiple distributors. Allows end-users to manage trusted sources for their installations.
+Contracts (typically part of a user's smart account or wallet setup) used by end-users to manage their application instances. The interaction between Installers, Distributors, and the upgrade process is detailed in the [Upgradability Guide](./docs/guides/Upgradability.md). Key functions:
+*   Interact with `Distributors` to instantiate applications.
+*   Hold ownership of application proxies.
+*   Participate in the upgrade process by initiating upgrades and consenting via the `Distributor`'s middleware checks.
+*   Manage trust relationships with `Distributors` (including changing or renouncing them).
+
+## Documentation Guides
+
+For a deeper understanding of each component and concept, refer to the following guides:
+
+*   **[Indexer (`ERC7744`)](./docs/guides/Indexer.md):** Explains the permissionless code registry.
+*   **[Distributions](./docs/guides/Distributions.md):** Details the different types of distribution contracts and their instantiation logic.
+*   **[Repositories](./docs/guides/Repositories.md):** Covers how developers manage code versions, metadata, and migration scripts.
+*   **[Distributors](./docs/guides/Distributors.md):** Describes the role of distributors in managing distributions, versions, upgrades, and security.
+*   **[Upgradeability (`ERC7746`)](./docs/guides/Upgradability.md):** Explains the multi-party trust model, middleware hooks, proxy architecture, and the detailed upgrade flow.
+*   **[Versioning (`SemVer`)](./docs/guides/Versioning.md):** Details the semantic versioning scheme used throughout EDS.
 
 ## Getting Started
 

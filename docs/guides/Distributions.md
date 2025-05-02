@@ -1,85 +1,105 @@
 # Distributions
 
-Distributions are the main entities in EDS. They are used to distribute and upgrade contracts.
+Distributions are smart contracts serving as the primary mechanism within EDS for deploying instances of specific contract logic. They encapsulate the source code (or a reference to it) and provide methods to instantiate it, potentially applying versioning or upgradability patterns.
 
-Distributions are enshrined to be developed in state-less manner, this allows easier auditing and secure portability of code cross-chain.
+Distributions are generally designed to be stateless, focusing solely on deploying logic. Managing the state *of* deployed instances is typically handled by users or specialized [Distributors](./Distributors.md).
 
 > [!WARNING]
-> If you deploy stateless distributions they will may likely be problematic to adapt by developers because of bytecode hash referencing by [Indexer](./Indexer.md). This is done intentionally to enshrine more secure development best practices.
+> Deploying stateful logic directly within a Distribution contract itself is discouraged. It complicates upgrades and may interfere with indexers like the [Indexer](./Indexer.md) that rely on bytecode hashes. Use a [Distributor](./Distributors.md) for managing stateful application logic built upon stateless Distribution sources.
 
-## Stateful distributions
+## Distribution Types
 
-Stateful distributions are distributions that are not stateless. They are used to distribute and upgrade contracts that are not stateless.
+EDS provides several base distribution contracts:
 
-If you need to deploy such stateful distributions, we suggest using [Distributor](./Distributors.md) instead that will manage state of your distribution and is designed with features for that in mind.
+### 1. Clone-Based Distributions (`CloneDistribution`)
 
-## Creating a distribution
+The abstract `CloneDistribution` contract (`src/distributions/CloneDistribution.sol`) serves as a base for distributions that deploy new instances using `Clones.clone`. Concrete implementations must override the `sources()` function to return the address(es) of the logic contract(s) to be cloned, along with the distribution's name and version.
 
-In order to create a distribution, first deploy your contract on-chain or copy address you want to use and then index contract code using [Indexer](./Indexer.md)
+Its `instantiate` function (called via `_instantiate`) clones the source(s) and emits a `Distributed` event.
 
-Once indexed, you can create a distribution using one of available [distribution contracts](../src/distributions)
+#### Example: `CodeHashDistribution`
 
-When extending distributions, you must implement `sources()` virtual function. For every source you return there, distribution abstracts will create one way or another a proxy that will deploy and link every source to proxy.
-
-Here is simple example of stateless distribution using [CloneDistribution](../src/distributions/CloneDistribution.sol):
+`CodeHashDistribution` (`src/distributions/CodeHashDistribution.sol`) extends `CloneDistribution`. It's initialized with a `codeHash` (referencing code indexed by the [Indexer](./Indexer.md)), metadata, name, and version. Its `sources()` implementation resolves the `codeHash` to the deployed contract address using `LibERC7744.getContainerOrThrow()` and returns that address to be cloned.
 
 ```solidity
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "@peeramid-labs/eds/versioning/LibSemver.sol";
-import "@peeramid-labs/eds/distributions/CloneDistribution.sol";
-contract MyDistribution is CloneDistribution {
+// Example: Deploying a CodeHashDistribution
+// Assume MyLogicContract code is indexed and its hash is CODE_HASH
+bytes32 name = "MyDistribution";
+uint256 version = LibSemver.toUint256(LibSemver.Version(1, 0, 0));
+bytes32 metadata = bytes32(0); // Optional metadata
+CodeHashDistribution myDist = new CodeHashDistribution(CODE_HASH, metadata, name, version);
 
-    ShortString private immutable distributionName;
-    uint256 private immutable distributionVersion;
-
-
-    constructor(LibSemver.Version memory version) {
-        distributionName = ShortStrings.toShortString("MyDistribution");
-        distributionVersion = version.toUint256();
-    }
-    using LibSemver for LibSemver.Version;
-    function sources() public pure override returns (address[] memory sources, bytes32 name, uint256 version) {
-        sources = new address[](1);
-        sources[0] = 0x1234567890123456789012345678901234567890;
-        name = ShortString.unwrap(distributionName);
-        version = distributionVersion;
-    }
-}
+// Later, anyone can instantiate it (if stateless)
+(address[] memory instances, ,) = myDist.instantiate(""); // data is unused in base CloneDistribution
+address myInstance = instances[0];
 ```
 
-### Creating upgradable repository managed distribution
+#### Example: `LatestVersionDistribution`
 
-In EDS [Upgradability](./Upgradability.md) is complex multi-party trust process. It enables pattern where distributor & user must agree on upgrade before it can be executed.
+`LatestVersionDistribution` (`src/distributions/LatestVersionDistribution.sol`) also extends `CloneDistribution`. It links to a [Repository](./Repositories.md). Its `sources()` implementation calls `repository.getLatest()` to find the `sourceId` of the latest version in the repository, resolves it to an address using `LibERC7744.getContainerOrThrow()`, and returns that address to be cloned. This ensures users always instantiate the most recent version available in the linked repository.
 
-In order to enable this process, standard upgradable proxies cannot be used. Instead, we must use proxies that have [ERC7746 Hooks](./Hooks.md) implemented within immutable part of the contract.
-This hooks must be implemented by developer of the distribution in such way, that only [Distributor](./Distributors.md) can upgrade the distribution, but the Installer consent is checked in runtime.
+### 2. Upgradable Distributions (`UpgradableDistribution`)
 
-Example of such upgradable distribution is [WrappedTransparentUpgradeableProxy](../src/proxies/WrappedTransparentUpgradeableProxy.sol).
+The `UpgradableDistribution` contract (`src/distributions/UpgradableDistribution.sol`) provides a mechanism for deploying instances that follow a specific upgradability pattern, integrating with [Distributors](./Distributors.md) and the [Upgradability](./Upgradability.md) flow. It does *not* inherit from `CloneDistribution`.
 
-Management of the upgrades & migrations on developer side is done via [Repository](./Repositories.md) contract.
-Distributors are free to implement their own logic of migration of the state, wrapping or completley bypassing Developer packages as they need to.
+**Mechanism:**
 
-For more details refer to [Upgradability](./Upgradability.md) documentation.
+1.  It's initialized similarly to `CodeHashDistribution` with a `codeHash`, metadata, name, and version.
+2.  Its `instantiate` function requires ABI-encoded `data` containing the `installer` address and initialization `args` for the proxy.
+3.  Crucially, `instantiate` deploys a `WrappedTransparentUpgradeableProxy` (`src/proxies/WrappedTransparentUpgradeableProxy.sol`) for each source.
+4.  When creating the `WrappedTransparentUpgradeableProxy`:
+    *   The logic contract address (resolved from `codeHash`) is set as the implementation.
+    *   The **installer** address (from `data`) is set as the proxy's *owner*.
+    *   The **distributor** address (`msg.sender` of the `instantiate` call) is set as the proxy's *admin* and registered as the sole middleware layer using `ERC7746Hooked` (`src/middleware/ERC7746Hooked.sol`).
+5.  This setup means:
+    *   Standard proxy owner functions (like changing the admin) are controlled by the **installer**.
+    *   Upgrades (changing the implementation) are controlled by the **distributor** acting as the `ProxyAdmin` *and* the middleware layer. The upgrade process happens via the distributor calling the proxy, triggering the ERC7746 hook flow detailed in the [Upgradability](./Upgradability.md) guide. This flow may involve checks requiring installer consent, depending on the Distributor's implementation.
 
-## Creating Distributions from CLI
+```solidity
+// Example: Instantiating an UpgradableDistribution
+// Assume upDist is an instance of UpgradableDistribution
+// Assume distributorContract is the address of the Distributor managing upgrades
+// Assume installerAddress is the end-user installing the instance
+// Assume initArgs is the ABI encoded initialization data for the logic contract
+
+bytes memory data = abi.encode(installerAddress, initArgs);
+
+// Called by the distributor:
+(address[] memory instances, ,) = distributorContract.call{value: 0}( // Or however the distributor triggers instantiation
+    abi.encodeWithSelector(
+        upDist.instantiate.selector,
+        data
+    )
+);
+address proxyInstance = instances[0];
+
+// Now, proxyInstance points to the logic, owned by installerAddress,
+// with upgrades managed by distributorContract via ERC7746 middleware.
+```
+
+For comprehensive details on the multi-party trust process for upgrades, refer to the [Upgradability](./Upgradability.md) documentation. Management of versions and migration scripts on the developer side is handled via the [Repository](./Repositories.md).
+
+## CLI
 
 > [!NOTE]
-> The CLI provides utilities to create and manage distributions.
+> The CLI provides utilities to simplify deploying and managing distributions. It may abstract some of the underlying contract details.
 
 ```bash
-# Deploy a new distribution with source addresses
-eds distribution deploy <source-addresses> --proxy-type <Upgradable|Clonable> --name <distribution-name> --version <version> [--uri <uri>]
+# Deploy a new distribution (CLI might determine type based on flags/sources)
+# Example using source addresses (likely creates CloneDistribution or similar internally)
+eds distribution deploy <source-addresses> --name <distribution-name> --version <version> [--uri <uri>] [--proxy-type <Clonable?>] # Check CLI help for exact flags
 
-# Deploy a distribution with source code hashes
-eds distribution deploy-with-hashes <source-hashes> --proxy-type <Upgradable|Clonable> --name <distribution-name> --version <version> [--uri <uri>]
+# Example using source code hashes (likely creates CodeHashDistribution or UpgradableDistribution)
+eds distribution deploy-with-hashes <source-hashes> --name <distribution-name> --version <version> [--uri <uri>] [--proxy-type <Upgradable|Clonable?>] # Check CLI help
 
-# Get information about a distribution
+# Get information about a distribution (calls get() and contractURI())
 eds distribution <address> info
 
-# Instantiate a distribution
+# Instantiate a distribution (calls instantiate())
+# Note: For UpgradableDistribution, '--data' needs correct encoding (installer, args)
 eds distribution <address> instantiate [--data <hex-data>]
 
-# Verify a distribution's source code matches code hashes
+# Verify a distribution's source code matches code hashes (likely specific to hash-based distributions)
 eds distribution <address> verify
 
 # Common options available for all commands
