@@ -417,23 +417,13 @@ describe("LibMiddleware", function () {
       // Change layers to shorter array
       await libMiddlewareExtendedTest.testChangeLayers(shorterLayers);
 
-      // Verify new layer count
-      // Note: Looking at the implementation, the pop operation reduces array length by
-      // ls.length - newLayers.length elements, so we should expect newLayers.length elements
-      // In this case, expected count is 1 + (3 - 1 - 1) = 2
       const finalCount = (await libMiddlewareExtendedTest.getLayerCount()).toNumber();
-      expect(finalCount).to.equal(2);
+      expect(finalCount).to.equal(1);
 
       // Verify the first layer has the expected data
       const [address1, configData1] = await libMiddlewareExtendedTest.getLayerAt(0);
       expect(address1).to.equal(ownerAddress);
       expect(configData1).to.equal("0xaaaa");
-
-      // Since array still has a second element, let's verify it still has its original value
-      // The changeLayers function doesn't update elements beyond the length of newLayers
-      const [address2, configData2] = await libMiddlewareExtendedTest.getLayerAt(1);
-      expect(address2).to.equal(mockMiddleware2.address);
-      expect(configData2).to.equal("0x2222");
     });
   });
 });
