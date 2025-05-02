@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "../libraries/LibSemver.sol";
+import "../versioning/LibSemver.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import "../interfaces/IMigration.sol";
 import {IContractURI} from "./IContractURI.sol";
 /**
  * @title IRepository Interface
@@ -48,6 +49,12 @@ interface IRepository is IERC165, IContractURI {
     error EmptyReleaseMetadata();
 
     /**
+     * @notice Emitted when a migration script is added to the repository.
+     * @param version The version number of the added item.
+     * @param migrationHash The hash of the migration script to be used for the new release.
+     */
+    event MigrationScriptAdded(uint64 indexed version, bytes32 indexed migrationHash);
+    /**
      * @notice Emitted when a new version is added to the repository.
      * @param version The version number of the added item.
      * @param source The source identifier of the added item.
@@ -80,7 +87,29 @@ interface IRepository is IERC165, IContractURI {
      * @param version The semantic version of the new release.
      * @dev It MUST emit `VersionAdded` event.
      */
-    function newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version) external;
+    function newRelease(
+        bytes32 sourceId,
+        bytes memory metadata,
+        LibSemver.Version memory version,
+        bytes32 migrationHash
+    ) external;
+
+    /**
+     * @notice Changes the migration script for a specific major version.
+     * @param majorVersion The major version number of the migration script to change.
+     * @param migrationHash The new migration script to be used for the specified major version.
+     * @dev It MUST emit `MigrationScriptAdded` event.
+     */
+    function changeMigrationScript(uint64 majorVersion, bytes32 migrationHash) external;
+
+    /**
+     * @notice Retrieves the migration script for a specific version.
+     * @param majorVersion The major version number of the migration script to retrieve.
+     * @return migrationHash The hash of the migration script for the specified version.
+     * @dev this script must execute logic of migrating from the previous (majorVersion-1) to the new one.
+     */
+    function getMigrationScript(uint64 majorVersion) external view returns (bytes32 migrationHash);
+
     /**
      * @notice Retrieves the latest source.
      * @return The requested source
@@ -92,4 +121,11 @@ interface IRepository is IERC165, IContractURI {
      * @return The requested `Source`.
      */
     function get(LibSemver.VersionRequirement calldata required) external view returns (Source memory);
+
+    /**
+     * @notice Resolves a version requirement to a specific version.
+     * @param required The version requirement to resolve.
+     * @return The resolved version as a uint256.
+     */
+    function resolveVersion(LibSemver.VersionRequirement calldata required) external view returns (uint256);
 }

@@ -1,9 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
+import {ShortStrings, ShortString} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
-import "../abstracts/CloneDistribution.sol";
+import "../distributions/CloneDistribution.sol";
 
 contract MockCloneDistribution is CloneDistribution {
+    ShortString private immutable distributionName;
+    uint256 private constant distributionVersion = 1;
+
+    constructor(string memory name) {
+        distributionName = ShortStrings.toShortString(name);
+    }
+
     function contractURI() external pure override returns (string memory) {
         return "MockCloneDistribution";
     }
@@ -15,6 +23,6 @@ contract MockCloneDistribution is CloneDistribution {
     function sources() internal view virtual override returns (address[] memory, bytes32, uint256) {
         address[] memory source = new address[](1);
         source[0] = address(this);
-        return (source, bytes32(abi.encodePacked("MockCloneDistribution")), 1);
+        return (source, ShortString.unwrap(distributionName), distributionVersion);
     }
 }

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "../abstracts/CloneDistribution.sol";
+import "./CloneDistribution.sol";
+import "../erc7744/LibERC7744.sol";
 
 /**
  * @title CodeHashDistribution
@@ -13,6 +14,7 @@ contract CodeHashDistribution is CloneDistribution {
     address private immutable _reference;
     bytes32 public immutable distributionName;
     uint256 public immutable distributionVersion;
+    using LibERC7744 for bytes32;
 
     /**
      * @notice Constructor for the CodeHashDistribution contract.
@@ -25,13 +27,12 @@ contract CodeHashDistribution is CloneDistribution {
         distributionName = name;
         distributionVersion = version;
         metadata = _metadata;
-        ICodeIndex index = getContractsIndex();
-        _reference = index.get(codeHash);
-        if (_reference == address(0)) {
-            revert CodeNotFoundInIndex(codeHash);
-        }
+        _reference = codeHash.getContainerOrThrow();
     }
 
+    /**
+     * @inheritdoc IDistribution
+     */
     function instantiate(bytes memory) external returns (address[] memory instances, bytes32, uint256) {
         return super._instantiate();
     }

@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 import {IContractURI} from "./IContractURI.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 /**
  * @title IDistribution
  * @notice Interface for distribution-related functionalities. It can get sources and produce a new instances out from them. It also provides metadata about the distribution.
- * @dev It is highly recommended to keep implementation stateless, and use `immutable` variables for any state. This allows your code to be referred in distributor and respositories via ERC7744. It's also easier to reason about, and more gas efficient.
+ * @dev It is highly recommended to keep implementation stateless, and use `immutable` variables for any state. This allows your code to be referred in distributor and repositories via ERC7744. It's also easier to reason about, and more gas efficient.
  * @author Peeramid Labs, 2024
  */
-interface IDistribution is IContractURI {
+interface IDistribution is IContractURI, IERC165 {
     /**
      * @notice Emitted when a distribution occurs.
      * @param distributor The address of the entity that performed the distribution.

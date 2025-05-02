@@ -13,17 +13,15 @@ interface IInitializer {
     /**
      * @notice Initializes the contract with necessary parameters.
      * @dev This function should be delegete-called by the distributor contract.
-     * @param distributionId The ID of the distribution being initialized
-     * @param instances The addresses of the instances being initialized
+     * @param distribution The address of the distribution being initialized
      * @param distributionName The name of the distribution
      * @param distributionVersion The version of the distribution
-     * @param args The additional arguments to be used for initialization
+     * @param userArgs The additional arguments to be used for initialization
      */
     function initialize(
-        bytes32 distributionId,
-        address[] memory instances,
+        address distribution,
         bytes32 distributionName,
         uint256 distributionVersion,
-        bytes calldata args
-    ) external;
+        bytes calldata userArgs
+    ) external returns (address[] memory instances);
 }
