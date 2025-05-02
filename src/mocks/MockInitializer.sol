@@ -10,8 +10,8 @@ contract MockInitializer is IInitializer {
     // This matches what Distributor actually passes in the delegatecall
     function initialize(
         address distribution,
-        bytes32 distributionName,
-        uint256 distributionVersion,
+        bytes32,
+        uint256,
         bytes calldata userArgs
     ) external returns (address[] memory instances) {
         // Revert with a specific reason if args contain "FAIL"

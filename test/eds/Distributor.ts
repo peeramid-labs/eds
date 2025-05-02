@@ -2158,8 +2158,8 @@ describe("Distributor", function () {
         expect(distributorsIdFromApp).to.equal(distributorIdToUse);
 
         // Verify component is in the appComponents array
-        const components = await distributor.appComponents(appId, 0);
-        expect(components).to.equal(componentAddresses[0]);
+        const components = await distributor.appComponents(appId);
+        expect(components[0]).to.equal(componentAddresses[0]);
       }
 
       // Verify installer is set correctly

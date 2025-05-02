@@ -3,19 +3,57 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import "./Distributor.sol";
 
-abstract contract TokenizedDistributor is Distributor {
+abstract contract TokenizedDistributor is Distributor, Initializable {
     event InstantiationCostChanged(bytes32 indexed id, uint256 cost);
-    IERC20 public paymentToken;
-    address public _beneficiary;
-    mapping(bytes32 codeHash => uint256) public instantiationCosts;
-    uint256 public defaultInstantiationCost;
-    constructor(IERC20 token, uint256 defaultCost, address beneficiary) Distributor() {
-        paymentToken = token;
-        defaultInstantiationCost = defaultCost;
-        _beneficiary = beneficiary;
+
+    struct TokenizedDistributorStore {
+        IERC20 paymentToken;
+        address beneficiary;
+        mapping(bytes32 codeHash => uint256) instantiationCosts;
+        uint256 defaultInstantiationCost;
+    }
+
+    function instantiationCosts(bytes32 distributorsId) public view returns (uint256) {
+        return getTokenizedDistributorStore().instantiationCosts[distributorsId];
+    }
+
+    function defaultInstantiationCost() public view returns (uint256) {
+        return getTokenizedDistributorStore().defaultInstantiationCost;
+    }
+
+    function paymentToken() public view returns (IERC20) {
+        return getTokenizedDistributorStore().paymentToken;
+    }
+
+    function beneficiary() public view returns (address) {
+        return getTokenizedDistributorStore().beneficiary;
+    }
+
+
+
+    function getTokenizedDistributorStore()
+        internal
+        pure
+        returns (TokenizedDistributorStore storage tokenizedDistributorStore)
+    {
+        bytes32 TOKENIZED_DISTRIBUTOR_STORAGE_POSITION = keccak256("distributor.tokenized.distributor.store");
+        assembly {
+            tokenizedDistributorStore.slot := TOKENIZED_DISTRIBUTOR_STORAGE_POSITION
+        }
+    }
+    constructor(IERC20 token, uint256 defaultCost, address _beneficiary) Distributor() {
+        initialize(token, defaultCost, _beneficiary);
+    }
+
+    function initialize(IERC20 token, uint256 defaultCost, address _beneficiary) public initializer {
+        TokenizedDistributorStore storage tokenizedDistributorStore = getTokenizedDistributorStore();
+        tokenizedDistributorStore.paymentToken = token;
+        tokenizedDistributorStore.defaultInstantiationCost = defaultCost;
+        tokenizedDistributorStore.beneficiary = _beneficiary;
     }
 
     /**
@@ -24,7 +62,8 @@ abstract contract TokenizedDistributor is Distributor {
      * @param cost cost of instantiation
      */
     function _setInstantiationCost(bytes32 distributorsId, uint256 cost) internal {
-        instantiationCosts[distributorsId] = cost;
+        TokenizedDistributorStore storage tokenizedDistributorStore = getTokenizedDistributorStore();
+        tokenizedDistributorStore.instantiationCosts[distributorsId] = cost;
         emit InstantiationCostChanged(distributorsId, cost);
     }
 
@@ -36,8 +75,9 @@ abstract contract TokenizedDistributor is Distributor {
         address initializerAddress,
         string memory readableName
     ) internal override returns (bytes32 distributorsId) {
+        TokenizedDistributorStore storage tokenizedDistributorStore = getTokenizedDistributorStore();
         distributorsId = super._addDistribution(codeHash, initializerAddress, readableName);
-        _setInstantiationCost(distributorsId, defaultInstantiationCost);
+        _setInstantiationCost(distributorsId, tokenizedDistributorStore.defaultInstantiationCost);
     }
 
     function _addDistribution(
@@ -46,8 +86,9 @@ abstract contract TokenizedDistributor is Distributor {
         LibSemver.VersionRequirement memory requirement,
         string memory readableName
     ) internal override returns (bytes32 distributorsId) {
+        TokenizedDistributorStore storage tokenizedDistributorStore = getTokenizedDistributorStore();
         distributorsId = super._addDistribution(repository, initializer, requirement, readableName);
-        _setInstantiationCost(distributorsId, defaultInstantiationCost);
+        _setInstantiationCost(distributorsId, tokenizedDistributorStore.defaultInstantiationCost);
     }
 
     /**
@@ -62,7 +103,17 @@ abstract contract TokenizedDistributor is Distributor {
         override
         returns (address[] memory instances, bytes32 distributionName, uint256 distributionVersion)
     {
-        paymentToken.transferFrom(msg.sender, _beneficiary, instantiationCosts[distributorsId]);
+        TokenizedDistributorStore storage tokenizedDistributorStore = getTokenizedDistributorStore();
+        tokenizedDistributorStore.paymentToken.transferFrom(
+            msg.sender,
+            tokenizedDistributorStore.beneficiary,
+            tokenizedDistributorStore.instantiationCosts[distributorsId]
+        );
         return super._instantiate(distributorsId, args);
+    }
+
+    function _setBeneficiary(address _beneficiary) internal {
+        TokenizedDistributorStore storage tokenizedDistributorStore = getTokenizedDistributorStore();
+        tokenizedDistributorStore.beneficiary = _beneficiary;
     }
 }

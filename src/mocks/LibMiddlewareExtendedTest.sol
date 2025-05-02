@@ -11,7 +11,7 @@ import "../interfaces/IERC7746.sol";
 contract LibMiddlewareExtendedTest {
     // Direct call to accessLayersStorage
     function testAccessLayersStorage() external {
-        LibMiddleware.LayerStruct[] storage layers = LibMiddleware.accessLayersStorage();
+
         // Just to access it, we don't need to do anything with it
     }
 

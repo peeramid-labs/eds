@@ -2,12 +2,17 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "./Distributor.sol";
+import "./TokenizedDistributor.sol";
 import "../interfaces/IMigration.sol";
 import "../versioning/LibSemver.sol";
 import "../interfaces/IMigration.sol";
-contract OwnableDistributor is Distributor, OwnableUpgradeable {
-    constructor(address _owner) {
+contract OwnableTokenizedDistributor is TokenizedDistributor, OwnableUpgradeable {
+    constructor(
+        address _owner,
+        IERC20 _paymentToken,
+        uint256 _defaultInstantiationCost,
+        address _beneficiary
+    ) TokenizedDistributor(_paymentToken, _defaultInstantiationCost, _beneficiary) {
         initialize(_owner);
     }
 
@@ -40,7 +45,7 @@ contract OwnableDistributor is Distributor, OwnableUpgradeable {
         LibSemver.VersionRequirement memory requirement,
         string memory readableName
     ) external onlyOwner {
-        _addDistribution(address(repository), initializer, requirement, readableName);
+        super._addDistribution(address(repository), initializer, requirement, readableName);
     }
 
     /**
@@ -71,14 +76,14 @@ contract OwnableDistributor is Distributor, OwnableUpgradeable {
         MigrationStrategy strategy,
         bytes memory distributorCalldata
     ) public onlyOwner {
-        _addVersionMigration(distributionId, from, to, migrationHash, strategy, distributorCalldata);
+        super._addVersionMigration(distributionId, from, to, migrationHash, strategy, distributorCalldata);
     }
 
     /**
      * @inheritdoc IDistributor
      */
     function removeVersionMigration(bytes32 migrationId) public onlyOwner {
-        _removeVersionMigration(migrationId);
+        super._removeVersionMigration(migrationId);
     }
 
     function getDistribution(bytes32 distributionId) public view returns (DistributionComponent memory) {
@@ -96,4 +101,15 @@ contract OwnableDistributor is Distributor, OwnableUpgradeable {
     ) public virtual override returns (LibSemver.Version memory) {
         return super.upgradeUserInstance(appId, migrationId, userCalldata);
     }
+
+    function setInstantiationCost(bytes32 distributorsId, uint256 cost) public onlyOwner {
+        super._setInstantiationCost(distributorsId, cost);
+    }
+
+    function setBeneficiary(address beneficiary) public onlyOwner {
+        super._setBeneficiary(beneficiary);
+
+    }
+
+
 }

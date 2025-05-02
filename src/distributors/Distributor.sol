@@ -35,37 +35,106 @@ abstract contract Distributor is IDistributor, ERC165 {
         LibSemver.VersionRequirement requirement;
     }
 
+    struct DistributorStore {
+        EnumerableSet.Bytes32Set distributionsSet;
+        mapping(address appComponent => uint256 appId) appIds;
+        mapping(uint256 appId => address[]) appComponents;
+        mapping(uint256 appId => address installer) installers;
+        mapping(uint256 appId => bool renouncing) appsRenounced;
+        mapping(bytes32 distributorsId => bool exists) distributionExists;
+        mapping(uint256 appId => LibSemver.Version appVersion) appVersions;
+        mapping(bytes32 migrationId => MigrationPlan migrationPlan) migrations;
+        mapping(bytes32 aliasHash => bytes32 distributorsId) aliasToDistributorId;
+        mapping(uint256 appId => address undergoingMigration) appsUndergoingMigration;
+        mapping(uint256 appComponent => bytes32 distributorsId) distributionOf;
+        mapping(bytes32 distributorsId => DistributionComponent distribution) distributionComponents;
+        mapping(bytes32 distributorsId => LibSemver.VersionRequirement VersionRequirement) versionRequirements;
+    }
+
+    function appsRenounced(uint256 appId) public view returns (bool) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.appsRenounced[appId];
+    }
+
+    function appComponents(uint256 appId) public view returns (address[] memory) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.appComponents[appId];
+    }
+
+    function appVersions(uint256 appId) public view returns (LibSemver.Version memory) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.appVersions[appId];
+    }
+
+    function distributionOf(uint256 appId) public view returns (bytes32) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.distributionOf[appId];
+    }
+
+    function versionRequirements(bytes32 distributorsId) public view returns (LibSemver.VersionRequirement memory) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.versionRequirements[distributorsId];
+    }
+
+    function distributionComponents(bytes32 distributorsId) public view returns (DistributionComponent memory) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.distributionComponents[distributorsId];
+    }
+
+    function migrations(bytes32 migrationId) public view returns (MigrationPlan memory) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.migrations[migrationId];
+    }
+
+    function aliasToDistributorId(bytes32 aliasHash) public view returns (bytes32) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.aliasToDistributorId[aliasHash];
+    }
+
+    function appsUndergoingMigration(uint256 appId) public view returns (address) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.appsUndergoingMigration[appId];
+    }
+
+    function distributionExists(bytes32 distributorsId) public view returns (bool) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.distributionExists[distributorsId];
+    }
+
+    function installers(uint256 appId) public view returns (address) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.installers[appId];
+    }
+
     using EnumerableSet for EnumerableSet.Bytes32Set;
-    mapping(bytes32 distributorsId => bool exists) public distributionExists;
-    EnumerableSet.Bytes32Set private distributionsSet;
-    mapping(address appComponent => uint256 appId) private appIds;
-    mapping(uint256 appComponent => bytes32 distributorsId) public distributionOf;
-    mapping(bytes32 distributorsId => DistributionComponent distribution) public distributionComponents;
-    mapping(bytes32 distributorsId => LibSemver.VersionRequirement VersionRequirement) public versionRequirements;
-    mapping(uint256 appId => LibSemver.Version appVersion) public appVersions;
-    mapping(uint256 appId => address installer) public installers;
-    mapping(uint256 appId => address[]) public appComponents;
-    mapping(bytes32 migrationId => MigrationPlan migrationPlan) public migrations;
-    mapping(bytes32 aliasHash => bytes32 distributorsId) public aliasToDistributorId;
-    mapping(uint256 appId => address undergoingMigration) public appsUndergoingMigration;
-    mapping(uint256 appId => bool renouncing) public appsRenounced;
+
+    function getDistributorStore() internal pure returns (DistributorStore storage distributorStore) {
+        bytes32 DISTRIBUTOR_STORAGE_POSITION = keccak256("distributor.distributor.store");
+        assembly {
+            distributorStore.slot := DISTRIBUTOR_STORAGE_POSITION
+        }
+    }
 
     uint256 public numAppInstances;
     // @inheritdoc IDistributor
     function getDistributions() external view returns (bytes32[] memory) {
-        return distributionsSet.values();
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.distributionsSet.values();
     }
     // @inheritdoc IDistributor
     function getDistributionId(address appComponent) external view virtual returns (bytes32) {
-        return distributionOf[getAppId(appComponent)];
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.distributionOf[getAppId(appComponent)];
     }
     // @inheritdoc IDistributor
     function getAppId(address appComponent) public view virtual returns (uint256) {
-        return appIds[appComponent];
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.appIds[appComponent];
     }
     // @inheritdoc IDistributor
     function getDistributionURI(bytes32 distributorsId) external view returns (string memory) {
-        DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
+        DistributorStore storage distributorStore = getDistributorStore();
+        DistributionComponent memory distributionComponent = distributorStore.distributionComponents[distributorsId];
         return IContractURI(distributionComponent.distributionLocation).contractURI();
     }
 
@@ -75,6 +144,7 @@ abstract contract Distributor is IDistributor, ERC165 {
         LibSemver.VersionRequirement memory requirement,
         string memory readableName
     ) internal virtual returns (bytes32 distributorId) {
+        DistributorStore storage distributorStore = getDistributorStore();
         if (!ERC165Checker.supportsInterface(address(repository), type(IRepository).interfaceId)) {
             revert InvalidRepository(repository);
         }
@@ -86,7 +156,7 @@ abstract contract Distributor is IDistributor, ERC165 {
         IRepository repositoryContract = IRepository(repository);
         require(repositoryContract.resolveVersion(requirement) != 0, "Version does not exist");
         _newDistributionRecord(distributorId, repository, initializer, readableName);
-        versionRequirements[distributorId] = requirement;
+        distributorStore.versionRequirements[distributorId] = requirement;
         emit VersionChanged(distributorId, requirement, requirement);
     }
 
@@ -110,17 +180,17 @@ abstract contract Distributor is IDistributor, ERC165 {
         address initializer,
         string memory readableName
     ) private {
-        require(!distributionExists[distributorId], DistributionExists(distributorId));
-        distributionExists[distributorId] = true;
-
-        distributionsSet.add(distributorId);
-        distributionComponents[distributorId] = DistributionComponent(source, initializer);
+        DistributorStore storage distributorStore = getDistributorStore();
+        require(!distributorStore.distributionExists[distributorId], DistributionExists(distributorId));
+        distributorStore.distributionExists[distributorId] = true;
+        distributorStore.distributionsSet.add(distributorId);
+        distributorStore.distributionComponents[distributorId] = DistributionComponent(source, initializer);
         bytes32 aliasHash = keccak256(abi.encode(readableName));
         if (aliasHash != bytes32(0)) {
-            if (aliasToDistributorId[aliasHash] != bytes32(0)) {
+            if (distributorStore.aliasToDistributorId[aliasHash] != bytes32(0)) {
                 revert AliasAlreadyExists(aliasHash);
             }
-            aliasToDistributorId[aliasHash] = distributorId;
+            distributorStore.aliasToDistributorId[aliasHash] = distributorId;
         }
         emit DistributionAdded(distributorId, readableName, source, initializer, readableName);
     }
@@ -143,12 +213,14 @@ abstract contract Distributor is IDistributor, ERC165 {
      * @inheritdoc IDistributor
      */
     function getIdFromAlias(string memory readableName) public view returns (bytes32) {
-        return aliasToDistributorId[keccak256(abi.encode(readableName))];
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.aliasToDistributorId[keccak256(abi.encode(readableName))];
     }
 
     function _disableDistribution(bytes32 distributorsId) internal virtual {
-        if (!distributionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
-        distributionsSet.remove(distributorsId);
+        DistributorStore storage distributorStore = getDistributorStore();
+        if (!distributorStore.distributionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
+        distributorStore.distributionsSet.remove(distributorsId);
         emit DistributionDisabled(distributorsId);
     }
 
@@ -164,9 +236,10 @@ abstract contract Distributor is IDistributor, ERC165 {
         virtual
         returns (address[] memory newAppComponents, bytes32 distributionName, uint256 distributionVersion)
     {
-        if (!distributionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
-        DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
-        LibSemver.VersionRequirement memory versionRequirement = versionRequirements[distributorsId];
+        DistributorStore storage distributorStore = getDistributorStore();
+        if (!distributorStore.distributionsSet.contains(distributorsId)) revert DistributionNotFound(distributorsId);
+        DistributionComponent memory distributionComponent = distributorStore.distributionComponents[distributorsId];
+        LibSemver.VersionRequirement memory versionRequirement = distributorStore.versionRequirements[distributorsId];
 
         // External initializer is provided, delegatecall to it
         // Contrary, if no initializer is provided, the distribution is expected to be self-initializing
@@ -180,7 +253,7 @@ abstract contract Distributor is IDistributor, ERC165 {
             // Unversioned distribution, expect IDistribution
             distributionLocation = distributionComponent.distributionLocation;
             // Unversioned distributions are considered to be at version 0
-            appVersions[numAppInstances] = LibSemver.parse(0);
+            distributorStore.appVersions[numAppInstances] = LibSemver.parse(0);
         } else {
             // Versioned distribution, expect IRepository
             IRepository repository = IRepository(distributionComponent.distributionLocation);
@@ -188,7 +261,7 @@ abstract contract Distributor is IDistributor, ERC165 {
             distributionLocation = repoSource.sourceId.getContainerOrThrow();
             distributionName = repository.repositoryName();
             distributionVersion = repoSource.version.toUint256();
-            appVersions[numAppInstances] = repoSource.version;
+            distributorStore.appVersions[numAppInstances] = repoSource.version;
         }
         if (!externallyInitialized) {
             try IDistribution(distributionLocation).instantiate(args) returns (
@@ -220,15 +293,15 @@ abstract contract Distributor is IDistributor, ERC165 {
         {
             uint256 instancesLength = newAppComponents.length;
             for (uint256 i; i < instancesLength; ++i) {
-                appIds[newAppComponents[i]] = appId;
-                distributionOf[appId] = distributorsId;
+                distributorStore.appIds[newAppComponents[i]] = appId;
+                distributorStore.distributionOf[appId] = distributorsId;
             }
         }
         emit Instantiated(distributorsId, appId, distributionVersion, newAppComponents, args);
         for (uint256 i; i < newAppComponents.length; i++) {
-            appComponents[appId].push(newAppComponents[i]);
+            distributorStore.appComponents[appId].push(newAppComponents[i]);
         }
-        installers[appId] = msg.sender;
+        distributorStore.installers[appId] = msg.sender;
     }
 
     /**
@@ -244,20 +317,21 @@ abstract contract Distributor is IDistributor, ERC165 {
         bytes memory
     ) external view virtual returns (bytes memory) {
         DistributorLayerConfig memory distConfig = abi.decode(config, (DistributorLayerConfig));
-        uint256 appId = getAppId(distConfig.app);
-        bytes32 distributorsId = distributionOf[appId];
-        address installer = installers[appId];
-        if (appsRenounced[appId]) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        uint256 appId = distributorStore.appIds[distConfig.app];
+        bytes32 distributorsId = distributorStore.distributionOf[appId];
+        address installer = distributorStore.installers[appId];
+        if (distributorStore.appsRenounced[appId]) {
             return abi.encode(bytes32(0), "");
         }
         if (installer != msg.sender) {
             revert NotAnInstaller(msg.sender);
         }
-        if (appId == 0 || !distributionsSet.contains(distributorsId)) {
+        if (appId == 0 || !distributorStore.distributionsSet.contains(distributorsId)) {
             revert InvalidApp(sender, distributorsId, appId);
         }
-        if (!LibSemver.compare(appVersions[appId], versionRequirements[distributorsId])) {
-            revert VersionOutdated(distributorsId, LibSemver.toString(appVersions[appId]));
+        if (!LibSemver.compare(distributorStore.appVersions[appId], distributorStore.versionRequirements[distributorsId])) {
+            revert VersionOutdated(distributorsId, LibSemver.toString(distributorStore.appVersions[appId]));
         }
         return abi.encode(distributorsId, "");
     }
@@ -275,20 +349,21 @@ abstract contract Distributor is IDistributor, ERC165 {
         bytes memory
     ) external virtual {
         DistributorLayerConfig memory distConfig = abi.decode(config, (DistributorLayerConfig));
-        uint256 appId = getAppId(distConfig.app);
-        bytes32 distributorsId = distributionOf[appId];
-        address installer = installers[appId];
-        if (appsRenounced[appId]) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        uint256 appId = distributorStore.appIds[distConfig.app];
+        bytes32 distributorsId = distributorStore.distributionOf[appId];
+        address installer = distributorStore.installers[appId];
+        if (distributorStore.appsRenounced[appId]) {
             return;
         }
         if (installer != msg.sender) {
             revert NotAnInstaller(msg.sender);
         }
-        if (appId == 0 || !distributionsSet.contains(distributorsId)) {
+        if (appId == 0 || !distributorStore.distributionsSet.contains(distributorsId)) {
             revert InvalidApp(sender, distributorsId, appId);
         }
-        if (!LibSemver.compare(appVersions[appId], versionRequirements[distributorsId])) {
-            revert VersionOutdated(distributorsId, LibSemver.toString(appVersions[appId]));
+        if (!LibSemver.compare(distributorStore.appVersions[appId], distributorStore.versionRequirements[distributorsId])) {
+            revert VersionOutdated(distributorsId, LibSemver.toString(distributorStore.appVersions[appId]));
         }
     }
 
@@ -297,8 +372,9 @@ abstract contract Distributor is IDistributor, ERC165 {
     }
 
     function _changeVersion(bytes32 distributionId, LibSemver.VersionRequirement memory newRequirement) internal {
-        if (!distributionsSet.contains(distributionId)) revert DistributionNotFound(distributionId);
-        LibSemver.VersionRequirement memory oldRequirement = versionRequirements[distributionId];
+        DistributorStore storage distributorStore = getDistributorStore();
+        if (!distributorStore.distributionsSet.contains(distributionId)) revert DistributionNotFound(distributionId);
+        LibSemver.VersionRequirement memory oldRequirement = distributorStore.versionRequirements[distributionId];
         if (LibSemver.toUint256(oldRequirement.version) == 0) {
             revert UnversionedDistribution(distributionId);
         }
@@ -308,7 +384,7 @@ abstract contract Distributor is IDistributor, ERC165 {
         if (LibSemver.areEqual(oldRequirement.version, newRequirement.version)) {
             revert InvalidVersionRequested(distributionId, LibSemver.toString(newRequirement.version));
         }
-        versionRequirements[distributionId] = newRequirement;
+        distributorStore.versionRequirements[distributionId] = newRequirement;
         emit VersionChanged(distributionId, oldRequirement, newRequirement);
     }
 
@@ -320,7 +396,8 @@ abstract contract Distributor is IDistributor, ERC165 {
         MigrationStrategy strategy,
         bytes memory distributorCalldata
     ) internal {
-        if (LibSemver.toUint256(versionRequirements[distributionId].version) == 0) {
+        DistributorStore storage distributorStore = getDistributorStore();
+        if (LibSemver.toUint256(distributorStore.versionRequirements[distributionId].version) == 0) {
             revert UnversionedDistribution(distributionId);
         }
         if (from.version.major == to.version.major) {
@@ -333,9 +410,9 @@ abstract contract Distributor is IDistributor, ERC165 {
             require(migrationHash != bytes32(0), "Migration hash is required for repository managed migration");
         bytes32 migrationId;
         migrationId = keccak256(abi.encode(distributionId, migrationHash, strategy));
-        require(migrations[migrationId].distributionId == bytes32(0), MigrationAlreadyExists(migrationId));
-        require(distributionComponents[distributionId].distributionLocation != address(0), "Distribution not found");
-        migrations[migrationId] = MigrationPlan(from, to, migrationHash, strategy, distributorCalldata, distributionId);
+        require(distributorStore.migrations[migrationId].distributionId == bytes32(0), MigrationAlreadyExists(migrationId));
+        require(distributorStore.distributionComponents[distributionId].distributionLocation != address(0), "Distribution not found");
+        distributorStore.migrations[migrationId] = MigrationPlan(from, to, migrationHash, strategy, distributorCalldata, distributionId);
 
         emit MigrationContractAddedFromVersions(
             distributionId,
@@ -358,11 +435,13 @@ abstract contract Distributor is IDistributor, ERC165 {
      * @inheritdoc IDistributor
      */
     function getVersionMigration(bytes32 migrationId) public view virtual returns (MigrationPlan memory migrationPlan) {
-        return migrations[migrationId];
+        DistributorStore storage distributorStore = getDistributorStore();
+        return distributorStore.migrations[migrationId];
     }
 
     function _removeVersionMigration(bytes32 migrationId) internal virtual {
-        migrations[migrationId].distributionId = bytes32(0);
+        DistributorStore storage distributorStore = getDistributorStore();
+        distributorStore.migrations[migrationId].distributionId = bytes32(0);
         emit VersionMigrationRemoved(migrationId);
     }
 
@@ -372,23 +451,24 @@ abstract contract Distributor is IDistributor, ERC165 {
         bytes32 migrationId,
         bytes calldata userCalldata
     ) public virtual returns (LibSemver.Version memory newVersion) {
-        bytes32 distributorsId = distributionOf[appId];
-        require(distributionsSet.contains(distributorsId), "Distribution not found");
-        require(msg.sender == installers[appId], NotAnInstaller(msg.sender));
-        require(versionRequirements[distributorsId].version.toUint256() != 0, "Not versioned");
-        MigrationPlan memory migrationPlan = migrations[migrationId];
-        require(LibSemver.compare(appVersions[appId], migrationPlan.from), "Version is not in range");
+        DistributorStore storage distributorStore = getDistributorStore();
+        bytes32 distributorsId = distributorStore.distributionOf[appId];
+        require(distributorStore.distributionsSet.contains(distributorsId), "Distribution not found");
+        require(msg.sender == distributorStore.installers[appId], NotAnInstaller(msg.sender));
+        require(distributorStore.versionRequirements[distributorsId].version.toUint256() != 0, "Not versioned");
+        MigrationPlan memory migrationPlan = distributorStore.migrations[migrationId];
+        require(LibSemver.compare(distributorStore.appVersions[appId], migrationPlan.from), "Version is not in range");
 
-        address[] memory _appComponents = appComponents[appId];
-        LibSemver.Version memory oldVersion = appVersions[appId];
-        DistributionComponent memory distributionComponent = distributionComponents[distributorsId];
+        address[] memory _appComponents = distributorStore.appComponents[appId];
+        LibSemver.Version memory oldVersion = distributorStore.appVersions[appId];
+        DistributionComponent memory distributionComponent = distributorStore.distributionComponents[distributorsId];
         IRepository repository = IRepository(distributionComponent.distributionLocation);
         require(migrationPlan.distributionId != bytes32(0), MigrationContractNotFound(migrationId));
         newVersion = LibSemver.parse(repository.resolveVersion(migrationPlan.to));
 
         if (migrationPlan.strategy == MigrationStrategy.CALL) {
             address distributorMigrationContract = migrationPlan.migrationHash.getContainerOrThrow();
-            appsUndergoingMigration[appId] = distributorMigrationContract;
+            distributorStore.appsUndergoingMigration[appId] = distributorMigrationContract;
             try
                 IMigration(distributorMigrationContract).migrate(
                     _appComponents,
@@ -407,7 +487,7 @@ abstract contract Distributor is IDistributor, ERC165 {
             }
         } else if (migrationPlan.strategy == MigrationStrategy.DELEGATECALL) {
             address distributorMigrationContract = migrationPlan.migrationHash.getContainerOrThrow();
-            appsUndergoingMigration[appId] = distributorMigrationContract;
+            distributorStore.appsUndergoingMigration[appId] = distributorMigrationContract;
             require(
                 ERC165Checker.supportsInterface(distributorMigrationContract, type(IMigration).interfaceId),
                 "Migration contract does not support IMigration interface"
@@ -435,7 +515,7 @@ abstract contract Distributor is IDistributor, ERC165 {
             for (uint256 i = 0; i < migrationPlan.to.version.major - migrationPlan.from.version.major; i++) {
                 bytes32 migrationHash = repository.getMigrationScript(uint64(migrationPlan.from.version.major + 1 + i));
                 IMigration migration = IMigration(migrationHash.getContainerOrThrow());
-                appsUndergoingMigration[appId] = address(migration);
+                distributorStore.appsUndergoingMigration[appId] = address(migration);
                 (bool success, bytes memory result) = address(migration).delegatecall(
                     abi.encodeWithSelector(
                         IMigration.migrate.selector,
@@ -452,10 +532,10 @@ abstract contract Distributor is IDistributor, ERC165 {
                 }
             }
         }
-        appsUndergoingMigration[appId] = address(0);
+        distributorStore.appsUndergoingMigration[appId] = address(0);
         uint256 oldVersionUint = oldVersion.toUint256();
         uint256 newVersionUint = newVersion.toUint256();
-        appVersions[appId] = newVersion;
+        distributorStore.appVersions[appId] = newVersion;
         emit UserUpgraded(appId, migrationId, msg.sender, newVersionUint, oldVersionUint, abi.encode(userCalldata));
         emit AppUpgraded(appId, oldVersionUint, newVersionUint);
         emit MigrationExecuted(migrationId, oldVersionUint, newVersionUint, abi.encode(userCalldata));
@@ -468,11 +548,12 @@ abstract contract Distributor is IDistributor, ERC165 {
         address newDistributor,
         bytes[] memory appData
     ) public returns (bool[] memory statuses, bytes[] memory results) {
-        require(installers[appId] == msg.sender, "Not an installer");
-        address[] memory _appComponents = appComponents[appId];
+        DistributorStore storage distributorStore = getDistributorStore();
+        require(distributorStore.installers[appId] == msg.sender, "Not an installer");
+        address[] memory _appComponents = distributorStore.appComponents[appId];
         require(appData.length == _appComponents.length || appData.length == 0, "App data length mismatch");
-        require(!appsRenounced[appId], "App renounced");
-        appsRenounced[appId] = true;
+        require(!distributorStore.appsRenounced[appId], "App renounced");
+        distributorStore.appsRenounced[appId] = true;
         statuses = new bool[](_appComponents.length);
         results = new bytes[](_appComponents.length);
         for (uint256 i; i < _appComponents.length; i++) {
@@ -495,12 +576,12 @@ abstract contract Distributor is IDistributor, ERC165 {
             } else {
                 results[i] = "";
             }
-            delete appIds[_appComponents[i]];
+            delete distributorStore.appIds[_appComponents[i]];
         }
-        delete distributionOf[appId];
-        delete installers[appId];
-        delete appComponents[appId];
-        delete appVersions[appId];
+        delete distributorStore.distributionOf[appId];
+        delete distributorStore.installers[appId];
+        delete distributorStore.appComponents[appId];
+        delete distributorStore.appVersions[appId];
         emit DistributorChanged(appId, newDistributor);
         return (statuses, results);
     }

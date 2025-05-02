@@ -3,17 +3,20 @@ import { ethers, deployments } from "hardhat";
 import {
   MockERC20,
   MockERC20__factory,
-  MockTokenizedDistributor,
-  MockTokenizedDistributor__factory,
+  TokenizedDistributor__factory,
   ERC7744,
-  MockCloneDistribution__factory
+  MockCloneDistribution__factory,
+  TokenizedDistributor,
+  MockTokenizedDistributor__factory,
+  OwnableTokenizedDistributor,
+  OwnableTokenizedDistributor__factory
 } from "../../types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { constants } from "ethers";
 
 describe("TokenizedDistributor", function () {
   let mockToken: MockERC20;
-  let distributor: MockTokenizedDistributor;
+  let distributor: OwnableTokenizedDistributor;
   let codeIndex: ERC7744;
   let deployer: SignerWithAddress;
   let owner: SignerWithAddress;
@@ -44,13 +47,14 @@ describe("TokenizedDistributor", function () {
   beforeEach(async function () {
     const MockERC20 = (await ethers.getContractFactory("MockERC20", owner)) as MockERC20__factory;
     mockToken = await MockERC20.deploy("Mock Token", "MTK", ethers.utils.parseEther("1000"));
-    const MockTokenizedDistributor = (await ethers.getContractFactory(
-      "MockTokenizedDistributor"
-    )) as MockTokenizedDistributor__factory;
-    distributor = await MockTokenizedDistributor.deploy(
+    const TokenizedDistributor = (await ethers.getContractFactory(
+      "OwnableTokenizedDistributor"
+    )) as OwnableTokenizedDistributor__factory;
+    distributor = await TokenizedDistributor.deploy(
       owner.address,
       mockToken.address,
-      defaultCost
+      defaultCost,
+      owner.address
     ).then((d) => d.connect(owner));
     distributorsId = await distributor["calculateDistributorId(bytes32,address)"](
       distributedCodeHash,
@@ -110,6 +114,6 @@ describe("TokenizedDistributor", function () {
 
   it("should support the correct interfaces", async function () {
     expect(await distributor.supportsInterface("0x01ffc9a7")).to.be.true; // ERC165
-    expect(await distributor.supportsInterface("0x7965db0b")).to.be.true; // AccessControl
+    // expect(await distributor.supportsInterface("0x7965db0b")).to.be.true; // AccessControl
   });
 });

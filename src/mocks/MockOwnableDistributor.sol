@@ -13,11 +13,13 @@ contract MockOwnableDistributor is OwnableDistributor {
     constructor(address owner_) OwnableDistributor(owner_) {}
 
     function renounceApp(uint256 appId) public {
-        appsRenounced[appId] = true;
+        DistributorStore storage distributorStore = getDistributorStore();
+        distributorStore.appsRenounced[appId] = true;
     }
 
     function setMigration(uint256 appId, address migration) public {
-        appsUndergoingMigration[appId] = migration;
+        DistributorStore storage distributorStore = getDistributorStore();
+        distributorStore.appsUndergoingMigration[appId] = migration;
     }
 
     function getLastUpgradeUserInstanceCall()
