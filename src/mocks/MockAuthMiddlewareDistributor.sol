@@ -117,4 +117,8 @@ contract MockAuthMiddlewareDistributor is IDistributor, ERC165 {
             interfaceId == type(IERC7746).interfaceId ||
             super.supportsInterface(interfaceId);
     }
+
+    function calculateDistributorId(bytes32, address) external returns (bytes32) {
+        return bytes32("testDistributionId");
+    }
 }

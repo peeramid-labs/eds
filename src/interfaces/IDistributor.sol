@@ -264,4 +264,12 @@ interface IDistributor is IERC7746, IERC165 {
         uint256 oldVersion,
         bytes userCalldata
     );
+
+    /**
+     * @notice Calculates the distributor ID for a given code hash and initializer address.
+     * @param codeHash The code hash of the distribution.
+     * @param initializer The address of the initializer for the distribution.
+     * @return distributorId The unique identifier of the distributor.
+     */
+    function calculateDistributorId(bytes32 codeHash, address initializer) external returns (bytes32);
 }

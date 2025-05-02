@@ -245,11 +245,4 @@ abstract contract Repository is IRepository {
     function getMigrationScript(uint64 major) public view returns (bytes32) {
         return releaseMigrationHash[major];
     }
-
-    /**
-     * @inheritdoc IRepository
-     */
-    function repositoryName() public view returns (bytes32) {
-        return repositoryName; // Note: Shadowing public immutable variable
-    }
 }

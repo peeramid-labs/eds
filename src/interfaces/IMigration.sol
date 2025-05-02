@@ -3,11 +3,6 @@ pragma solidity >=0.8.0 <0.9.0;
 
 import {IRepository} from "./IRepository.sol";
 import {LibSemver} from "../versioning/LibSemver.sol";
-// SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
-
-import {IRepository} from "./IRepository.sol";
-import {LibSemver} from "../versioning/LibSemver.sol";
 
 /**
  * @title IMigration
