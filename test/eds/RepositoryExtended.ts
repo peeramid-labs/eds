@@ -296,7 +296,6 @@ describe("Repository Extended Tests", function () {
     });
 
     it.skip("should allow changing migration script for existing major version", async function () {
-      // This test was failing due to complex ERC7744 registration issues
       // Skip for now but keep the test for future reference
     });
 

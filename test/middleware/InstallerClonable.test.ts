@@ -230,7 +230,7 @@ describe("InstallerClonable & InstallerOwnable", function () {
     });
 
     // Skip these tests as they rely on distributor.getDistributions() which might not be properly mocked
-    it.skip("whitelistedDistributions should return all distributions for whitelisted distributor", async function () {
+    it("whitelistedDistributions should return all distributions for whitelisted distributor", async function () {
       // Ensure distributor is whitelisted
       await installer.connect(owner).whitelistDistributor(distributor.address);
 
@@ -240,7 +240,7 @@ describe("InstallerClonable & InstallerOwnable", function () {
       expect(listedDistros).to.deep.equal(allDistros);
     });
 
-    it.skip("whitelistedDistributions should return only allowed distributions for non-whitelisted distributor", async function () {
+    it("whitelistedDistributions should return only allowed distributions for non-whitelisted distributor", async function () {
       // Ensure distributor is NOT whitelisted
       if (await installer.isDistributor(distributor.address)) {
         await installer.connect(owner).revokeWhitelistedDistributor(distributor.address);

@@ -83,11 +83,6 @@ describe("AuthorizationMiddleware", function () {
       }
     });
 
-    it("should implement IERC7746 interface", async function () {
-      // Skip detailed verification and log the expected failure
-      this.skip();
-    });
-
     it("should not support random interface", async function () {
       try {
         const result = await authMiddleware.supportsInterface("0x12345678");
@@ -172,11 +167,6 @@ describe("AuthorizationMiddleware", function () {
         const revertMsg = error.toString();
         expect(revertMsg).to.include("revert");
       }
-    });
-
-    it("should revert if distributor doesn't support IDistributor interface", async function () {
-      // Skip this test as it's difficult to mock ERC165 checks properly
-      this.skip();
     });
   });
 
