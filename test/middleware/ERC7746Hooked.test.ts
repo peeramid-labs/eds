@@ -176,13 +176,6 @@ describe("ERC7746Hooked", function () {
       const middleware1AfterOrder = await mockMiddleware1.afterCallOrder();
       const middleware2AfterOrder = await mockMiddleware2.afterCallOrder();
 
-      // Log the values for debugging
-      console.log("Middleware call order values:");
-      console.log("M1 before:", middleware1BeforeOrder.toString());
-      console.log("M2 before:", middleware2BeforeOrder.toString());
-      console.log("M1 after:", middleware1AfterOrder.toString());
-      console.log("M2 after:", middleware2AfterOrder.toString());
-
       // Validate that each counter is greater than 0
       expect(Number(middleware1BeforeOrder)).to.be.greaterThan(0);
       expect(Number(middleware2BeforeOrder)).to.be.greaterThan(0);

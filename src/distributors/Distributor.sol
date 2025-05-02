@@ -202,11 +202,7 @@ abstract contract Distributor is IDistributor, ERC165 {
                 abi.encodeWithSelector(selector, distributionLocation, distributionName, distributionVersion, args)
             );
             if (!success) {
-                if (result.length > 0) {
-                    revert(string(result));
-                } else {
-                    revert("initializer delegatecall failed without revert reason");
-                }
+                revert(string(result));
             }
 
             newAppComponents = abi.decode(result, (address[]));

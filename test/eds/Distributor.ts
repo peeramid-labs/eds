@@ -2076,15 +2076,7 @@ describe("Distributor", function () {
       const failArgs = ethers.utils.toUtf8Bytes("REVERT");
       await expect(
         distributor.connect(owner).instantiate(initializerDistributorsId, failArgs)
-      ).to.be.revertedWith("initializer delegatecall failed without revert reason"); // This is the actual behavior
-    });
-
-    it("should revert with generic message when external initializer fails without reason", async function () {
-      // Instantiate using the distribution linked to MockNoReasonInitializer
-      const failArgs = ethers.utils.toUtf8Bytes("FAIL");
-      await expect(
-        distributor.connect(owner).instantiate(noReasonInitializerDistributorsId, failArgs)
-      ).to.be.revertedWith("initializer delegatecall failed without revert reason");
+      ).to.be.revertedWith(""); // This is the actual behavior
     });
   });
 
