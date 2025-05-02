@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
 
-import "../abstracts/TokenizedDistributor.sol";
+import "../distributors/TokenizedDistributor.sol";
 import "@openzeppelin/contracts/access/extensions/AccessControlDefaultAdminRules.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -21,9 +21,11 @@ contract MockTokenizedDistributor is TokenizedDistributor, AccessControlDefaultA
      * @param id The unique identifier for the distribution.
      * @param initializer The address that initializes the distribution.
      */
-    function addDistribution(bytes32 id, address initializer) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        super._addDistribution(id, initializer);
+    function addDistribution(bytes32 id, address initializer, string memory readableName) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _addDistribution(id, initializer, readableName);
     }
+
+
 
     /**
      * @notice Sets instantiation cost on a specific instantiation id
@@ -31,7 +33,7 @@ contract MockTokenizedDistributor is TokenizedDistributor, AccessControlDefaultA
      * @param cost cost of instantiation
      */
     function setInstantiationCost(bytes32 id, uint256 cost) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        super._setInstantiationCost(id, cost);
+        _setInstantiationCost(id, cost);
     }
 
     /**
@@ -54,8 +56,8 @@ contract MockTokenizedDistributor is TokenizedDistributor, AccessControlDefaultA
      * @dev This function can only be called by an account with the `DEFAULT_ADMIN_ROLE`.
      * @param id The unique identifier of the distribution entry to be removed.
      */
-    function removeDistribution(bytes32 id) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _removeDistribution(id);
+    function disableDistribution(bytes32 id) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _disableDistribution(id);
     }
 
     /**
@@ -84,16 +86,27 @@ contract MockTokenizedDistributor is TokenizedDistributor, AccessControlDefaultA
     function addDistribution(
         IRepository repository,
         address initializer,
-        LibSemver.VersionRequirement memory requirement
+        LibSemver.VersionRequirement memory requirement,
+        string memory readableName
     ) external override onlyRole(DEFAULT_ADMIN_ROLE) {
-        super._addDistribution(address(repository), initializer, requirement);
+        super._addDistribution(address(repository), initializer, requirement, readableName);
     }
 
-    function addNamedDistribution(
-        bytes32 name,
-        bytes32 distributorId,
-        address initializer
+
+
+  function addVersionMigration(
+        bytes32 distributionId,
+        LibSemver.VersionRequirement memory from,
+        LibSemver.VersionRequirement memory to,
+        bytes32 migrationHash,
+        MigrationStrategy strategy,
+        bytes memory distributorCalldata
     ) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        super._addDistribution(name, distributorId, initializer);
+        super._addVersionMigration(distributionId, from, to, migrationHash, strategy, distributorCalldata);
     }
+
+    function removeVersionMigration(bytes32 migrationId) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        _removeVersionMigration(migrationId);
+    }
+
 }

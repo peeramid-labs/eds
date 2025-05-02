@@ -8,7 +8,11 @@ import {
   OwnableRepository__factory,
   Repository,
   TestFacet__factory,
-  OwnableDistributor
+  OwnableDistributor,
+  MockMigration__factory,
+  MockMigration,
+  OwnableInstaller__factory,
+  OwnableInstaller
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -21,15 +25,33 @@ describe("Version Distributor", function () {
   let owner: SignerWithAddress;
   let mockDistr: MockCloneDistribution;
   let repository: Repository;
+  let mockInstaller: OwnableInstaller;
+  let dummyMigration: MockMigration;
+  let dummyMigrationCodeHash: string;
 
   beforeEach(async function () {
     await deployments.fixture("ERC7744"); // This is the key addition
     const ERC7744 = await ethers.getContractFactory("ERC7744");
     [deployer, owner] = await ethers.getSigners();
     const codeIndexDeployment = await deployments.get("ERC7744");
+    const MockInstaller = (await ethers.getContractFactory(
+      "OwnableInstaller"
+    )) as OwnableInstaller__factory;
+    mockInstaller = await MockInstaller.deploy(deployer.address, owner.address);
+
     codeIndex = new ethers.Contract(codeIndexDeployment.address, ERC7744.interface).connect(
       deployer
     ) as ERC7744;
+
+    const DummyMigration = (await ethers.getContractFactory(
+      "MockMigration"
+    )) as MockMigration__factory;
+    dummyMigration = await DummyMigration.deploy();
+    await dummyMigration.deployed();
+    await codeIndex.register(dummyMigration.address);
+    dummyMigrationCodeHash = ethers.utils.keccak256(
+      await dummyMigration.provider.getCode(dummyMigration.address)
+    );
 
     const Repository = (await ethers.getContractFactory(
       "OwnableRepository"
@@ -43,19 +65,23 @@ describe("Version Distributor", function () {
     const CloneDistribution = (await ethers.getContractFactory(
       "MockCloneDistribution"
     )) as MockCloneDistribution__factory;
-    mockDistr = await CloneDistribution.deploy();
+    mockDistr = await CloneDistribution.deploy("MockCloneDistribution");
     await mockDistr.deployed();
     const code = await mockDistr.provider.getCode(mockDistr.address);
     const mockDistributionId = ethers.utils.keccak256(code);
     await codeIndex.register(mockDistr.address);
 
-    repository
-      .connect(owner)
-      .newRelease(mockDistributionId, ethers.utils.formatBytes32String("test"), {
+    const tx = await repository.connect(owner).newRelease(
+      mockDistributionId,
+      ethers.utils.formatBytes32String("test"),
+      {
         major: 1,
         minor: 0,
         patch: 0
-      });
+      },
+      dummyMigrationCodeHash
+    );
+    await tx.wait();
 
     const Distributor = (await ethers.getContractFactory(
       "OwnableDistributor"
@@ -68,15 +94,15 @@ describe("Version Distributor", function () {
       await distributor
         .connect(owner)
         [
-          "addDistribution(address,address,((uint64,uint64,uint128),uint8))"
-        ](repository.address, ethers.constants.AddressZero, { version: { major: 1, minor: 0, patch: 0 }, requirement: 1 })
+          "addDistribution(address,address,((uint64,uint64,uint128),uint8),string)"
+        ](repository.address, ethers.constants.AddressZero, { version: { major: 0, minor: 0, patch: 1 }, requirement: 1 }, "test")
     ).to.emit(distributor, "VersionedDistributionAdded");
     await expect(
       distributor
         .connect(deployer)
         [
-          "addDistribution(address,address,((uint64,uint64,uint128),uint8))"
-        ](repository.address, ethers.constants.AddressZero, { version: { major: 1, minor: 0, patch: 0 }, requirement: 1 })
+          "addDistribution(address,address,((uint64,uint64,uint128),uint8),string)"
+        ](repository.address, ethers.constants.AddressZero, { version: { major: 1, minor: 0, patch: 1 }, requirement: 1 }, "test")
     ).to.be.revertedWithCustomError(distributor, "OwnableUnauthorizedAccount");
   });
 
@@ -103,20 +129,26 @@ describe("Version Distributor", function () {
       await distributor
         .connect(owner)
         [
-          "addDistribution(address,address,((uint64,uint64,uint128),uint8))"
-        ](repository.address, ethers.constants.AddressZero, { version: { major: 1, minor: 0, patch: 0 }, requirement: 1 });
+          "addDistribution(address,address,((uint64,uint64,uint128),uint8),string)"
+        ](repository.address, ethers.constants.AddressZero, { version: { major: 1, minor: 0, patch: 0 }, requirement: 1 }, "test");
     });
 
     it("Is possible to instantiate a contract", async function () {
+      //InstantiateData memory instantiateData = abi.decode(data, (InstantiateData));
+      const instantiateData = ethers.utils.defaultAbiCoder.encode(
+        ["address", "bytes"],
+        [mockInstaller.address, ethers.utils.formatBytes32String("")]
+      );
       const id = ethers.utils.keccak256(
         ethers.utils.defaultAbiCoder.encode(
           ["address", "address"],
           [repository.address, ethers.constants.AddressZero]
         )
       );
-      expect(
-        await distributor.connect(owner).instantiate(id, ethers.utils.formatBytes32String(""))
-      ).to.emit(distributor, "Instantiated");
+      expect(await distributor.connect(owner).instantiate(id, instantiateData)).to.emit(
+        distributor,
+        "Instantiated"
+      );
     });
 
     it("Is possible to remove a distribution", async function () {
@@ -127,9 +159,9 @@ describe("Version Distributor", function () {
         )
       );
 
-      expect(await distributor.connect(owner)["removeDistribution(bytes32)"](id)).to.emit(
+      expect(await distributor.connect(owner).disableDistribution(id)).to.emit(
         distributor,
-        "DistributionRemoved"
+        "DistributionDisabled"
       );
     });
 
@@ -158,7 +190,10 @@ describe("Version Distributor", function () {
         distributor
           .connect(owner)
           .beforeCall(
-            ethers.utils.defaultAbiCoder.encode(["address"], [instanceAddress]),
+            ethers.utils.defaultAbiCoder.encode(
+              ["tuple(address,address,bytes)"],
+              [[instanceAddress!, owner.address!, "0x"]]
+            ),
             "0x00000000",
             instanceAddress,
             "0",
@@ -201,12 +236,23 @@ describe("Version Distributor", function () {
             [repository.address, ethers.constants.AddressZero]
           )
         );
-        await distributor.connect(owner)["removeDistribution(bytes32)"](id);
+        await distributor.connect(owner).disableDistribution(id);
       });
       it("Instance is invalid upon check", async () => {
         await expect(
-          distributor.connect(owner).beforeCall("0x", "0x00000000", instanceAddress, "0", "0x")
-        ).to.be.revertedWithCustomError(distributor, "InvalidInstance");
+          distributor
+            .connect(owner)
+            .beforeCall(
+              ethers.utils.defaultAbiCoder.encode(
+                ["tuple(address,address,bytes)"],
+                [[instanceAddress!, owner.address!, "0x"]]
+              ),
+              "0x00000000",
+              instanceAddress,
+              "0",
+              "0x"
+            )
+        ).to.be.revertedWithCustomError(distributor, "InvalidApp");
       });
     });
   });

@@ -1,36 +1,51 @@
-// SPDX-License-Identifier: MIT
-pragma solidity >=0.8.0 <0.9.0;
+// // SPDX-License-Identifier: MIT
+// pragma solidity >=0.8.0 <0.9.0;
 
-import "../abstracts/Installer.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-contract MockInstaller is Installer, Ownable {
-    constructor(address targetAddress, address owner) Ownable(owner) Installer(targetAddress) {}
+// import "../middleware/InstallerClonable.sol";
+// import "@openzeppelin/contracts/access/Ownable.sol";
+// contract MockInstaller is InstallerClonable, Ownable {
+//     constructor(address targetAddress, address owner) Ownable(owner) InstallerClonable() {
+//         initialize(targetAddress == address(0) ? address(this) : targetAddress);
+//     }
 
-    function install(
-        IDistributor distributor,
-        bytes32 distributionId,
-        bytes calldata args
-    ) public payable returns (uint256 instanceId) {
-        return super._install(distributor, distributionId, args);
-    }
 
-    function uninstall(uint256 instanceId) public onlyOwner {
-        super._uninstall(instanceId);
-    }
+//     function install(
+//         IDistributor distributor,
+//         bytes32 distributionId,
+//         bytes calldata args
+//     ) public payable returns (uint256 instanceId) {
+//            if (msg.sender != owner()) {
+//             return _installPublic(distributor, distributionId, args);
+//         } else {
+//             return _installByOwner(distributor, distributionId, args);
+//         }
+//     }
 
-    function allowDistribution(IDistributor distributor, bytes32 distributionId) public onlyOwner {
-        super._allowDistribution(distributor, distributionId);
-    }
+//     function uninstall(uint256 instanceId) public onlyOwner {
+//         super._uninstall(instanceId);
+//     }
 
-    function disallowDistribution(IDistributor distributor, bytes32 distributionId) public onlyOwner {
-        super._disallowDistribution(distributor, distributionId);
-    }
+//     function allowDistribution(IDistributor distributor, bytes32 distributionId) public onlyOwner {
+//         super._allowDistribution(distributor, distributionId);
+//     }
 
-    function whitelistDistributor(IDistributor distributor) public onlyOwner {
-        super._allowAllDistributions(distributor);
-    }
+//     function disallowDistribution(IDistributor distributor, bytes32 distributionId) public onlyOwner {
+//         super._disallowDistribution(distributor, distributionId);
+//     }
 
-    function revokeWhitelistedDistributor(IDistributor distributor) public onlyOwner {
-        super._disallowAllDistributions(distributor);
-    }
-}
+//     function whitelistDistributor(IDistributor distributor) public onlyOwner {
+//         super._allowAllDistributions(distributor);
+//     }
+
+//     function revokeWhitelistedDistributor(IDistributor distributor) public onlyOwner {
+//         super._disallowAllDistributions(distributor);
+//     }
+
+//    function changeDistributor(uint256 appId, IDistributor newDistributor, bytes[] memory appData) public onlyOwner {
+//     _changeDistributor(appId, newDistributor, appData);
+//    }
+
+//    function upgradeApp(uint256 appId, bytes32 migrationId, bytes calldata userCalldata) public onlyOwner {
+//     _upgradeApp(appId, migrationId, userCalldata);
+//    }
+// }

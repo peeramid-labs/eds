@@ -12,11 +12,11 @@ importers:
         specifier: ^5.7.0
         version: 5.7.0
       '@openzeppelin/contracts':
-        specifier: ^5.0.2
-        version: 5.0.2
+        specifier: ^5.3.0
+        version: 5.3.0
       '@openzeppelin/contracts-upgradeable':
-        specifier: ^5.0.2
-        version: 5.0.2(@openzeppelin/contracts@5.0.2)
+        specifier: ^5.3.0
+        version: 5.3.0(@openzeppelin/contracts@5.3.0)
       '@types/chai':
         specifier: ^4.3.1
         version: 4.3.17
@@ -62,7 +62,7 @@ importers:
         version: 1.0.11(hardhat@2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@5.0.10))
       '@nomicfoundation/hardhat-toolbox':
         specifier: ^2.0.2
-        version: 2.0.2(d65r24y6qyodup7on6bdh6rryu)
+        version: 2.0.2(rulxezo52sgmy4pkawdmbtl2hm)
       '@nomiclabs/buidler':
         specifier: ^1.4.8
         version: 1.4.8(bufferutil@4.0.8)(utf-8-validate@5.0.10)
@@ -154,8 +154,8 @@ importers:
         specifier: ^3.6.2
         version: 3.6.2(typescript@5.7.3)
       solidity-coverage:
-        specifier: ^0.8.5
-        version: 0.8.12(hardhat@2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@5.0.10))
+        specifier: ^0.8.14
+        version: 0.8.15(hardhat@2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@5.0.10))
       solidity-docgen:
         specifier: ^0.6.0-beta.36
         version: 0.6.0-beta.36(hardhat@2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@5.0.10))
@@ -593,13 +593,13 @@ packages:
     peerDependencies:
       hardhat: ^2.0.4
 
-  '@openzeppelin/contracts-upgradeable@5.0.2':
-    resolution: {integrity: sha512-0MmkHSHiW2NRFiT9/r5Lu4eJq5UJ4/tzlOgYXNAIj/ONkQTVnz22pLxDvp4C4uZ9he7ZFvGn3Driptn1/iU7tQ==}
+  '@openzeppelin/contracts-upgradeable@5.3.0':
+    resolution: {integrity: sha512-yVzSSyTMWO6rapGI5tuqkcLpcGGXA0UA1vScyV5EhE5yw8By3Ewex9rDUw8lfVw0iTkvR/egjfcW5vpk03lqZg==}
     peerDependencies:
-      '@openzeppelin/contracts': 5.0.2
+      '@openzeppelin/contracts': 5.3.0
 
-  '@openzeppelin/contracts@5.0.2':
-    resolution: {integrity: sha512-ytPc6eLGcHHnapAZ9S+5qsdomhjo6QBHTDRRBFfTxXIpsicMhVPouPgmUPebZZZGX7vt9USA+Z+0M0dSVtSUEA==}
+  '@openzeppelin/contracts@5.3.0':
+    resolution: {integrity: sha512-zj/KGoW7zxWUE8qOI++rUM18v+VeLTTzKs/DJFkSzHpQFPD/jKKF0TrMxBfGLl3kpdELCNccvB3zmofSzm4nlA==}
 
   '@pkgr/core@0.1.1':
     resolution: {integrity: sha512-cq8o4cWH0ibXh9VGi5P20Tu9XF/0fFXl9EUinr9QfTM7a7p0oTA4iJRCQWppXR1Pg8dSM0UCItCkPwsk9qWWYA==}
@@ -664,6 +664,9 @@ packages:
 
   '@solidity-parser/parser@0.18.0':
     resolution: {integrity: sha512-yfORGUIPgLck41qyN7nbwJRAx17/jAIXCTanHOJZhB6PJ1iAk/84b/xlsVKFSyNyLXIj0dhppoE0+CRws7wlzA==}
+
+  '@solidity-parser/parser@0.19.0':
+    resolution: {integrity: sha512-RV16k/qIxW/wWc+mLzV3ARyKUaMUTBy9tOLMzFhtNSKYeTAanQ3a5MudJKf/8arIFnA2L27SNjarQKmFg0w/jA==}
 
   '@solidity-parser/parser@0.5.2':
     resolution: {integrity: sha512-uRyvnvVYmgNmTBpWDbBsH/0kPESQhQpEc4KsvMRLVzFJ1o1s0uIv0Y6Y9IB5vI1Dwz2CbS4X/y4Wyw/75cTFnQ==}
@@ -3753,8 +3756,8 @@ packages:
   solidity-ast@0.4.56:
     resolution: {integrity: sha512-HgmsA/Gfklm/M8GFbCX/J1qkVH0spXHgALCNZ8fA8x5X+MFdn/8CP2gr5OVyXjXw6RZTPC/Sxl2RUDQOXyNMeA==}
 
-  solidity-coverage@0.8.12:
-    resolution: {integrity: sha512-8cOB1PtjnjFRqOgwFiD8DaUsYJtVJ6+YdXQtSZDrLGf8cdhhh8xzTtGzVTGeBf15kTv0v7lYPJlV/az7zLEPJw==}
+  solidity-coverage@0.8.15:
+    resolution: {integrity: sha512-qH7290NKww4/t/qFvnSEePEzON0k025IGVlwc8wo8Q6p+h1Tt6fV2M0k3yfsps3TomZYTROsfPXjx7MSnwD5uA==}
     hasBin: true
     peerDependencies:
       hardhat: ^2.11.0
@@ -4405,6 +4408,7 @@ packages:
   yaeti@0.0.6:
     resolution: {integrity: sha512-MvQa//+KcZCUkBTIC9blM+CU9J2GzuTytsOUwf2lidtvkx/6gnEp1QvJv34t9vdjhFmha/mUiNDbN0D0mJWdug==}
     engines: {node: '>=0.10.32'}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   yallist@2.1.2:
     resolution: {integrity: sha512-ncTzHV7NvsQZkYe1DW7cbDLm0YpzHmZF5r/iyP3ZnQtMiJ+pjzisCiMNI+Sj+xQF5pXhSHxSB3uDbsBTzY/c2A==}
@@ -5079,7 +5083,7 @@ snapshots:
       ethereumjs-util: 7.1.5
       hardhat: 2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@5.0.10)
 
-  '@nomicfoundation/hardhat-toolbox@2.0.2(d65r24y6qyodup7on6bdh6rryu)':
+  '@nomicfoundation/hardhat-toolbox@2.0.2(rulxezo52sgmy4pkawdmbtl2hm)':
     dependencies:
       '@ethersproject/abi': 5.7.0
       '@ethersproject/providers': 5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
@@ -5096,7 +5100,7 @@ snapshots:
       ethers: 5.7.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
       hardhat: 2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@5.0.10)
       hardhat-gas-reporter: 1.0.10(bufferutil@4.0.8)(hardhat@2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@5.0.10))(utf-8-validate@5.0.10)
-      solidity-coverage: 0.8.12(hardhat@2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@5.0.10))
+      solidity-coverage: 0.8.15(hardhat@2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@5.0.10))
       ts-node: 10.9.2(@types/node@17.0.45)(typescript@5.7.3)
       typechain: 8.3.2(typescript@5.7.3)
       typescript: 5.7.3
@@ -5228,11 +5232,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@openzeppelin/contracts-upgradeable@5.0.2(@openzeppelin/contracts@5.0.2)':
+  '@openzeppelin/contracts-upgradeable@5.3.0(@openzeppelin/contracts@5.3.0)':
     dependencies:
-      '@openzeppelin/contracts': 5.0.2
+      '@openzeppelin/contracts': 5.3.0
 
-  '@openzeppelin/contracts@5.0.2': {}
+  '@openzeppelin/contracts@5.3.0': {}
 
   '@pkgr/core@0.1.1': {}
 
@@ -5322,6 +5326,8 @@ snapshots:
       antlr4ts: 0.5.0-alpha.4
 
   '@solidity-parser/parser@0.18.0': {}
+
+  '@solidity-parser/parser@0.19.0': {}
 
   '@solidity-parser/parser@0.5.2': {}
 
@@ -8965,10 +8971,10 @@ snapshots:
     dependencies:
       array.prototype.findlast: 1.2.5
 
-  solidity-coverage@0.8.12(hardhat@2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@5.0.10)):
+  solidity-coverage@0.8.15(hardhat@2.22.8(bufferutil@4.0.8)(ts-node@10.9.2(@types/node@17.0.45)(typescript@5.7.3))(typescript@5.7.3)(utf-8-validate@5.0.10)):
     dependencies:
       '@ethersproject/abi': 5.7.0
-      '@solidity-parser/parser': 0.18.0
+      '@solidity-parser/parser': 0.19.0
       chalk: 2.4.2
       death: 1.1.0
       difflib: 0.2.4
