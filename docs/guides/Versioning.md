@@ -1,9 +1,8 @@
 # Versioning
 
-EDS implements Semantic versioning system within one bytes32 word.
+EDS implements a Semantic versioning system within one bytes32 word.
 
-On chain semantic versioning is managed by [LibSemver](../src/versioning/LibSemver.sol).
-
+On chain semantic versioning is managed by [LibSemver](../../src/versioning/LibSemver.sol).
 Typical on-chain uses:
 
 ```solidity
