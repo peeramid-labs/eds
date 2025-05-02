@@ -17,10 +17,9 @@ import "../../src/erc7744/LibERC7744.sol";
 contract MockRepository is IRepository {
     using LibERC7744 for bytes32;
     using LibSemver for LibSemver.Version;
-    using LibSemver for uint256
+    using LibSemver for uint256;
 
-
-    function example(LibSemver.Version memory version, LibSemver.Requirement req) external {
+    function example(LibSemver.Version memory version, LibSemver.Requirement req) external view {
         uint256 versionUint = version.toUint256();
         LibSemver.Version restoreVersion = versionUint.parse();
         uint64 major = restoreVersion.major;
