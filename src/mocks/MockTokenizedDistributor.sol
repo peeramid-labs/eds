@@ -21,11 +21,13 @@ contract MockTokenizedDistributor is TokenizedDistributor, AccessControlDefaultA
      * @param id The unique identifier for the distribution.
      * @param initializer The address that initializes the distribution.
      */
-    function addDistribution(bytes32 id, address initializer, string memory readableName) external onlyRole(DEFAULT_ADMIN_ROLE) {
+    function addDistribution(
+        bytes32 id,
+        address initializer,
+        string memory readableName
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _addDistribution(id, initializer, readableName);
     }
-
-
 
     /**
      * @notice Sets instantiation cost on a specific instantiation id
@@ -92,9 +94,7 @@ contract MockTokenizedDistributor is TokenizedDistributor, AccessControlDefaultA
         super._addDistribution(address(repository), initializer, requirement, readableName);
     }
 
-
-
-  function addVersionMigration(
+    function addVersionMigration(
         bytes32 distributionId,
         LibSemver.VersionRequirement memory from,
         LibSemver.VersionRequirement memory to,
@@ -108,5 +108,4 @@ contract MockTokenizedDistributor is TokenizedDistributor, AccessControlDefaultA
     function removeVersionMigration(bytes32 migrationId) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _removeVersionMigration(migrationId);
     }
-
 }

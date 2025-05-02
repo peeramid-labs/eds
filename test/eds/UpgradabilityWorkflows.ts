@@ -169,9 +169,7 @@ describe("Upgradability Workflows", function () {
       // Allow this distribution in the installer
 
       // Install the app
-      const installTx = await installer
-        .connect(user)
-        .install(distributor.address, distributionId, "0x");
+      await installer.connect(user).install(distributor.address, distributionId, "0x");
 
       // Check if we can get the installed app
       const appComponents = await installer.getApp(1);
@@ -216,7 +214,6 @@ describe("Upgradability Workflows", function () {
 
       // Install the app
       await installer.connect(user).install(distributor.address, distributionId, "0x");
-      const appComponents = await installer.getApp(1);
 
       // Change the distributor
       await expect(
@@ -233,6 +230,7 @@ describe("Upgradability Workflows", function () {
           createVersion(1, 0, 0),
           migrationHash
         );
+        //eslint-disable-next-line
       } catch (e) {
         // Version might already exist, ignore error
       }
@@ -257,7 +255,6 @@ describe("Upgradability Workflows", function () {
       );
 
       await installer.connect(user).install(distributor.address, distributionId, installData);
-      const appComponents = await installer.getApp(1);
       const appId = 1;
 
       // Register a new version 2.0.0 in the repository

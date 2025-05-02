@@ -55,7 +55,7 @@ const getSuperInterface = (outputPath?: string) => {
       if (fs.statSync(fullPath).isDirectory()) {
         readDirectory(fullPath); // Recurse into subdirectories
       } else if (path.extname(file) === ".json") {
-        const fileContents = require("./" + fullPath); // Load the JSON file
+        const fileContents = JSON.parse(fs.readFileSync(fullPath, "utf8"));
         if (Array.isArray(fileContents)) {
           mergedArray = mergedArray.concat(fileContents); // Merge the array from the JSON file
         }
@@ -74,7 +74,7 @@ const getSuperInterface = (outputPath?: string) => {
 };
 
 task("getSuperInterface", "Prints the super interface of a contract")
-  .setAction(async (taskArgs: { outputPath: string }, hre) => {
+  .setAction(async (taskArgs: { outputPath: string }) => {
     const originalConsoleLog = console.log;
     console.log = () => {};
     const su = getSuperInterface(taskArgs.outputPath + "/super-interface.json");

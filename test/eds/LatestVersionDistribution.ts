@@ -23,9 +23,6 @@ describe("LatestUpgradableDistribution", function () {
   // Use bytes32 for metadata as expected by the LatestUpgradableDistribution constructor
   const metadata = "testMetadata";
 
-  // Repository name should be bytes32 as per IRepository interface
-  const repoName = ethers.utils.formatBytes32String("MyRepo");
-
   async function deployTestFixture() {
     await deployments.fixture("ERC7744");
     [deployer, user] = await ethers.getSigners();

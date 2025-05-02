@@ -87,7 +87,12 @@ interface IRepository is IERC165, IContractURI {
      * @param version The semantic version of the new release.
      * @dev It MUST emit `VersionAdded` event.
      */
-    function newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version, bytes32 migrationHash) external;
+    function newRelease(
+        bytes32 sourceId,
+        bytes memory metadata,
+        LibSemver.Version memory version,
+        bytes32 migrationHash
+    ) external;
 
     /**
      * @notice Changes the migration script for a specific major version.

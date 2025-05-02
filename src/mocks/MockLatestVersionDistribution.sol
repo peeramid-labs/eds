@@ -6,7 +6,6 @@ import "../interfaces/IDistribution.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 contract MockLatestVersionDistribution is LatestVersionDistribution {
-
     constructor(
         address repository_,
         string memory metadata_

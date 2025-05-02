@@ -16,10 +16,7 @@ contract LibMiddlewareTest {
     }
 
     function encodeConfig(address middleware, bytes memory configData) public pure returns (bytes memory) {
-        MiddlewareConfig memory config = MiddlewareConfig({
-            middleware: middleware,
-            configData: configData
-        });
+        MiddlewareConfig memory config = MiddlewareConfig({middleware: middleware, configData: configData});
         return abi.encode(config);
     }
 
@@ -27,7 +24,10 @@ contract LibMiddlewareTest {
         return abi.decode(encodedConfig, (MiddlewareConfig));
     }
 
-    function getLayerTest(bytes[] memory middlewareLayers, uint256 index) public pure returns (MiddlewareConfig memory) {
+    function getLayerTest(
+        bytes[] memory middlewareLayers,
+        uint256 index
+    ) public pure returns (MiddlewareConfig memory) {
         return getConfig(middlewareLayers[index]);
     }
 
@@ -41,13 +41,7 @@ contract LibMiddlewareTest {
         bytes memory lastResult;
         for (uint256 i = 0; i < middlewareLayers.length; i++) {
             MiddlewareConfig memory config = getConfig(middlewareLayers[i]);
-            lastResult = IERC7746(config.middleware).beforeCall(
-                config.configData,
-                selector,
-                sender,
-                value,
-                data
-            );
+            lastResult = IERC7746(config.middleware).beforeCall(config.configData, selector, sender, value, data);
         }
         return lastResult;
     }
@@ -61,15 +55,8 @@ contract LibMiddlewareTest {
         bytes memory beforeCallResult
     ) public {
         for (uint256 i = middlewareLayers.length; i > 0; i--) {
-            MiddlewareConfig memory config = getConfig(middlewareLayers[i-1]);
-            IERC7746(config.middleware).afterCall(
-                config.configData,
-                selector,
-                sender,
-                value,
-                data,
-                beforeCallResult
-            );
+            MiddlewareConfig memory config = getConfig(middlewareLayers[i - 1]);
+            IERC7746(config.middleware).afterCall(config.configData, selector, sender, value, data, beforeCallResult);
         }
     }
 }

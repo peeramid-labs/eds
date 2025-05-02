@@ -28,7 +28,6 @@ contract OwnableDistributor is Distributor, Ownable {
         _addDistribution(address(repository), initializer, requirement, readableName);
     }
 
-
     function changeVersion(
         bytes32 distributionId,
         LibSemver.VersionRequirement memory newRequirement

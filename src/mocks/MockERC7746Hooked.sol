@@ -14,21 +14,20 @@ contract MockERC7746Hooked is ERC7746Hooked {
     string public testValue;
 
     // Called to test the ERC7746C modifier with explicit parameters
-    function testModifierWithParams(bytes4 _selector, address _sender, bytes calldata _data, uint256 _value, string calldata newValue)
-        external
-        ERC7746C(_selector, _sender, _data, _value)
-        returns (bool) {
+    function testModifierWithParams(
+        bytes4 _selector,
+        address _sender,
+        bytes calldata _data,
+        uint256 _value,
+        string calldata newValue
+    ) external ERC7746C(_selector, _sender, _data, _value) returns (bool) {
         testValue = newValue;
         emit FunctionCalled(_selector, _sender, _data, _value);
         return true;
     }
 
     // Called to test the ERC7746 modifier which uses msg values
-    function testDefaultModifier(string calldata newValue)
-        external
-        payable
-        ERC7746
-        returns (bool) {
+    function testDefaultModifier(string calldata newValue) external payable ERC7746 returns (bool) {
         testValue = newValue;
         return true;
     }

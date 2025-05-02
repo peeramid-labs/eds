@@ -34,21 +34,20 @@ contract MockERC7746HookedTest is ERC7746Hooked {
     }
 
     // Test modifiers and emit events to track execution
-    function testERC7746CModifier(bytes4 _selector, address _sender, bytes calldata _data, uint256 _value, string calldata newValue)
-        external
-        ERC7746C(_selector, _sender, _data, _value)
-        returns (bool) {
+    function testERC7746CModifier(
+        bytes4 _selector,
+        address _sender,
+        bytes calldata _data,
+        uint256 _value,
+        string calldata newValue
+    ) external ERC7746C(_selector, _sender, _data, _value) returns (bool) {
         testValue = newValue;
         functionExecuted = true;
         emit FunctionCalled(_selector, _sender, _data, _value);
         return true;
     }
 
-    function testERC7746Modifier(string calldata newValue)
-        external
-        payable
-        ERC7746
-        returns (bool) {
+    function testERC7746Modifier(string calldata newValue) external payable ERC7746 returns (bool) {
         testValue = newValue;
         functionExecuted = true;
         return true;
@@ -70,10 +69,13 @@ contract MockERC7746HookedTest is ERC7746Hooked {
     }
 
     // Function that uses the tracked modifier for enhanced testing
-    function testTrackedModifier(bytes4 _selector, address _sender, bytes calldata _data, uint256 _value, string calldata newValue)
-        external
-        ERC7746C_Tracked(_selector, _sender, _data, _value)
-        returns (bool) {
+    function testTrackedModifier(
+        bytes4 _selector,
+        address _sender,
+        bytes calldata _data,
+        uint256 _value,
+        string calldata newValue
+    ) external ERC7746C_Tracked(_selector, _sender, _data, _value) returns (bool) {
         testValue = newValue;
         functionExecuted = true;
         emit FunctionCalled(_selector, _sender, _data, _value);

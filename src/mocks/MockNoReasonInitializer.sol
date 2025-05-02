@@ -16,13 +16,7 @@ contract MockNoReasonInitializer {
 
     // Solidity gets the selector from the first function that matches the name and parameter count
     // So we need to account for both possible calls
-    function initialize(
-        bytes32,
-        address[] memory,
-        bytes32,
-        uint256,
-        bytes calldata
-    ) external pure {
+    function initialize(bytes32, address[] memory, bytes32, uint256, bytes calldata) external pure {
         // In case this gets called directly, still revert without a reason
         assembly {
             revert(0, 0)

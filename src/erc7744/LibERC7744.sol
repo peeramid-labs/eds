@@ -27,4 +27,3 @@ library LibERC7744 {
         return container;
     }
 }
-

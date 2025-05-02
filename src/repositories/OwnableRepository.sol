@@ -12,14 +12,18 @@ contract OwnableRepository is Repository, Ownable, ERC165 {
     function updateReleaseMetadata(LibSemver.Version memory version, bytes calldata releaseMetadata) public onlyOwner {
         super._updateReleaseMetadata(version, releaseMetadata);
     }
-    function newRelease(bytes32 sourceId, bytes memory metadata, LibSemver.Version memory version, bytes32 migrationHash) public onlyOwner {
+    function newRelease(
+        bytes32 sourceId,
+        bytes memory metadata,
+        LibSemver.Version memory version,
+        bytes32 migrationHash
+    ) public onlyOwner {
         super._newRelease(sourceId, metadata, version, migrationHash);
     }
 
     function changeMigrationScript(uint64 major, bytes32 migrationHash) public onlyOwner {
         super._changeMigrationScript(major, migrationHash);
     }
-
 
     function supportsInterface(bytes4 interfaceId) public view override(ERC165, IERC165) returns (bool) {
         return interfaceId == type(IRepository).interfaceId || super.supportsInterface(interfaceId);

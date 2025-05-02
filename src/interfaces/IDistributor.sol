@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0 <0.9.0;
-import {IERC7746} from "../interfaces/IERC7746.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import "../interfaces/IRepository.sol";
 import "../versioning/LibSemver.sol";
@@ -131,7 +130,7 @@ interface IDistributor is IERC7746, IERC165 {
      * @notice Instantiates a new app with the given distributor ID and arguments.
      * @param distributorId The unique identifier of the distributor.
      * @param args The arguments to be used for instantiation.
-     * @return app The addresses of the app that were created.
+     * @return addresses The address of the accessor that was created.
      * @return distributionName The name of the distribution.
      * @return distributionVersion The version of the distribution.
      * @dev It MUST emit {Instantiated} event.
@@ -139,7 +138,7 @@ interface IDistributor is IERC7746, IERC165 {
     function instantiate(
         bytes32 distributorId,
         bytes calldata args
-    ) external payable returns (address[] memory, bytes32 distributionName, uint256 distributionVersion);
+    ) external payable returns (address[] memory addresses, bytes32 distributionName, uint256 distributionVersion);
 
     /**
      * @notice Adds a new distribution with the specified distributor ID and initializer address.

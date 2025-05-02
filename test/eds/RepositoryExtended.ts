@@ -10,7 +10,6 @@ import {
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import utils from "../utils";
 
 describe("Repository Extended Tests", function () {
   let codeIndex: ERC7744;
@@ -21,7 +20,6 @@ describe("Repository Extended Tests", function () {
   let dummyMigrationAddress: MockMigration;
   let dummyMigrationCodeHash: string;
   let firstId: string;
-  let distributionId: string;
 
   beforeEach(async function () {
     await deployments.fixture("ERC7744");
@@ -51,6 +49,7 @@ describe("Repository Extended Tests", function () {
 
     try {
       await codeIndex.register(distribution.address);
+      //eslint-disable-next-line
     } catch (e) {
       // Might already be registered
     }
@@ -67,6 +66,7 @@ describe("Repository Extended Tests", function () {
         },
         ethers.constants.HashZero
       );
+      //eslint-disable-next-line
     } catch (e) {
       // Version might already exist
     }

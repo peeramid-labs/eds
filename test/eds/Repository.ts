@@ -14,7 +14,6 @@ import {
 } from "../../types";
 import { deployments } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { constants } from "ethers";
 
 describe("Repository", function () {
   let codeIndex: ERC7744;

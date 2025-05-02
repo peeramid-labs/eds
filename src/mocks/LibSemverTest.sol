@@ -44,7 +44,10 @@ contract LibSemverTest {
         LibSemver.require_lesser(_version1, _version2);
     }
 
-    function areEqual(LibSemver.Version memory _version1, LibSemver.Version memory _version2) public pure returns (bool) {
+    function areEqual(
+        LibSemver.Version memory _version1,
+        LibSemver.Version memory _version2
+    ) public pure returns (bool) {
         return LibSemver.areEqual(_version1, _version2);
     }
 

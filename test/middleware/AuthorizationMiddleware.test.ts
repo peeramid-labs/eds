@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { Contract, ContractFactory, Signer } from "ethers";
+import { Contract, Signer } from "ethers";
 
 describe("AuthorizationMiddleware", function () {
   let authMiddleware: Contract;

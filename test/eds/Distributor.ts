@@ -102,8 +102,6 @@ describe("Distributor", function () {
     repositoryAddress = mockRepository.address;
 
     // Register the repository address with codeIndex
-    const repositoryCode = await mockRepository.provider.getCode(mockRepository.address);
-    const repositoryCodeHash = ethers.utils.keccak256(repositoryCode);
     await codeIndex.register(mockRepository.address);
 
     // Deploy a mock distribution implementation to use with the repository
@@ -489,14 +487,6 @@ describe("Distributor", function () {
       // Register with codeIndex
       await codeIndex.register(cloneDistribution.address);
 
-      // Calculate the full distribution ID
-      const fullDistributionId = ethers.utils.keccak256(
-        ethers.utils.defaultAbiCoder.encode(
-          ["bytes32", "bytes32"],
-          [distributionId, ethers.utils.formatBytes32String("")]
-        )
-      );
-
       // First add a distribution
       await distributor
         .connect(owner)
@@ -689,12 +679,6 @@ describe("Distributor", function () {
     });
     // These test cases check basic requirements but don't execute versioned code paths that might have syntax errors
     it("should handle cases when migration script with CALL strategy reverts", async function () {
-      // Get the mockRepository instance
-      const MockRepository = (await ethers.getContractFactory(
-        "MockRepository"
-      )) as MockRepository__factory;
-      const mockRepository = MockRepository.attach(repositoryAddress);
-
       // Add a versioned distribution
       await distributor
         .connect(owner)
@@ -885,7 +869,7 @@ describe("Distributor", function () {
         [
           "addDistribution(bytes32,address,string)"
         ](proxyDistributionCodeHash, wrappedProxyInitializer.address, "TestApp");
-      const receipt = await tx.wait();
+      await tx.wait();
 
       // Extract the appId and appComponents from event logs properly
       let distributorsId = await distributor.getIdFromAlias("TestApp");
@@ -1431,7 +1415,7 @@ describe("Distributor", function () {
       const changeTx = await distributor
         .connect(owner)
         .onDistributorChanged(appId!, newDistributor, appData);
-      const changeReceipt = await changeTx.wait();
+      await changeTx.wait();
 
       // Get the result from the event or return value
       const result = await changeTx.wait();
@@ -1574,12 +1558,6 @@ describe("Distributor", function () {
     });
 
     it("should test DELEGATECALL migration strategy", async function () {
-      // Get the mockRepository instance
-      const MockRepository = (await ethers.getContractFactory(
-        "MockRepository"
-      )) as MockRepository__factory;
-      const mockRepository = MockRepository.attach(repositoryAddress);
-
       // Add a versioned distribution
       await distributor
         .connect(owner)
@@ -1639,12 +1617,6 @@ describe("Distributor", function () {
       expect(appVersion.patch).to.equal(0);
     });
     it("should handle errors in DELEGATECALL migration", async function () {
-      // Get the mockRepository instance
-      const MockRepository = (await ethers.getContractFactory(
-        "MockRepository"
-      )) as MockRepository__factory;
-      const mockRepository = MockRepository.attach(repositoryAddress);
-
       // Add a versioned distribution
       await distributor
         .connect(owner)
@@ -1728,7 +1700,7 @@ describe("Distributor", function () {
 
       await distributor.connect(owner).renounceApp(appId!);
       if (!appComponent) throw new Error("App component is undefined");
-      const impersonated = await ethers.getImpersonatedSigner(appComponent);
+
       // This afterCall should not revert since the app is renounced
       await distributor.connect(owner).afterCall(
         ethers.utils.defaultAbiCoder.encode(
@@ -1827,12 +1799,6 @@ describe("Distributor", function () {
     });
 
     it("should skip validation in afterCall when app is undergoing migration", async function () {
-      // Get the mockRepository instance
-      const MockRepository = (await ethers.getContractFactory(
-        "MockRepository"
-      )) as MockRepository__factory;
-      const mockRepository = MockRepository.attach(repositoryAddress);
-
       // Add a versioned distribution
       await distributor
         .connect(owner)
@@ -1965,8 +1931,6 @@ describe("Distributor", function () {
       const CloneDistribution2 = await ethers.getContractFactory("MockCloneDistribution");
       const cloneDistribution2 = await CloneDistribution2.deploy("MockClone2");
       await cloneDistribution2.deployed();
-      const code2 = await cloneDistribution2.provider.getCode(cloneDistribution2.address);
-      const cloneDistribution2Id = ethers.utils.keccak256(code2);
       await codeIndex.register(cloneDistribution2.address);
 
       await distributor.connect(owner).renounceApp(appId!);

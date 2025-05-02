@@ -18,25 +18,12 @@ contract MockAuthMiddlewareDistributor is IDistributor, ERC165 {
     }
 
     // Implement IERC7746 functions
-    function beforeCall(
-        bytes memory,
-        bytes4,
-        address,
-        uint256,
-        bytes memory
-    ) external override returns (bytes memory) {
+    function beforeCall(bytes memory, bytes4, address, uint256, bytes memory) external override returns (bytes memory) {
         beforeCallCalled = true;
         return beforeCallReturnValue;
     }
 
-    function afterCall(
-        bytes memory,
-        bytes4,
-        address,
-        uint256,
-        bytes memory,
-        bytes memory
-    ) external override {
+    function afterCall(bytes memory, bytes4, address, uint256, bytes memory, bytes memory) external override {
         afterCallCalled = true;
         // No return value needed
     }
@@ -61,38 +48,67 @@ contract MockAuthMiddlewareDistributor is IDistributor, ERC165 {
 
     function addDistribution(bytes32, address, string memory) external pure override {}
     function disableDistribution(bytes32) external pure override {}
-    function getDistributionId(address) external pure override returns (bytes32) { return bytes32(0); }
-    function getAppId(address) external pure override returns (uint256) { return 0; }
-    function addDistribution(IRepository, address, LibSemver.VersionRequirement memory, string memory) external pure override {}
+    function getDistributionId(address) external pure override returns (bytes32) {
+        return bytes32(0);
+    }
+    function getAppId(address) external pure override returns (uint256) {
+        return 0;
+    }
+    function addDistribution(
+        IRepository,
+        address,
+        LibSemver.VersionRequirement memory,
+        string memory
+    ) external pure override {}
     function changeVersion(bytes32, LibSemver.VersionRequirement memory) external pure override {}
-    function addVersionMigration(bytes32, LibSemver.VersionRequirement memory, LibSemver.VersionRequirement memory, bytes32, MigrationStrategy, bytes memory) external pure override {}
+    function addVersionMigration(
+        bytes32,
+        LibSemver.VersionRequirement memory,
+        LibSemver.VersionRequirement memory,
+        bytes32,
+        MigrationStrategy,
+        bytes memory
+    ) external pure override {}
     function removeVersionMigration(bytes32) external pure override {}
     function getVersionMigration(bytes32) external pure override returns (MigrationPlan memory) {
-        return MigrationPlan({
-            from: LibSemver.VersionRequirement({
-                version: LibSemver.parse(0),
-                requirement: LibSemver.requirements.ANY
-            }),
-            to: LibSemver.VersionRequirement({
-                version: LibSemver.parse(0),
-                requirement: LibSemver.requirements.ANY
-            }),
-            migrationHash: bytes32(0),
-            strategy: MigrationStrategy.CALL,
-            distributorCalldata: bytes(""),
-            distributionId: bytes32(0)
-        });
+        return
+            MigrationPlan({
+                from: LibSemver.VersionRequirement({
+                    version: LibSemver.parse(0),
+                    requirement: LibSemver.requirements.ANY
+                }),
+                to: LibSemver.VersionRequirement({
+                    version: LibSemver.parse(0),
+                    requirement: LibSemver.requirements.ANY
+                }),
+                migrationHash: bytes32(0),
+                strategy: MigrationStrategy.CALL,
+                distributorCalldata: bytes(""),
+                distributionId: bytes32(0)
+            });
     }
-    function upgradeUserInstance(uint256, bytes32, bytes calldata) external pure override returns (LibSemver.Version memory) {
+    function upgradeUserInstance(
+        uint256,
+        bytes32,
+        bytes calldata
+    ) external pure override returns (LibSemver.Version memory) {
         return LibSemver.parse(0);
     }
-    function onDistributorChanged(uint256, address, bytes[] memory) external pure override returns (bool[] memory, bytes[] memory) {
+    function onDistributorChanged(
+        uint256,
+        address,
+        bytes[] memory
+    ) external pure override returns (bool[] memory, bytes[] memory) {
         bool[] memory statuses = new bool[](0);
         bytes[] memory results = new bytes[](0);
         return (statuses, results);
     }
-    function getIdFromAlias(string memory) external pure override returns (bytes32) { return bytes32(0); }
-    function calculateDistributorId(address, address) external pure override returns (bytes32) { return bytes32(0); }
+    function getIdFromAlias(string memory) external pure override returns (bytes32) {
+        return bytes32(0);
+    }
+    function calculateDistributorId(address, address) external pure override returns (bytes32) {
+        return bytes32(0);
+    }
 
     // Override supportsInterface
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {

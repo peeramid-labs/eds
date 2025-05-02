@@ -127,20 +127,21 @@ contract MockDistributorForTest is IDistributor, ERC165 {
     }
 
     function getVersionMigration(bytes32) external pure override returns (MigrationPlan memory) {
-        return MigrationPlan({
-            from: LibSemver.VersionRequirement({
-                version: LibSemver.parse(1),
-                requirement: LibSemver.requirements.ANY
-            }),
-            to: LibSemver.VersionRequirement({
-                version: LibSemver.parse(2),
-                requirement: LibSemver.requirements.ANY
-            }),
-            migrationHash: bytes32(0),
-            strategy: MigrationStrategy.CALL,
-            distributorCalldata: bytes(""),
-            distributionId: bytes32("testDistributionId")
-        });
+        return
+            MigrationPlan({
+                from: LibSemver.VersionRequirement({
+                    version: LibSemver.parse(1),
+                    requirement: LibSemver.requirements.ANY
+                }),
+                to: LibSemver.VersionRequirement({
+                    version: LibSemver.parse(2),
+                    requirement: LibSemver.requirements.ANY
+                }),
+                migrationHash: bytes32(0),
+                strategy: MigrationStrategy.CALL,
+                distributorCalldata: bytes(""),
+                distributionId: bytes32("testDistributionId")
+            });
     }
 
     function upgradeUserInstance(
@@ -149,11 +150,7 @@ contract MockDistributorForTest is IDistributor, ERC165 {
         bytes calldata userCalldata
     ) external override returns (LibSemver.Version memory) {
         // Save the call data
-        lastUpgradeCall = UpgradeCall({
-            appId: appId,
-            migrationId: migrationId,
-            userCalldata: userCalldata
-        });
+        lastUpgradeCall = UpgradeCall({appId: appId, migrationId: migrationId, userCalldata: userCalldata});
 
         // Optionally revert for testing
         if (shouldRevertOnUpgrade) {
@@ -193,14 +190,7 @@ contract MockDistributorForTest is IDistributor, ERC165 {
         return beforeCallReturnValue;
     }
 
-    function afterCall(
-        bytes memory,
-        bytes4,
-        address,
-        uint256,
-        bytes memory,
-        bytes memory
-    ) external pure override {
+    function afterCall(bytes memory, bytes4, address, uint256, bytes memory, bytes memory) external pure override {
         // No-op for testing
     }
 

@@ -109,11 +109,39 @@ contract MockMiddleware is IERC7746 {
         }
     }
 
-    function getLastBeforeCallArgs() external view returns (bytes memory configData, bytes4 selector, address sender, uint256 value, bytes memory data) {
-        return (lastBeforeCallConfig, lastBeforeCallSelector, lastBeforeCallSender, lastBeforeCallValue, lastBeforeCallData);
+    function getLastBeforeCallArgs()
+        external
+        view
+        returns (bytes memory configData, bytes4 selector, address sender, uint256 value, bytes memory data)
+    {
+        return (
+            lastBeforeCallConfig,
+            lastBeforeCallSelector,
+            lastBeforeCallSender,
+            lastBeforeCallValue,
+            lastBeforeCallData
+        );
     }
 
-    function getLastAfterCallArgs() external view returns (bytes memory configData, bytes4 selector, address sender, uint256 value, bytes memory data, bytes memory beforeCallResult) {
-        return (lastAfterCallConfig, lastAfterCallSelector, lastAfterCallSender, lastAfterCallValue, lastAfterCallData, lastAfterCallBeforeCallResult);
+    function getLastAfterCallArgs()
+        external
+        view
+        returns (
+            bytes memory configData,
+            bytes4 selector,
+            address sender,
+            uint256 value,
+            bytes memory data,
+            bytes memory beforeCallResult
+        )
+    {
+        return (
+            lastAfterCallConfig,
+            lastAfterCallSelector,
+            lastAfterCallSender,
+            lastAfterCallValue,
+            lastAfterCallData,
+            lastAfterCallBeforeCallResult
+        );
     }
 }

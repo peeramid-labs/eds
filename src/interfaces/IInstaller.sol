@@ -214,7 +214,12 @@ interface IInstaller is IERC7746 {
      * @param migrationId The unique identifier of the migration.
      * @param userCalldata Additional data required for the upgrade process.
      */
-    event AppUpgraded(uint256 indexed appId, bytes32 indexed migrationId, uint256 indexed newVersion, bytes userCalldata);
+    event AppUpgraded(
+        uint256 indexed appId,
+        bytes32 indexed migrationId,
+        uint256 indexed newVersion,
+        bytes userCalldata
+    );
     /**
      * @notice Upgrades an app with the given ID.
      * @param appId The unique identifier of the app to be upgraded.

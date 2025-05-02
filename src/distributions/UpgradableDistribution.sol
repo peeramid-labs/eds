@@ -9,8 +9,7 @@ import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStri
 import {IAdminGetter} from "../interfaces/IAdminGetter.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 contract UpgradableDistribution is IDistribution {
-
-        bytes32 private immutable metadata;
+    bytes32 private immutable metadata;
     address private immutable _reference;
     ShortString public immutable distributionName;
     uint256 public immutable distributionVersion;
@@ -29,9 +28,8 @@ contract UpgradableDistribution is IDistribution {
         _reference = codeHash.getContainerOrThrow();
     }
 
-
     // @inheritdoc IDistribution
-    function sources() internal view virtual  returns (address[] memory, bytes32 name, uint256 version) {
+    function sources() internal view virtual returns (address[] memory, bytes32 name, uint256 version) {
         address[] memory _sources = new address[](1);
         _sources[0] = _reference;
         return (_sources, ShortString.unwrap(distributionName), distributionVersion);
@@ -43,18 +41,16 @@ contract UpgradableDistribution is IDistribution {
 
     error CodeNotFoundInIndex(bytes32 codeId);
 
-
-
     // @inheritdoc IDistribution
-    function instantiate(
-        bytes memory data
-    ) public virtual returns (address[] memory instances, bytes32 , uint256 ) {
+    function instantiate(bytes memory data) public virtual returns (address[] memory instances, bytes32, uint256) {
         (address installer, bytes memory args) = abi.decode(data, (address, bytes));
         (address[] memory _sources, bytes32 _distributionName, uint256 _distributionVersion) = sources();
         uint256 srcsLength = _sources.length;
         instances = new address[](srcsLength);
         for (uint256 i; i < srcsLength; ++i) {
-            address proxy = address(new WrappedTransparentUpgradeableProxy(_sources[i], installer, msg.sender, args, ""));
+            address proxy = address(
+                new WrappedTransparentUpgradeableProxy(_sources[i], installer, msg.sender, args, "")
+            );
             instances[i] = proxy;
         }
         emit Distributed(msg.sender, instances);
@@ -64,7 +60,6 @@ contract UpgradableDistribution is IDistribution {
     function get() external view virtual returns (address[] memory src, bytes32 name, uint256 version) {
         return sources();
     }
-
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IDistribution).interfaceId || interfaceId == type(IERC165).interfaceId;
