@@ -1012,7 +1012,7 @@ describe("Distributor", function () {
         .and.to.emit(distributor, "MigrationContractAddedToVersions");
     });
 
-    it("should revert when adding REPOSITORY_MANGED strategy for minor version migration", async function () {
+    it("should revert when adding REPOSITORY_MANAGED strategy for minor version migration", async function () {
       // Add a versioned distribution
       await distributor
         .connect(owner)
@@ -1025,14 +1025,14 @@ describe("Distributor", function () {
       // Convert address to bytes32 properly for migrationHash
       const migrationHashBytes32 = ethers.utils.hexZeroPad(mockMigrationAddress, 32);
 
-      // Try to add a REPOSITORY_MANGED migration with the same major version
+      // Try to add a REPOSITORY_MANAGED migration with the same major version
       await expect(
         distributor.connect(owner).addVersionMigration(
           versionedId,
           createVersionRequirement(1, 0, 0, 0), // from
           createVersionRequirement(1, 1, 0, 0), // to - same major version
           migrationHashBytes32,
-          2, // MigrationStrategy.REPOSITORY_MANGED
+          2, // MigrationStrategy.REPOSITORY_MANAGED
           "0x" // distributor calldata
         )
       ).to.be.revertedWith(

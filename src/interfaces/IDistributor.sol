@@ -9,7 +9,7 @@ import "../interfaces/IMigration.sol";
 enum MigrationStrategy {
     CALL,
     DELEGATECALL,
-    REPOSITORY_MANGED
+    REPOSITORY_MANAGED
 }
 struct MigrationPlan {
     LibSemver.VersionRequirement from;

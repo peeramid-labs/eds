@@ -4,7 +4,7 @@ pragma solidity >=0.8.0 <0.9.0;
 import "./LibMiddleware.sol";
 
 /**
- * @title ERC7746Middleware
+ * @title ERC7746Hooked
  * @notice Abstract contract that serves as a middleware for ERC7746 standard.
  * This contract is intended to be inherited by other contracts that implement
  * the ERC7746 functionality. It provides base functionality and structure

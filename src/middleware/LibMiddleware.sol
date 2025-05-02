@@ -30,13 +30,14 @@ library LibMiddleware {
 
     function changeLayers(LayerStruct[] memory newLayers) internal {
         LayerStruct[] storage ls = accessLayersStorage();
+        for (uint256 i = ls.length; i < newLayers.length; i++) {
+            ls.push(newLayers[i]);
+        }
         for (uint256 i; i < newLayers.length; ++i) {
             ls[i] = newLayers[i];
         }
-        if (newLayers.length < ls.length) {
-            for (uint256 i; i < ls.length - newLayers.length; ++i) {
-                ls.pop();
-            }
+        while (ls.length > newLayers.length) {
+            ls.pop();
         }
     }
 

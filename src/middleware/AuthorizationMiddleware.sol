@@ -18,16 +18,16 @@ contract AuthorizationMiddleware is Initializable, IERC7746, ERC165 {
         IDistributor distributor;
     }
 
-    bytes32 private constant SACM_STORAGE_POSITION = keccak256("simple.access.manager.storage.position");
+    bytes32 private constant AUTH_MIDDLEWARE_STORAGE_POSITION = keccak256("simple.access.manager.storage.position");
 
     function getStorage() private pure returns (Storage storage s) {
-        bytes32 position = SACM_STORAGE_POSITION;
+        bytes32 position = AUTH_MIDDLEWARE_STORAGE_POSITION;
         assembly {
             s.slot := position
         }
     }
 
-    struct SimpleAccessManagerInitializer {
+    struct AuthorizationMiddlewareInitializer {
         bytes4 selector;
         address[] disallowedAddresses;
         bool distributionComponentsOnly;
@@ -38,7 +38,7 @@ contract AuthorizationMiddleware is Initializable, IERC7746, ERC165 {
     }
     error ERC165CheckFailed(address distributor, bytes4 interfaceId, string interfaceName);
     function initialize(
-        SimpleAccessManagerInitializer[] memory methodSettings,
+        AuthorizationMiddlewareInitializer[] memory methodSettings,
         address target,
         IDistributor distributor
     ) public initializer {

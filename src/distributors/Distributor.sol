@@ -316,11 +316,11 @@ abstract contract Distributor is IDistributor, ERC165 {
         }
         if (from.version.major == to.version.major) {
             require(
-                strategy != MigrationStrategy.REPOSITORY_MANGED,
+                strategy != MigrationStrategy.REPOSITORY_MANAGED,
                 "Repository managed migration is not allowed for minor version migrations"
             );
         }
-        if (strategy == MigrationStrategy.REPOSITORY_MANGED)
+        if (strategy == MigrationStrategy.REPOSITORY_MANAGED)
             require(migrationHash != bytes32(0), "Migration hash is required for repository managed migration");
         bytes32 migrationId;
         migrationId = keccak256(abi.encode(distributionId, migrationHash, strategy));
@@ -414,7 +414,7 @@ abstract contract Distributor is IDistributor, ERC165 {
             if (!success) {
                 revert upgradeFailedWithError(result);
             }
-        } else if (migrationPlan.strategy == MigrationStrategy.REPOSITORY_MANGED) {
+        } else if (migrationPlan.strategy == MigrationStrategy.REPOSITORY_MANAGED) {
             // Repository managed migration, expect migration script to be provided by repository
             // NB: Migration scripts may be changed by repository.
             // This strategy assumes distributor trusts repository owner sufficiently to not change migration script maliciously.
